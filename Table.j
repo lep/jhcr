@@ -76,8 +76,8 @@ private struct $TYPE$s extends array
     method operator []= takes integer key, $TYPE$ value returns nothing
         local node n = node.create()
         set n.$TYPE$E = value
-        set n.next = table(this).aux
-        set table(this).aux = n
+        set n.next = Table(this).aux
+        set Table(this).aux = n
         call SaveInteger(ht, this, key, n)
     endmethod
 endstruct
@@ -88,49 +88,49 @@ private module $TYPE$m
 endmodule
 //! endtextmacro
 
-//! runtextmacro BASIC_SAVEABLE("Real", "real")
-//! runtextmacro BASIC_SAVEABLE("Boolean", "boolean")
-//! runtextmacro BASIC_SAVEABLE("Str", "string")
-//! runtextmacro BASIC_SAVEABLE("Integer", "integer")
+//! runtextmacro BASIC_SAVEABLE("Boolean","boolean")
+//! runtextmacro BASIC_SAVEABLE("Integer","integer")
+//! runtextmacro BASIC_SAVEABLE("Real","real")
+//! runtextmacro BASIC_SAVEABLE("Str","string")
 
-//! runtextmacro BUILTIN_SAVEABLE("Player", "player")
-//! runtextmacro BUILTIN_SAVEABLE("Widget", "widget")
-//! runtextmacro BUILTIN_SAVEABLE("Destructable", "destructable")
-//! runtextmacro BUILTIN_SAVEABLE("Item", "item")
-//! runtextmacro BUILTIN_SAVEABLE("Unit", "unit")
-//! runtextmacro BUILTIN_SAVEABLE("Ability", "ability")
-//! runtextmacro BUILTIN_SAVEABLE("Timer", "timer")
-//! runtextmacro BUILTIN_SAVEABLE("Trigger", "trigger")
-//! runtextmacro BUILTIN_SAVEABLE("TriggerCondition", "triggercondition")
-//! runtextmacro BUILTIN_SAVEABLE("TriggerAction", "triggeraction")
-//! runtextmacro BUILTIN_SAVEABLE("TriggerEvent", "event")
-//! runtextmacro BUILTIN_SAVEABLE("Force", "force")
-//! runtextmacro BUILTIN_SAVEABLE("Group", "group")
-//! runtextmacro BUILTIN_SAVEABLE("Location", "location")
-//! runtextmacro BUILTIN_SAVEABLE("Rect", "rect")
-//! runtextmacro BUILTIN_SAVEABLE("BooleanExpr", "boolexpr")
-//! runtextmacro BUILTIN_SAVEABLE("Sound", "sound")
-//! runtextmacro BUILTIN_SAVEABLE("Effect", "effect")
-//! runtextmacro BUILTIN_SAVEABLE("UnitPool", "unitpool")
-//! runtextmacro BUILTIN_SAVEABLE("ItemPool", "itempool")
-//! runtextmacro BUILTIN_SAVEABLE("Quest", "quest")
-//! runtextmacro BUILTIN_SAVEABLE("QuestItem", "questitem")
-//! runtextmacro BUILTIN_SAVEABLE("DefeatCondition", "defeatcondition")
-//! runtextmacro BUILTIN_SAVEABLE("TimerDialog", "timerdialog")
-//! runtextmacro BUILTIN_SAVEABLE("Leaderboard", "leaderboard")
-//! runtextmacro BUILTIN_SAVEABLE("Multiboard", "multiboard")
-//! runtextmacro BUILTIN_SAVEABLE("MultiboardItem", "multiboarditem")
-//! runtextmacro BUILTIN_SAVEABLE("Trackable", "trackable")
-//! runtextmacro BUILTIN_SAVEABLE("Dialog", "dialog")
-//! runtextmacro BUILTIN_SAVEABLE("Button", "button")
-//! runtextmacro BUILTIN_SAVEABLE("TextTag", "texttag")
-//! runtextmacro BUILTIN_SAVEABLE("Lightning", "lightning")
-//! runtextmacro BUILTIN_SAVEABLE("Image", "image")
-//! runtextmacro BUILTIN_SAVEABLE("Ubersplat", "ubersplat")
-//! runtextmacro BUILTIN_SAVEABLE("Region", "region")
-//! runtextmacro BUILTIN_SAVEABLE("FogState", "fogstate")
-//! runtextmacro BUILTIN_SAVEABLE("FogModifier", "fogmodifier")
-//! runtextmacro BUILTIN_SAVEABLE("Hashtable", "hashtable")
+//! runtextmacro BUILTIN_SAVEABLE("Ability","ability")
+//! runtextmacro BUILTIN_SAVEABLE("BooleanExpr","boolexpr")
+//! runtextmacro BUILTIN_SAVEABLE("Button","button")
+//! runtextmacro BUILTIN_SAVEABLE("DefeatCondition","defeatcondition")
+//! runtextmacro BUILTIN_SAVEABLE("Destructable","destructable")
+//! runtextmacro BUILTIN_SAVEABLE("Dialog","dialog")
+//! runtextmacro BUILTIN_SAVEABLE("Effect","effect")
+//! runtextmacro BUILTIN_SAVEABLE("FogModifier","fogmodifier")
+//! runtextmacro BUILTIN_SAVEABLE("FogState","fogstate")
+//! runtextmacro BUILTIN_SAVEABLE("Force","force")
+//! runtextmacro BUILTIN_SAVEABLE("Group","group")
+//! runtextmacro BUILTIN_SAVEABLE("Hashtable","hashtable")
+//! runtextmacro BUILTIN_SAVEABLE("Image","image")
+//! runtextmacro BUILTIN_SAVEABLE("Item","item")
+//! runtextmacro BUILTIN_SAVEABLE("ItemPool","itempool")
+//! runtextmacro BUILTIN_SAVEABLE("Leaderboard","leaderboard")
+//! runtextmacro BUILTIN_SAVEABLE("Lightning","lightning")
+//! runtextmacro BUILTIN_SAVEABLE("Location","location")
+//! runtextmacro BUILTIN_SAVEABLE("Multiboard","multiboard")
+//! runtextmacro BUILTIN_SAVEABLE("MultiboardItem","multiboarditem")
+//! runtextmacro BUILTIN_SAVEABLE("Player","player")
+//! runtextmacro BUILTIN_SAVEABLE("Quest","quest")
+//! runtextmacro BUILTIN_SAVEABLE("QuestItem","questitem")
+//! runtextmacro BUILTIN_SAVEABLE("Rect","rect")
+//! runtextmacro BUILTIN_SAVEABLE("Region","region")
+//! runtextmacro BUILTIN_SAVEABLE("Sound","sound")
+//! runtextmacro BUILTIN_SAVEABLE("TextTag","texttag")
+//! runtextmacro BUILTIN_SAVEABLE("Timer","timer")
+//! runtextmacro BUILTIN_SAVEABLE("TimerDialog","timerdialog")
+//! runtextmacro BUILTIN_SAVEABLE("Trackable","trackable")
+//! runtextmacro BUILTIN_SAVEABLE("Trigger","trigger")
+//! runtextmacro BUILTIN_SAVEABLE("TriggerAction","triggeraction")
+//! runtextmacro BUILTIN_SAVEABLE("TriggerCondition","triggercondition")
+//! runtextmacro BUILTIN_SAVEABLE("TriggerEvent","event")
+//! runtextmacro BUILTIN_SAVEABLE("Ubersplat","ubersplat")
+//! runtextmacro BUILTIN_SAVEABLE("Unit","unit")
+//! runtextmacro BUILTIN_SAVEABLE("UnitPool","unitpool")
+//! runtextmacro BUILTIN_SAVEABLE("Widget","widget")
 
 //! runtextmacro HACK_SAVEABLE("AIDifficulty","aidifficulty")
 //! runtextmacro HACK_SAVEABLE("AllianceType","alliancetype")
@@ -192,49 +192,49 @@ endmodule
 struct Table
     node aux = 0
     
+    implement booleanm
     implement integerm
     implement realm
     implement stringm
-    implement booleanm
     
-    implement playerm
-    implement widgetm
-    implement destructablem
-    implement itemm
-    implement unitm
     implement abilitym
-    implement timerm
-    implement triggerm
-    implement triggerconditionm
-    implement triggeractionm
+    implement boolexprm
+    implement buttonm
+    implement defeatconditionm
+    implement destructablem
+    implement dialogm
+    implement effectm
     implement eventm
+    implement fogmodifierm
+    implement fogstatem
     implement forcem
     implement groupm
-    implement locationm
-    implement rectm
-    implement boolexprm
-    implement soundm
-    implement effectm
-    implement unitpoolm
-    implement itempoolm
-    implement questm
-    implement questitemm
-    implement defeatconditionm
-    implement timerdialogm
-    implement leaderboardm
-    implement multiboardm
-    implement multiboarditemm
-    implement trackablem
-    implement dialogm
-    implement buttonm
-    implement texttagm
-    implement lightningm
-    implement imagem
-    implement ubersplatm
-    implement regionm
-    implement fogstatem
-    implement fogmodifierm
     implement hashtablem
+    implement imagem
+    implement itemm
+    implement itempoolm
+    implement leaderboardm
+    implement lightningm
+    implement locationm
+    implement multiboarditemm
+    implement multiboardm
+    implement playerm
+    implement questitemm
+    implement questm
+    implement rectm
+    implement regionm
+    implement soundm
+    implement texttagm
+    implement timerdialogm
+    implement timerm
+    implement trackablem
+    implement triggeractionm
+    implement triggerconditionm
+    implement triggerm
+    implement ubersplatm
+    implement unitm
+    implement unitpoolm
+    implement widgetm
 
     implement aidifficultym
     implement alliancetypem
@@ -293,13 +293,11 @@ struct Table
     implement weathereffectm
     
     method clear takes nothing returns nothing
-        local node n = aux
         call FlushChildHashtable(ht, this)
         loop
-        exitwhen n == 0
-            set n = aux.next
+        exitwhen aux == 0
             call aux.destroy()
-            set aux = n
+            set aux = aux.next
         endloop
     endmethod
 endstruct
