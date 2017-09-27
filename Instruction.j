@@ -1,4 +1,8 @@
 
+globals
+    Context fresh
+endglobals
+
 struct Instruction
     Instruction next
     
@@ -17,25 +21,11 @@ struct Instruction
     string a3_string
 endstruct
 
-struct AuxTable
-    AuxTable next = 0
-    integer ident
-    
-    gamecache gamecacheE
-    terraindeformation terraindeformationE
-    weathereffect weathereffectE
-    camerasetup camerasetupE
-endstruct
-
 
 struct Context
-    static hashtable locals = InitHashtable()
-    static hashtable labels = InitHashtable()
-    
-    static Context fresh = 0
-    
-    AuxTable auxLocals = 0
-    
+    Table tbl = Table.create()
+    Table lables = Table.create()
+
     Context parent = 0
     Instruction pc
 endstruct
@@ -183,7 +173,6 @@ function interp takes Context ctx returns nothing
             // handle derived type (except the other few types)
             set ctx.tbl[op.a1].boolean = ctx.tbl[op.a2].fogstate != ctx.tbl[op.a3_integer].fogstate
         endif
-        endif
         
     elseif t == Add then
         if op.type == TypeInteger then
@@ -266,10 +255,7 @@ function interp takes Context ctx returns nothing
             set ctx.parent.tbl[ctx.parent.pc.a1].integer = ctx.tbl[0].integer
         // etc.
         endif
-        call FlushChildHashtable(tbl, ctx)
-        if ctx.auxLocals != 0 then
-            call freeAuxLocals(ctx.auxLocals)
-        endif
+        call tbl.clean()
         return ctx.parent.next
         
     elseif t == i2r then
@@ -280,25 +266,25 @@ function interp takes Context ctx returns nothing
             // auto generated call for natives/BJ-functions
         else
             // user-defined function
-            set Context.fresh.parent = ctx
-            set Context.fresh.pc = calls[op.a2]
-            set tmp = Context.fresh
-            set Context.fresh = Context.create()
+            set fresh.parent = ctx
+            set fresh.pc = calls[op.a2]
+            set tmp = fresh
+            set fresh = Context.create()
             return tmp
         endif
 
     elseif t == Bind then
         if op.type == TypeInteger then
             if lit then
-                set Context.fresh.tbl[op.a1].integer = op.a3_integer
+                set fresh.tbl[op.a1].integer = op.a3_integer
             else
-                set Context.fresh.tbl[op.a3_integer].integer = ctx.tbl[op.a3_integer].integer
+                set fresh.tbl[op.a3_integer].integer = ctx.tbl[op.a3_integer].integer
             endif
         elseif op.type == TypeReal then
             if lit then
-                set Context.fresh.tbl[op.a1].real = op.a3_real
+                set fresh.tbl[op.a1].real = op.a3_real
             else
-                set Context.fresh.tbl[op.a3_integer].real = ctx.tbl[op.a3_integer].real
+                set fresh.tbl[op.a3_integer].real = ctx.tbl[op.a3_integer].real
             endif
         // ...
         endif
@@ -325,6 +311,8 @@ set[] get[]
 setglobal getglobal
 setglobal[] getglobal[]
 
+x2h / cast ?
+
 
 // untyped ops
 not
@@ -349,6 +337,7 @@ bind integer a1 v1
 bind string a2 literal foo bar
 
 call integer t c1
+
 
 // arity of 3
 
