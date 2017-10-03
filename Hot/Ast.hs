@@ -10,6 +10,7 @@ module Hot.Ast
     , Var (..)
     , Ast (..)
     , compile
+    , countLocals, renameLocals, renameLocals', convertNamesToUniqueIds
     ) where
 
 
@@ -38,6 +39,8 @@ import Control.Lens
 import Control.Monad.State
 
 import Unsafe.Coerce (unsafeCoerce)
+
+import Debug.Trace
 
 data Var = Local Type Int
          | Global Type Int
@@ -202,6 +205,8 @@ name2ids e =
 
     Jass.Var v -> Jass.Var <$> name2ids v
 
+    Jass.Set lvar e -> Jass.Set <$> name2ids lvar <*> name2ids e
+
     Jass.Call fn args | isOp fn -> Jass.Call (Op fn) <$> mapM name2ids args
     Jass.Call fn args -> Jass.Call <$> getVar fn <*> mapM name2ids args
     Jass.Code fn -> Jass.Code <$> getVar fn
@@ -221,11 +226,73 @@ name2ids e =
     Jass.Exitwhen cond -> Jass.Exitwhen <$> name2ids cond
     Jass.Return e -> Jass.Return <$> traverse name2ids e
 
-    --Jass.Int i -> Jass.Int i
-
+    --Jass.Int i -> return $ Jass.Int i
+    --Jass.Bool b -> return $ Jass.Bool b
     --_ -> error $ unwords ["Unhandled case", show e]
 
     _ -> return $ unsafeCoerce e
 
-compile :: Jass.Ast Name Programm -> Ast Var Programm
-compile = jass2hot . flip evalState emptyState . runScopeMonad . name2ids
+
+
+renameLocals :: Jass.Ast Var a -> State (Int, Map Int Var) (Jass.Ast Var a)
+renameLocals e =
+  case e of
+    Jass.Function c n args ret body -> do
+        _1 .= 0
+        let (types, names) = unzip args
+        names' <- mapM rename names
+
+        body' <- mapM renameLocals body
+        return $ Jass.Function c n (zip types names') ret body'
+
+    Jass.SDef c v t init -> Jass.SDef c <$> rename v <*> pure t <*> traverse renameLocals init
+    Jass.ADef v t -> Jass.ADef <$> rename v <*> pure t
+    Jass.SVar l -> Jass.SVar <$> rename l
+    Jass.AVar l idx -> Jass.AVar <$> rename l <*> renameLocals idx
+    _ -> composeM renameLocals e
+  where
+    rename :: Var -> State (Int, Map Int Var) Var
+    rename v =
+      case v of
+        Local t n -> do
+            m <- use _2
+            case Map.lookup n m of
+                Just l -> return l
+                Nothing -> do
+                    n' <- _1 <+= 1
+                    _2 %= (at n ?~ Local t n')
+                    return $ Local t n'
+        _ -> return v
+
+compile :: Jass.Ast Name Programm -> (Ast Var Programm, Map Var Int)
+compile ast = (jass2hot ast', m)
+  where
+    ast' = renameLocals' $ convertNamesToUniqueIds ast
+    m = countLocals ast'
+
+
+renameLocals' = flip evalState (0, mempty) . renameLocals
+convertNamesToUniqueIds = flip evalState emptyState . runScopeMonad . name2ids
+
+
+
+countLocals :: Jass.Ast Var Programm -> Map Var Int
+countLocals (Jass.Programm toplevel) = 
+    foldMap (\f -> Map.singleton (nameOf f) (go f)) $
+    filter isFunction toplevel
+  where
+    isFunction (Jass.Function{}) = True
+    isFunction _ = False
+
+    nameOf :: Jass.Ast Var Toplevel -> Var
+    nameOf (Jass.Function _ n _ _ _) = n
+
+    go :: Jass.Ast Var Toplevel -> Int
+    go e =
+      case e of
+        Jass.Function _ _ args _ body ->
+            length args + sum (map count body)
+        _ -> 0
+
+    count (Jass.Local _) = 1
+    count _ = 0

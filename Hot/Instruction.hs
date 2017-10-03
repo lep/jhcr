@@ -71,13 +71,7 @@ data Instruction
     | Call Type Register Register
     | Bind Type Register Register
 
-    -- Can't use And/Or due to their lazy semantics
-    -- Gonna use a bunch of ifs
-    -- | And Register Register Register
-    -- | Or Register Register Register
     | Not Register Register
-
-    | I2R Register Register
 
     | Label Register
     | Jmp Register
@@ -85,6 +79,7 @@ data Instruction
 
     | Convert Type Register Type Register
 
+    | Function Int
     | Ret
     deriving (Show)
 
@@ -93,7 +88,6 @@ newtype CompileMonad a = CompileMonad { runCompileMonad :: ReaderT Type (StateT 
   deriving (Functor, Applicative, Monad, MonadWriter (DList Instruction), MonadState CompileState, MonadReader Type )
 
 
-emptyState = CompileS mempty 0 mempty 0
 
 name2op n = fromJust $ lookup n [ ("<", Lt), ("<=", Le), (">", Gt), (">=", Ge)
                                 , ("==", Eq), ("!=", Neq), ("-", Sub)
@@ -107,6 +101,7 @@ data CompileState = CompileS { _loopStack :: [(Label, Label)]
                              , _labelId :: Int
                              , _scope :: Map Var Int
                              , _registerId :: Int
+                             , _localCount :: Map Var Int
                              }
 makeLenses ''CompileState
 
@@ -169,7 +164,16 @@ compileProgram :: Hot.Ast Var Programm -> CompileMonad ()
 compileProgram (Hot.Programm toplevel) = mapM_ compileToplevel toplevel
 
 compileToplevel :: Hot.Ast Var Toplevel -> CompileMonad ()
-compileToplevel (Hot.Function n args r body) = typed r $ compileStmt body
+compileToplevel (Hot.Function n args r body) = do
+    fn <- Function <$> getVarId n
+    emit fn
+
+    labelId .= 1
+    m <- use localCount
+    registerId .= fromJust (Map.lookup n m)
+
+    typed r $ compileStmt body
+    emit Ret
 
 typed t = local (const t)
 
@@ -196,9 +200,7 @@ compileCall (Hot.Call n@(Fn aTypes rType _) args) = do
     typedGet (typeOfVar n) r
 
 compileStmt :: Hot.Ast Var Stmt -> CompileMonad ()
-compileStmt e = do
-  registerId .= 0
-  labelId .= 0
+compileStmt e =
   case e of
     Hot.Return Nothing -> emit Ret
     Hot.Return (Just e) -> do
@@ -206,7 +208,7 @@ compileStmt e = do
         emit $ Set (typeOfExpr e) 0 r
         emit Ret
 
-    Hot.Call{} -> compileCall e >> return ()
+    Hot.Call{} -> void $ compileCall e
 
 
     Hot.If cond tb eb -> do
@@ -297,9 +299,18 @@ compileExpr e =
         let t = numericType (typeOfExpr a) (typeOfExpr b)
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
+
         let op = name2op n
         emit $ op (typeOfExpr a) r a' b'
-        return r
+
+        wanted <- ask
+        if wanted /= t
+        then do
+            s <- newRegister
+            emit $ Convert wanted s t r
+            return s
+        else
+            return r
 
     
     Hot.Call{} -> compileCall e
@@ -333,5 +344,7 @@ compileExpr e =
         emit $ Literal t r e
         return r
 
-compile :: Hot.Ast Var Programm -> [Instruction]
-compile = DList.toList . execWriter . flip evalStateT emptyState . flip runReaderT "" . runCompileMonad . compileProgram
+compile :: Map Var Int -> Hot.Ast Var Programm -> [Instruction]
+compile m = DList.toList . execWriter . flip evalStateT emptyState . flip runReaderT "" . runCompileMonad . compileProgram
+  where
+    emptyState = CompileS mempty 0 mempty 0 m
