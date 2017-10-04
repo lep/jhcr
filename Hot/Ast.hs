@@ -31,6 +31,8 @@ import qualified Data.DList as DList
 
 import Data.Int
 
+import Data.List (genericLength)
+
 import Data.Maybe 
 
 import Data.ByteString.Lazy (ByteString)
@@ -42,10 +44,10 @@ import Unsafe.Coerce (unsafeCoerce)
 
 import Debug.Trace
 
-data Var = Local Type Int
-         | Global Type Int
+data Var = Local Type Int32
+         | Global Type Int32
          | Op Name
-         | Fn [Type] Type Int
+         | Fn [Type] Type Int32
     deriving (Eq, Ord, Show)
 
 type Scope = Map Var
@@ -133,7 +135,7 @@ jass2hot (Jass.Programm p) = Programm $ mapMaybe go p
 
 data ScopeS = ScopeS { _globalScope :: Map Name Var
                      , _localScope :: Map Name Var
-                     , _uid :: Int
+                     , _uid :: Int32
                      }
 makeLenses ''ScopeS
 
@@ -234,7 +236,7 @@ name2ids e =
 
 
 
-renameLocals :: Jass.Ast Var a -> State (Int, Map Int Var) (Jass.Ast Var a)
+renameLocals :: Jass.Ast Var a -> State (Int32, Map Int32 Var) (Jass.Ast Var a)
 renameLocals e =
   case e of
     Jass.Function c n args ret body -> do
@@ -251,7 +253,7 @@ renameLocals e =
     Jass.AVar l idx -> Jass.AVar <$> rename l <*> renameLocals idx
     _ -> composeM renameLocals e
   where
-    rename :: Var -> State (Int, Map Int Var) Var
+    rename :: Var -> State (Int32, Map Int32 Var) Var
     rename v =
       case v of
         Local t n -> do
@@ -264,7 +266,7 @@ renameLocals e =
                     return $ Local t n'
         _ -> return v
 
-compile :: Jass.Ast Name Programm -> (Ast Var Programm, Map Var Int)
+compile :: Jass.Ast Name Programm -> (Ast Var Programm, Map Var Int32)
 compile ast = (jass2hot ast', m)
   where
     ast' = renameLocals' $ convertNamesToUniqueIds ast
@@ -276,7 +278,7 @@ convertNamesToUniqueIds = flip evalState emptyState . runScopeMonad . name2ids
 
 
 
-countLocals :: Jass.Ast Var Programm -> Map Var Int
+countLocals :: Jass.Ast Var Programm -> Map Var Int32
 countLocals (Jass.Programm toplevel) = 
     foldMap (\f -> Map.singleton (nameOf f) (go f)) $
     filter isFunction toplevel
@@ -287,11 +289,11 @@ countLocals (Jass.Programm toplevel) =
     nameOf :: Jass.Ast Var Toplevel -> Var
     nameOf (Jass.Function _ n _ _ _) = n
 
-    go :: Jass.Ast Var Toplevel -> Int
+    go :: Jass.Ast Var Toplevel -> Int32
     go e =
       case e of
         Jass.Function _ _ args _ body ->
-            length args + sum (map count body)
+            genericLength args + sum (map count body)
         _ -> 0
 
     count (Jass.Local _) = 1

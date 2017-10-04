@@ -8,17 +8,21 @@
 
 module Hot.Instruction
     ( compileExpr, compileStmt, compileToplevel, compileProgram
-    , compile
+    , compile, serialize
     ) where
 
 import qualified Hot.Ast as Hot
+import qualified Hot.Types as Hot
 import Hot.Ast (Programm, Toplevel, LVar, Stmt, Expr, Name, Type)
 import Hot.Ast ( Var(..) )
+
 
 
 import Data.Composeable
 
 import Control.Arrow (second)
+
+import Data.List (intersperse)
 
 import Data.Monoid
 
@@ -33,6 +37,8 @@ import Data.Int
 import Data.Maybe 
 
 import Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy as BL
+import Data.ByteString.Builder
 
 import Control.Lens
 import Control.Monad.State
@@ -41,8 +47,8 @@ import Control.Monad.Reader
 
 import Unsafe.Coerce (unsafeCoerce)
 
-type Register = Int
-type Label = Int
+type Register = Int32
+type Label = Int32
 
 
 data Instruction
@@ -79,7 +85,7 @@ data Instruction
 
     | Convert Type Register Type Register
 
-    | Function Int
+    | Function Label
     | Ret
     deriving (Show)
 
@@ -98,10 +104,10 @@ name2op n = fromJust $ lookup n [ ("<", Lt), ("<=", Le), (">", Gt), (">=", Ge)
 -- when compiling to bytecode we dont care about sequential ids
 
 data CompileState = CompileS { _loopStack :: [(Label, Label)]
-                             , _labelId :: Int
-                             , _scope :: Map Var Int
-                             , _registerId :: Int
-                             , _localCount :: Map Var Int
+                             , _labelId :: Label
+                             , _scope :: Map Var Int32
+                             , _registerId :: Register
+                             , _localCount :: Map Var Int32
                              }
 makeLenses ''CompileState
 
@@ -127,7 +133,7 @@ isOp :: Var -> Bool
 isOp (Op _) = True
 isOp _ = False
 
-getVarId :: Var -> CompileMonad Int
+getVarId :: Var -> CompileMonad Int32
 getVarId v =
   case v of
     Fn _ _ id -> return id
@@ -146,6 +152,7 @@ typeOfExpr e =
         | otherwise -> numericType (typeOfExpr a) (typeOfExpr b)
     Hot.Call n _ -> typeOfVar n
     Hot.Var (Hot.SVar v) -> typeOfVar v
+    Hot.Var (Hot.AVar v _) -> typeOfVar v
     Hot.Int{} -> "integer"
     Hot.Real{} -> "real"
     Hot.Bool{} -> "boolean"
@@ -205,7 +212,8 @@ compileStmt e =
     Hot.Return Nothing -> emit Ret
     Hot.Return (Just e) -> do
         r <- compileExpr e
-        emit $ Set (typeOfExpr e) 0 r
+        wanted <- ask
+        emit $ Set wanted 0 r
         emit Ret
 
     Hot.Call{} -> void $ compileCall e
@@ -251,6 +259,20 @@ compileStmt e =
         vid <- getVarId v
         emit $ SetGlobal t vid r
 
+    Hot.Set (Hot.AVar v@Hot.Local{} idx) e -> do
+        let t = typeOfVar v
+        idx' <- typed "integer" $ compileExpr idx
+        r <- typed t $ compileExpr e
+        vid <- getVarId v
+        emit $ SetArray t vid idx' r
+
+    Hot.Set (Hot.AVar v@Hot.Global{} idx) e -> do
+        let t = typeOfVar v
+        idx' <- typed "integer" $ compileExpr idx
+        r <- typed t $ compileExpr e
+        vid <- getVarId v
+        emit $ SetGlobalArray t vid idx' r
+
     Hot.Block blk -> mapM_ compileStmt blk
 
 numericType "real" _ = "real"
@@ -295,22 +317,14 @@ compileExpr e =
         return r
         
     Hot.Call (Op n) [a, b] -> do
-        r <- newRegister
+        let op = name2op n
         let t = numericType (typeOfExpr a) (typeOfExpr b)
+
+        r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
-
-        let op = name2op n
         emit $ op (typeOfExpr a) r a' b'
-
-        wanted <- ask
-        if wanted /= t
-        then do
-            s <- newRegister
-            emit $ Convert wanted s t r
-            return s
-        else
-            return r
+        typedGet t r
 
     
     Hot.Call{} -> compileCall e
@@ -321,6 +335,26 @@ compileExpr e =
         v <- getVarId g
         emit $ GetGlobal (typeOfVar g) r v
         typedGet (typeOfVar g) r
+
+    Hot.Var (Hot.AVar l@Hot.Local{} idx) -> do
+        let t = typeOfVar l
+
+        r <- newRegister
+        vid <- getVarId l
+        idx' <- typed "integer" $ compileExpr idx
+
+        emit $ GetArray t r vid idx'
+        typedGet t r
+
+    Hot.Var (Hot.AVar g@Hot.Global{} idx) -> do
+        let t = typeOfVar g
+        
+        r <- newRegister
+        vid <- getVarId g
+        idx' <- typed "integer" $ compileExpr idx
+        emit $ GetGlobalArray t r vid idx'
+        typedGet t r
+
 
     Hot.Int _ -> do
         r <- newRegister
@@ -344,7 +378,67 @@ compileExpr e =
         emit $ Literal t r e
         return r
 
-compile :: Map Var Int -> Hot.Ast Var Programm -> [Instruction]
+    Hot.Code v -> getVarId v
+
+compile :: Map Var Int32 -> Hot.Ast Var Programm -> [Instruction]
 compile m = DList.toList . execWriter . flip evalStateT emptyState . flip runReaderT "" . runCompileMonad . compileProgram
   where
     emptyState = CompileS mempty 0 mempty 0 m
+
+
+serialize :: [Instruction] -> Builder
+serialize = unlines . map s
+  where
+    unlines = mconcat . intersperse (charUtf8 '\n')
+    unwords = mconcat . intersperse (charUtf8 ' ')
+
+    serializeLit :: Hot.Ast Var Expr -> Builder
+    serializeLit l =
+      case l of
+        Hot.Int i -> int32Dec i
+        Hot.Real r -> floatDec r
+        Hot.String s -> lazyByteString s
+        Hot.Bool s -> stringUtf8 $ show s
+        Hot.Null -> stringUtf8 "null"
+
+    bla ins args = unwords [ins, unwords $ map int32Dec args]
+
+    typeToId = (Hot.types Map.!)
+
+    s ins =
+      case ins of
+        Lt t s a b -> bla "lt" [typeToId t, s, a, b]
+        Le t s a b -> bla "le" [typeToId t, s, a, b]
+        Gt t s a b -> bla "gt" [typeToId t, s, a, b]
+        Ge t s a b -> bla "ge" [typeToId t, s, a, b]
+        Eq t s a b -> bla "eq" [typeToId t, s, a, b]
+        Neq t s a b -> bla "neq" [typeToId t, s, a, b]
+        Add t s a b -> bla "add" [typeToId t, s, a, b]
+        Sub t s a b -> bla "sub" [typeToId t, s, a, b]
+        Mul t s a b -> bla "mul" [typeToId t, s, a, b]
+        Div t s a b -> bla "div" [typeToId t, s, a, b]
+
+        Negate t s a -> bla "neg" [typeToId t, s, a]
+
+        Set t s a -> bla "set" [typeToId t, s, a]
+        SetGlobal t s a -> bla "setglobal" [typeToId t, s, a]
+        GetGlobal t s a -> bla "getglobal" [typeToId t, s, a]
+
+        Call t s f -> bla "call" [typeToId t, s, f]
+        Bind t s a -> bla "bind" [typeToId t, s, a]
+
+        Not s a -> bla "not" [s, a]
+
+        Function f -> bla "fun" [f]
+
+        Label l -> bla "label" [l]
+        Jmp l -> bla "jmp" [l]
+        JmpT l a-> bla "jmpt" [l, a]
+
+        Convert t s t' s' -> bla "conv" [typeToId t, s, typeToId t', s']
+
+        Ret -> bla "ret" []
+
+        Literal t s l -> unwords [string8 "lit", int32Dec $ typeToId t, int32Dec s, serializeLit l]
+
+        _ -> error $ "NYI: " ++ show ins

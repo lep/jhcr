@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTs #-}
 
 
 import qualified Jass.Parser as Jass
@@ -8,7 +9,10 @@ import qualified Hot.Ast as A
 
 import qualified Data.ByteString.Lazy as BL
 
+import Data.ByteString.Builder
+
 import System.Environment
+import System.IO
 
 import Control.Monad
 
@@ -18,7 +22,8 @@ test src = do
     let Right j = Jass.parse Jass.programm src
         (ast, locals) = A.compile j
         ins = I.compile locals ast
-    forM_ ins print
+    --forM_ ins print
+    hPutBuilder stdout $ I.serialize ins
 
 bla src =
     let Right j = Jass.parse Jass.programm src
