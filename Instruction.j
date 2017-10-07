@@ -10,28 +10,27 @@ struct Instruction
     integer type
     boolean literal
     
-    // always registers or similar
     integer a1
     integer a2
-    
-    // might be literal
-    integer a3_integer
-    real a3_real
-    boolean a3_boolean
-    string a3_string
+    integer a3
+
+    real real_literal
+    boolean boolean_literal
+    string string_literal
 endstruct
 
 
 struct Context
     Table tbl = Table.create()
     Table lables = Table.create()
+    Table arrays = Table.create()
 
     Context parent = 0
     Instruction pc
 endstruct
 
 
-function interp takes Context ctx returns nothing
+function interp takes Context ctx returns Context
     local Instruction op = ctx.pc
     local integer t = op.OP
     local boolean l = lit
@@ -40,35 +39,15 @@ function interp takes Context ctx returns nothing
     
         // TODO: binsearch
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.integer[op.a1] = op.a3_integer
-            else
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2]
         elseif op.type == TypeReal then
-            if lit then
-                set ctx.tbl.real[op.a1] = op.a3_real
-            else
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2]
         elseif op.type == TypeBoolean then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = op.a3_boolean
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.boolean[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.boolean[op.a2]
         elseif op.type == TypeString then
-            if lit then
-                set ctx.tbl.string[op.a1] = op.a3_string
-            else
-                set ctx.tbl.string[op.a1] = ctx.tbl.string[op.a3_integer]
-            endif
+            set ctx.tbl.string[op.a1] = ctx.tbl.string[op.a2]
         elseif op.type == TypeCode then
-            if lit then
-                set ctx.tbl.integer[op.a1] = op.a3_integer
-            else
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2]
             
             // remember: handle literal can only be null
         endif
@@ -78,160 +57,80 @@ function interp takes Context ctx returns nothing
     
     elseif t == Lt then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] < op.a3_integer
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] < ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] < ctx.tbl.integer[op.a2]
         else
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] < op.a3_real
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] < ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] < ctx.tbl.real[op.a3]
         endif
         
     elseif t == Le then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] <= op.a3_integer
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] <= ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] <= ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] <= op.a3_real
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] <= ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] <= ctx.tbl.real[op.a3]
         endif
         
     elseif t == Gt then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] > op.a3_integer
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] > ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] > ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] > op.a3_real
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] > ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] > ctx.tbl.real[op.a3]
         endif
         
     elseif t == Ge then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] >= op.a3_integer
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] >= ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] >= ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] >= op.a3_real
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] >= ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] >= ctx.tbl.real[op.a3]
         endif
         
     elseif t == Eq then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] == op.a3_integer
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] == ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] == ctx.tbl.integer[op.a3]
         elseif op.type == TypeReal then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] == op.a3_real
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] == ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] == ctx.tbl.real[op.a3]
         // ...
         else
             // handle derived type (except the other few types)
-            set ctx.tbl.boolean[op.a1] = ctx.tbl.fogstate[op.a2] == ctx.tbl.fogstate[op.a3_integer]
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.fogstate[op.a2] == ctx.tbl.fogstate[op.a3]
         endif
         
     elseif t == Neq then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] != op.a3_integer
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] != ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.integer[op.a2] != ctx.tbl.integer[op.a3]
         elseif op.type == TypeReal then
-            if lit then
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] != op.a3_real
-            else
-                set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] != ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.real[op.a2] != ctx.tbl.real[op.a3]
                 // ...
         else
             // handle derived type (except the other few types)
-            set ctx.tbl.boolean[op.a1] = ctx.tbl.fogstate[op.a2] != ctx.tbl.fogstate[op.a3_integer]
+            set ctx.tbl.boolean[op.a1] = ctx.tbl.fogstate[op.a2] != ctx.tbl.fogstate[op.a3]
         endif
         
     elseif t == Add then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] + op.a3_integer
-            else
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] + ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] + ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] + op.a3_real
-            else
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] + ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] + ctx.tbl.real[op.a3]
         endif
         
     elseif t == Sub then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] - op.a3_integer
-            else
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] - ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] - ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] - op.a3_real
-            else
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] - ctx.tbl.real[op.a3_real]
-            endif
+            set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] - ctx.tbl.real[op.a3_real]
         endif
         
     elseif t == Mul then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] * op.a3_integer
-            else
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] * ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] * ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] * op.a3_real
-            else
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] * ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] * ctx.tbl.real[op.a3]
         endif
         
     elseif t == Div then
         if op.type == TypeInteger then
-            if lit then
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] / op.a3_integer
-            else
-                set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] / ctx.tbl.integer[op.a3_integer]
-            endif
+            set ctx.tbl.integer[op.a1] = ctx.tbl.integer[op.a2] / ctx.tbl.integer[op.a3]
         else
-            if lit then
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] / op.a3_real
-            else
-                set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] / ctx.tbl.real[op.a3_integer]
-            endif
+            set ctx.tbl.real[op.a1] = ctx.tbl.real[op.a2] / ctx.tbl.real[op.a3]
         endif
         
     elseif t == NOT then
@@ -259,9 +158,6 @@ function interp takes Context ctx returns nothing
         call ctx.destroy()
         return ctx.parent.next
         
-    elseif t == i2r then
-        set ctx.tbl.real[op.a1] = ctx.tbl.integer[op.a2]
-        
     elseif t == Call then
         if op.a2 < 0 then
             // auto generated call for natives/BJ-functions
@@ -276,17 +172,9 @@ function interp takes Context ctx returns nothing
 
     elseif t == Bind then // should be same as Set except different target table
         if op.type == TypeInteger then
-            if lit then
-                set fresh.tbl.integer[op.a1] = op.a3_integer
-            else
-                set fresh.tbl.integer[op.a3_integer] = ctx.tbl.integer[op.a3_integer]
-            endif
+            set fresh.tbl.integer[op.a1] = ctx.tbl.integer[op.a2]
         elseif op.type == TypeReal then
-            if lit then
-                set fresh.tbl.real[op.a1] = op.a3_real
-            else
-                set fresh.tbl.real[op.a3_integer] = ctx.tbl.real[op.a3_integer]
-            endif
+            set fresh.tbl.real[op.a1] = ctx.tbl.real[op.a2]
         // ...
         endif
     elseif t == SetGlobal then

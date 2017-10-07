@@ -47,6 +47,8 @@ import Control.Monad.Reader
 
 import Unsafe.Coerce (unsafeCoerce)
 
+import Debug.Trace
+
 type Register = Int32
 type Label = Int32
 
@@ -153,6 +155,10 @@ typeOfExpr e =
     Hot.Call n _ -> typeOfVar n
     Hot.Var (Hot.SVar v) -> typeOfVar v
     Hot.Var (Hot.AVar v _) -> typeOfVar v
+
+    -- we might not need this since all code references are now integers...
+    Hot.Code{} -> "code" 
+
     Hot.Int{} -> "integer"
     Hot.Real{} -> "real"
     Hot.Bool{} -> "boolean"
@@ -201,7 +207,7 @@ compileCall :: Hot.Ast Var a -> CompileMonad Register
 compileCall (Hot.Call n@(Fn aTypes rType _) args) = do
     r <- newRegister
     v <- getVarId n
-    forM_ (zip3 args aTypes [1..]) $ \(arg, typ, pos) -> typed typ $ do
+    forM_ (zip3 args aTypes [-1, -2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
         emit $ Bind typ pos r
     emit $ Call (typeOfVar n) r v
@@ -373,6 +379,11 @@ compileExpr e =
         emit $ Literal "boolean" r e
         return r
 
+    Hot.String _ -> do
+        r <- newRegister
+        emit $ Literal "string" r e
+        return r
+
     Hot.Null -> do
         r <- newRegister
         t <- ask
@@ -425,6 +436,9 @@ serialize = unlines . map s
         SetGlobal t s a -> bla "setglobal" [typeToId t, s, a]
         GetGlobal t s a -> bla "getglobal" [typeToId t, s, a]
 
+        SetGlobalArray t ar idx v -> bla "setglobalarray" [typeToId t, ar, idx, v]
+        GetGlobalArray ty t ar idx -> bla "getglobalarray" [typeToId ty, t, ar, idx]
+
         Call t s f -> bla "call" [typeToId t, s, f]
         Bind t s a -> bla "bind" [typeToId t, s, a]
 
@@ -441,5 +455,6 @@ serialize = unlines . map s
         Ret -> bla "ret" []
 
         Literal t s l -> unwords [string8 "lit", int32Dec $ typeToId t, int32Dec s, serializeLit l]
+
 
         _ -> error $ "NYI: " ++ show ins
