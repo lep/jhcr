@@ -261,16 +261,49 @@ renameLocals e =
             case Map.lookup n m of
                 Just l -> return l
                 Nothing -> do
-                    n' <- _1 <+= 1
+                    n' <- _1 <-= 1
                     _2 %= (at n ?~ Local t n')
                     return $ Local t n'
         _ -> return v
 
+
+type PState = (Map (Bool, Name) Int32, Map Var Int32)
+
+partitionGlobalsByType' :: Jass.Ast Var a -> State PState (Jass.Ast Var a)
+partitionGlobalsByType' e =
+  case e of
+    Jass.Global (Jass.ADef v t) ->
+        Jass.Global <$> (Jass.ADef <$> add v True <*> pure t)
+
+    Jass.Global (Jass.SDef c v t init) ->
+        Jass.Global <$> (Jass.SDef c <$> add v False <*> pure t <*> traverse partitionGlobalsByType' init)
+        
+    Jass.AVar g@Global{} idx -> Jass.AVar <$> rename g True <*> partitionGlobalsByType' idx
+    Jass.SVar g@Global{} -> Jass.SVar <$> rename g False
+    _ -> composeM partitionGlobalsByType' e
+
+  where
+    add :: Var -> Bool -> State PState Var
+    add var@(Global ty i) arr = do
+        _1 %= (Map.insertWith (+) (arr, ty) 1)
+        id <- uses _1 (Map.! (arr, ty))
+        _2 %= (at var ?~ id)
+        return $ Global ty id
+
+    rename :: Var -> Bool -> State PState Var
+    rename var@(Global ty i) arr = do
+        uid <- uses _2 (Map.! var)
+        return $ Global ty uid
+
+partitionGlobalsByType e = evalState (partitionGlobalsByType' e) (mempty, mempty)
+
+
 compile :: Jass.Ast Name Programm -> (Ast Var Programm, Map Var Int32)
-compile ast = (jass2hot ast', m)
+compile ast = (jass2hot ast'', m)
   where
     ast' = renameLocals' $ convertNamesToUniqueIds ast
-    m = countLocals ast'
+    ast'' = partitionGlobalsByType ast'
+    m = countLocals ast''
 
 
 renameLocals' = flip evalState (0, mempty) . renameLocals

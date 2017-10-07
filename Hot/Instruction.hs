@@ -176,8 +176,9 @@ compileToplevel (Hot.Function n args r body) = do
     emit fn
 
     labelId .= 1
-    m <- use localCount
-    registerId .= fromJust (Map.lookup n m)
+    --m <- use localCount
+    --registerId .= fromJust (Map.lookup n m)
+    registerId .= 0
 
     typed r $ compileStmt body
     emit Ret
