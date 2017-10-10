@@ -11,6 +11,8 @@ module Hot.Ast
     , Ast (..)
     , compile
     , countLocals, renameLocals, renameLocals', convertNamesToUniqueIds
+    , runScopeMonad, emptyState, name2ids, partitionGlobalsByType'
+    , ScopeS (..)
     ) where
 
 
@@ -267,7 +269,7 @@ renameLocals e =
         _ -> return v
 
 
-type PState = (Map (Bool, Name) Int32, Map Var Int32)
+type PState = (Map (Bool, Name) Int32, Map Var Var)
 
 partitionGlobalsByType' :: Jass.Ast Var a -> State PState (Jass.Ast Var a)
 partitionGlobalsByType' e =
@@ -287,13 +289,12 @@ partitionGlobalsByType' e =
     add var@(Global ty i) arr = do
         _1 %= (Map.insertWith (+) (arr, ty) 1)
         id <- uses _1 (Map.! (arr, ty))
-        _2 %= (at var ?~ id)
-        return $ Global ty id
+        let v = Global ty id
+        _2 %= (at var ?~ v)
+        return v
 
     rename :: Var -> Bool -> State PState Var
-    rename var@(Global ty i) arr = do
-        uid <- uses _2 (Map.! var)
-        return $ Global ty uid
+    rename var@(Global ty i) arr = uses _2 (Map.! var)
 
 partitionGlobalsByType e = evalState (partitionGlobalsByType' e) (mempty, mempty)
 

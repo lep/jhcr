@@ -109,7 +109,6 @@ data CompileState = CompileS { _loopStack :: [(Label, Label)]
                              , _labelId :: Label
                              , _scope :: Map Var Int32
                              , _registerId :: Register
-                             , _localCount :: Map Var Int32
                              }
 makeLenses ''CompileState
 
@@ -182,8 +181,6 @@ compileToplevel (Hot.Function n args r body) = do
     emit fn
 
     labelId .= 1
-    --m <- use localCount
-    --registerId .= fromJust (Map.lookup n m)
     registerId .= 0
 
     typed r $ compileStmt body
@@ -392,10 +389,10 @@ compileExpr e =
 
     Hot.Code v -> getVarId v
 
-compile :: Map Var Int32 -> Hot.Ast Var Programm -> [Instruction]
-compile m = DList.toList . execWriter . flip evalStateT emptyState . flip runReaderT "" . runCompileMonad . compileProgram
+compile :: Hot.Ast Var Programm -> [Instruction]
+compile = DList.toList . execWriter . flip evalStateT emptyState . flip runReaderT "" . runCompileMonad . compileProgram
   where
-    emptyState = CompileS mempty 0 mempty 0 m
+    emptyState = CompileS mempty 0 mempty 0
 
 
 serialize :: [Instruction] -> Builder
