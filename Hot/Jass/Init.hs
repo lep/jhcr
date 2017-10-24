@@ -92,16 +92,20 @@ split (Programm p) =
     g = groupBy ((==) `on` signatur)
 
 
-generate :: Ast Var Programm -> Ast Var Programm
+generate :: Ast Var Programm -> [Ast Var Programm]
 generate pr =
     let (normals, arrays, functions) = split pr
-    in Programm $
-       concat [ map generateNormalGetters normals
+        i2code_dummies = Programm $ i2code $ concat functions
+
+        enter_predefined = Programm [ enterFunction $ concat functions ]
+
+        set_get = Programm $ concat [
+                map generateNormalGetters normals
               , map generateNormalSetters normals
               , map generateArraySetters arrays
               , map generateArrayGetters arrays
-              , [ enterFunction $ concat functions ]
               ]
+    in [i2code_dummies, enter_predefined, set_get]
   where
     uid = mkLocal "_i"
     idx = mkLocal "_idx"
@@ -110,19 +114,48 @@ generate pr =
     bind = mkLocal "_binding"
     scope = mkLocal "_scope"
 
+    --dummyCodeVars = [Global $ SDef Normal (H.Global Normal ("_dummy_code" <> fromString (show i)) "code" False 0) "code" Nothing | i <- [0..100]]
+
+    i2code :: [Ast Var Toplevel] -> [Ast Var Toplevel]
+    i2code fns =
+
+        let r :: Int -> Ast Var Stmt
+            r idx = let fn = (fns' ++ fns) !! (100+idx)
+                        (v, args) = case fn of
+                            Native _ v args _ -> (Code v, args)
+                            Function _ v args _ _ -> (Code v, args)
+                            Global (SDef _ v _ _) -> (Var $ SVar v, [])
+                    in if null args
+                    then Return $ Just v
+                    else Return $ Just Null
+
+
+            mkDummyFn idx =
+                let idx' = fromString . show $ negate idx
+                in Function Normal (mkFn $ "_dummyFunction_" <> idx') [] "nothing" [
+                    Call (mkFn "_call_anything_around") [Call (H.Op "-") [Int idx']] 
+                    --Return . Just . Var $ AVar (mkGlobal "_dummyFunctions") (Int idx')
+                ]
+            fns' :: [Ast Var Toplevel]
+            fns' = map mkDummyFn [-1, -2 .. -101] 
+        in fns' ++ [Function Normal (mkFn "_i2code") [("integer", uid)] "code" [
+            bin (-100) (length fns) (Var $ SVar uid) r
+        ]]
+                    
+
     enterFunction :: [Ast Var Toplevel] -> Ast Var Toplevel
     enterFunction fns =
         let r idx = let fn = fns !! pred idx
                         v@(H.Fn _ types ret _) = case fn of
                                                     Native _ v _ _ -> v
                                                     Function _ v _ _ _ -> v
-                        args = zipWith (\ty pos -> Call (mkFn $ "_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] ) types [-1, -2 ..]
+                        args = zipWith (\ty pos -> Call (mkFn $ "_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] ) types [1, 2 ..]
                         stmt = if ret == "nothing"
                                then Call v args
                                else Call (mkFn $ "_set_" <> ret) [Var $ SVar scope, Int "0", Call v args]
                     in stmt
         
-        in Function Normal (mkFn "_enterFunction") [("integer", uid)] "nothing" [
+        in Function Normal (mkFn "_call_predefined") [("integer", uid)] "nothing" [
                bin 1 (length fns) (Var $ SVar uid) r
            ]
 
@@ -132,7 +165,7 @@ generate pr =
         let Global (ADef _ ty) = x
             r idx' = let Global (ADef v _) = g !! pred idx'
                     in Return . Just . Var $ AVar (v) (Var $ SVar idx)
-        in Function Normal (mkFn $ "_array_get_" <> ty) [("integer", uid), ("integer", idx)] ty [
+        in Function Normal (mkFn $ "_array_get_global_" <> ty) [("integer", uid), ("integer", idx)] ty [
             bin 1 (length g) (Var $ SVar uid) r
         ]
 
@@ -141,7 +174,7 @@ generate pr =
         let Global (ADef _ ty) = x
             r idx' = let Global (ADef v _) = g !! pred idx'
                     in Set (AVar (v) (Var $ SVar idx)) (Var $ SVar val)
-        in Function Normal (mkFn $ "_array_set_" <> ty) [("integer", uid), ("integer", idx), (ty, val)] "nothing" [
+        in Function Normal (mkFn $ "_array_set_global_" <> ty) [("integer", uid), ("integer", idx), (ty, val)] "nothing" [
             bin 1 (length g) (Var $ SVar uid) r
         ]
 
@@ -155,7 +188,7 @@ generate pr =
                     in if c == Normal
                     then Set (SVar (v)) (Var $ SVar val)
                     else Return Nothing
-        in Function Normal (mkFn $ "_set_" <> ty) [("integer", uid), (ty, val)] "nothing" [
+        in Function Normal (mkFn $ "_set_global_" <> ty) [("integer", uid), (ty, val)] "nothing" [
             bin 1 (length g) (Var $ SVar uid) r    
         ]
 
@@ -168,7 +201,7 @@ generate pr =
         let Global (SDef _ v ty _) = x
             r idx = let Global (SDef _ v _ _) = g !! pred idx
                     in Return . Just . Var $ SVar v
-        in Function Normal (mkFn $ "_get_" <> ty) [("integer", uid)] ty $ [bin 1 (length g) (Var $ SVar uid) r]
+        in Function Normal (mkFn $ "_get_global_" <> ty) [("integer", uid)] ty $ [bin 1 (length g) (Var $ SVar uid) r]
 
 bin :: Int -> Int -> Ast Var Expr -> (Int -> Ast Var Stmt) -> Ast Var Stmt
 bin lo hi c f = go lo (hi+1)

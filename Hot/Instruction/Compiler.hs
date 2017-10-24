@@ -83,7 +83,7 @@ newLabel :: CompileMonad Label
 newLabel = labelId <+= 1
 
 newRegister :: CompileMonad Register
-newRegister = registerId <+= 1
+newRegister = registerId <-= 1
 
 isOp :: Var -> Bool
 isOp (Op _) = True
@@ -152,7 +152,7 @@ compileCall :: Ast Var a -> CompileMonad Register
 compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
     r <- newRegister
     let v = getId n
-    forM_ (zip3 args aTypes [-1, -2..]) $ \(arg, typ, pos) -> typed typ $ do
+    forM_ (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
         emit $ Bind typ pos r
     emit $ Call (typeOfVar n) r v

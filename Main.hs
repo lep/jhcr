@@ -70,8 +70,13 @@ loop prelude = forever $ do
             Left err -> hPutStrLn stderr $ show err
             Right ast -> do
                 let ast' = H.execRenameM preludeState ast
-                    generatedFns = H.generate $ concatPrograms prelude' ast'
-                hPutBuilder stdout $ J.pretty $ addPrefix "JHCR" generatedFns
+                    generated = H.generate $ concatPrograms prelude' ast'
+                    --generatedFns = H.generate $ concatPrograms prelude' ast'
+                forM_ (zip generated ["i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
+                    hdl <- openBinaryFile path WriteMode
+                    hPutBuilder hdl $ J.pretty $ addPrefix "JHCR" p
+                    hFlush hdl
+                    hClose hdl
                 hPutStrLn stderr "Ok."
 
     compile file = do
@@ -98,6 +103,7 @@ addPrefix p e =
     J.SDef c v ty init -> J.SDef c (r v) ty (fmap (addPrefix p) init)
     J.AVar v idx -> J.AVar (r v) (addPrefix p idx)
     J.SVar v -> J.SVar (r v)
+    J.Code v -> J.Code (r v)
 
     _ -> composeOp (addPrefix p) e
 
