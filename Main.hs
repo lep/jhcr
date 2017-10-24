@@ -71,12 +71,15 @@ loop prelude = forever $ do
             Right ast -> do
                 let ast' = H.execRenameM preludeState ast
                     generated = H.generate $ concatPrograms prelude' ast'
+                    stubs = H.stubify ast'
+                    generated' = stubs:generated
                     --generatedFns = H.generate $ concatPrograms prelude' ast'
-                forM_ (zip generated ["i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
+                forM_ (zip generated' ["stubs.j", "i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
                     hdl <- openBinaryFile path WriteMode
                     hPutBuilder hdl $ J.pretty $ addPrefix "JHCR" p
                     hFlush hdl
                     hClose hdl
+
                 hPutStrLn stderr "Ok."
 
     compile file = do

@@ -33,25 +33,50 @@ import Unsafe.Coerce
 import Debug.Trace
 
 stubify :: Ast Var Programm -> Ast Var Programm
-stubify (Programm pr) = Programm $ concatMap go pr
+stubify (Programm pr) = Programm $ concatMap stubifyFn pr
+
+stubifyFn :: Ast Var Toplevel -> [Ast Var Toplevel]
+stubifyFn e =
+  case e of
+    Function c n args retty body ->
+        let binds :: [Ast Var Stmt]
+            binds = zipWith (\(ty, var) idx ->
+                                Call (mkFn $ "_set_" <> ty)
+                                      [ Var $ SVar bind
+                                      , Int . fromString $ show idx
+                                      , Var $ SVar var])
+                                args
+                                [1..]
+
+                                
+            ret :: Ast Var Stmt
+            ret = if retty /= "nothing"
+                  then Return . Just $ Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]
+                  else if retty == "code"
+                  then Return . Just $ Call (mkFn "_i2code") [Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]]
+                  else Return Nothing
+
+            call :: Ast Var Stmt
+            call = Call (mkFn "_call_anything_around") [Int $ getId' n]
+
+            body = binds ++ [call, ret]
+
+
+        in [ Function c ("_" ## n) args retty body
+        , Function c n args retty [
+            If (Call (mkFn "_modified") [Int $ getId' n])
+                  body
+                [] (Just [
+                  if retty == "nothing"
+                  then Call ("_" ## n) $ map (Var . SVar . snd) args
+                  else Return . Just $ Call ("_" ## n) $ map (Var . SVar . snd) args
+                ])
+          ]
+        ]
+    _ -> [e]
   where
-    go :: Ast Var Toplevel -> [Ast Var Toplevel]
-    go e =
-      case e of
-        Function c n args ret body ->
-            [ Function c ("_" ## n) args ret body
-            , Function c n args ret [
-                If (Call (mkFn "_modified") [Int $ getId' n]) [
-                      Call (mkFn "_enterFunction") [Int $ getId' n]
-                    ] [
-                    ] (Just [
-                      Call ("_" ## n) $ map (Var . SVar . snd) args
-                    ])
-              ]
-            ]
-        _ -> [e]
-
-
+    bind = mkLocal "_binding"
+    scope = mkLocal "_scope"
 
 data Signatur = FunctionSig [Type] Type
               | GlobalDef Type Bool
@@ -105,6 +130,8 @@ generate pr =
               , map generateArraySetters arrays
               , map generateArrayGetters arrays
               ]
+
+        --stubs = Programm $ concatMap stubifyFn $ concat functions
     in [i2code_dummies, enter_predefined, set_get]
   where
     uid = mkLocal "_i"
@@ -149,9 +176,16 @@ generate pr =
                         v@(H.Fn _ types ret _) = case fn of
                                                     Native _ v _ _ -> v
                                                     Function _ v _ _ _ -> v
-                        args = zipWith (\ty pos -> Call (mkFn $ "_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] ) types [1, 2 ..]
+                        args = zipWith (\ty pos -> 
+                                    if ty == "code"
+                                    then Call (mkFn "_i2code") [Call (mkFn "_get_integer") [Var $ SVar bind, Int . fromString $ show pos]]
+                                    else Call (mkFn $ "_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] )
+                                types [1, 2 ..]
+
                         stmt = if ret == "nothing"
                                then Call v args
+                               else if ret == "code"
+                               then Call (mkFn "_set_code") [Call (mkFn "_i2code") [Var $ SVar scope, Int "0", Call v args]]
                                else Call (mkFn $ "_set_" <> ret) [Var $ SVar scope, Int "0", Call v args]
                     in stmt
         
