@@ -34,6 +34,7 @@ globals
     constant integer _Le = 0
     constant integer _Ge = 0
     constant integer _Gt = 0
+    constant integer _Convert = 0
 
 
 
@@ -224,6 +225,8 @@ function interp takes integer ctx returns integer
     elseif t == _GetGlobal then
     elseif t == _SetGlobalArr then
     elseif t == _GetGlobalArr then
+    elseif t == _Convert then
+        call _convert(_ins_type[op], _ins_a1[op], _ins_a2[op], _ins_a3[op])
     endif
     
     set _ctx_pc[ctx] = _ins_next[_ctx_pc[ctx]]
