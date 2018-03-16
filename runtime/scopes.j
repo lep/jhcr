@@ -1,5 +1,6 @@
+// scope Scope
 
 globals
-    integer _binding = 1
-    integer _scope = 2
+    integer _binding
+    integer _scope
 endglobals

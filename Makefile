@@ -10,3 +10,6 @@ all: ${PROCESSED}
 
 out/%.j: runtime/%.j
 	bash process.sh $^ $@
+
+Jass/Tokenizer.hs: Jass/jass.x
+	alex -o $@ $^

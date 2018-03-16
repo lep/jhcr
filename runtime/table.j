@@ -1,4 +1,6 @@
+// scope Table
 
+#include "alloc.j"
 
 globals
     hashtable _ht = InitHashtable()
@@ -18,12 +20,6 @@ globals
     integer array _aux
     integer array _next
 endglobals
-
-
-function _list_alloc takes nothing returns integer
-    return 0
-endfunction
-
 
 function _get_boolean takes integer this,integer key returns boolean
     return LoadBoolean(_ht, this, key)
@@ -713,7 +709,7 @@ function _get_agent takes integer this,integer key returns agent
     return _agent[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_agent takes integer this,integer key,agent value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _agent[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -725,7 +721,7 @@ function _get_buff takes integer this,integer key returns buff
     return _buff[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_buff takes integer this,integer key,buff value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _buff[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -737,7 +733,7 @@ function _get_camerasetup takes integer this,integer key returns camerasetup
     return _camerasetup[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_camerasetup takes integer this,integer key,camerasetup value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _camerasetup[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -749,7 +745,7 @@ function _get_conditionfunc takes integer this,integer key returns conditionfunc
     return _conditionfunc[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_conditionfunc takes integer this,integer key,conditionfunc value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _conditionfunc[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -761,7 +757,7 @@ function _get_eventid takes integer this,integer key returns eventid
     return _eventid[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_eventid takes integer this,integer key,eventid value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _eventid[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -773,7 +769,7 @@ function _get_filterfunc takes integer this,integer key returns filterfunc
     return _filterfunc[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_filterfunc takes integer this,integer key,filterfunc value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _filterfunc[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -785,7 +781,7 @@ function _get_gamecache takes integer this,integer key returns gamecache
     return _gamecache[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_gamecache takes integer this,integer key,gamecache value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _gamecache[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -797,7 +793,7 @@ function _get_gamestate takes integer this,integer key returns gamestate
     return _gamestate[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_gamestate takes integer this,integer key,gamestate value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _gamestate[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -809,7 +805,7 @@ function _get_handle takes integer this,integer key returns handle
     return _handle[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_handle takes integer this,integer key,handle value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _handle[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -821,7 +817,7 @@ function _get_terraindeformation takes integer this,integer key returns terraind
     return _terraindeformation[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_terraindeformation takes integer this,integer key,terraindeformation value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _terraindeformation[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n
@@ -833,7 +829,7 @@ function _get_weathereffect takes integer this,integer key returns weathereffect
     return _weathereffect[(LoadInteger(_ht, this, key))]
 endfunction
 function _set_weathereffect takes integer this,integer key,weathereffect value returns nothing
-    local integer n= _list_alloc()
+    local integer n= _alloc()
     set _weathereffect[n]=value
     set _next[n]=_aux[this]
     set _aux[this]=n

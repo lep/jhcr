@@ -1,40 +1,40 @@
-
+// scope Interpreter
 
 globals
 
-    constant integer _type_Integer = 0
-    constant integer _type_Real = 0
-    constant integer _type_Code = 0
-    constant integer _type_String = 0
-    constant integer _type_Boolean = 0
+    constant integer _type_Integer = 94
+    constant integer _type_Real = 93
+    constant integer _type_Code = 96
+    constant integer _type_String = 95
+    constant integer _type_Boolean = 97
 
-    constant integer _NOT = 0
-    constant integer _Neq = 0
-    constant integer _JmpT = 0
-    constant integer _Jmp = 0
-    constant integer _Literal = 0
-    constant integer _Bind = 0
-    constant integer _Set = 0
-    constant integer _Call = 0
-    constant integer _Add = 0
-    constant integer _Mul = 0
-    constant integer _Div = 0
-    constant integer _Sub = 0
-    constant integer _Negate = 0
-    constant integer _SetArr = 0
-    constant integer _GetArr = 0
-    constant integer _SetGlobalArr = 0
-    constant integer _GetGlobalArr = 0
-    constant integer _SetGlobal = 0
-    constant integer _GetGlobal = 0
-    constant integer _Ret = 0
-    constant integer _Label = 0
-    constant integer _Eq = 0
-    constant integer _Lt = 0
-    constant integer _Le = 0
-    constant integer _Ge = 0
-    constant integer _Gt = 0
-    constant integer _Convert = 0
+    constant integer _Not = 1
+    constant integer _Neq = 2
+    constant integer _JmpT = 3
+    constant integer _Jmp = 4
+    constant integer _Literal = 5
+    constant integer _Bind = 6
+    constant integer _Set = 7
+    constant integer _Call = 8
+    constant integer _Add = 9
+    constant integer _Mul = 10
+    constant integer _Div = 11
+    constant integer _Sub = 12
+    constant integer _Negate = 13
+    constant integer _SetArr = 14
+    constant integer _GetArr = 15
+    constant integer _SetGlobalArr = 16
+    constant integer _GetGlobalArr = 17
+    constant integer _SetGlobal = 18
+    constant integer _GetGlobal = 19
+    constant integer _Ret = 20
+    constant integer _Label = 21
+    constant integer _Eq = 22
+    constant integer _Lt = 23
+    constant integer _Le = 24
+    constant integer _Ge = 25
+    constant integer _Gt = 26
+    constant integer _Convert = 27
 
 
 
@@ -44,20 +44,28 @@ globals
     integer _fresh
 
     // struct Instruction
+    //   Instruction next
+    //   integer op
+    //   integer type
+    //   integer a1
+    //   integer a2
+    //   integer a3
+    //   string literal
     integer array _ins_next
     integer array _ins_op
     integer array _ins_type
-    boolean array _ins_lit
 
     integer array _ins_a1
     integer array _ins_a2
     integer array _ins_a3
 
-    real array _ins_real_lit
-    boolean array _ins_bool_lit
-    string array _ins_string_lit
+    string array _ins_literal
 
     // struct Context
+    //   Table locals
+    //   Table labels
+    //   Context parent
+    //   Instruction pc
     integer array _ctx_locals
     integer array _ctx_labels
     integer array _ctx_parent
@@ -71,11 +79,12 @@ function _context_alloc takes nothing returns integer
     return 0
 endfunction
 
+// interp :: Context -> IO Context
 function interp takes integer ctx returns integer
     local integer op = _ctx_pc[ctx]
     local integer t = _ins_op[op]
-    local boolean l = _ins_lit[op]
     local integer tmp
+    local integer fn
     // TODO: binsearch
     if t == _Set then
     
@@ -88,10 +97,9 @@ function interp takes integer ctx returns integer
             call _set_boolean(_ctx_locals[ctx], _ins_a1[op], _get_boolean(_ctx_locals[ctx], _ins_a2[op]))
         elseif _ins_type[op] == _type_String then
             call _set_string(_ctx_locals[ctx], _ins_a1[op], _get_string(_ctx_locals[ctx], _ins_a2[op]))
+            
         elseif _ins_type[op] == _type_Code then
             call _set_integer(_ctx_locals[ctx], _ins_a1[op], _get_integer(_ctx_locals[ctx], _ins_a2[op]))
-            
-            // remember: handle literal can only be null
         endif
         
     elseif t == _SetArr then
@@ -203,12 +211,15 @@ function interp takes integer ctx returns integer
         return _ins_next[_ctx_parent[ctx]]
         
     elseif t == _Call then
-        if _ins_a2[op] > 0 then
+        if _ins_a2[op] < 0 then
             // auto generated call for natives/BJ-functions
         else
             // user-defined function
+            set fn = _get_integer(_functions, _ins_a2[op])
             set _ctx_parent[_fresh] = ctx
-            set _ctx_pc[_fresh] = 0 //calls[_ins_a2[op]]
+            set _ctx_pc[_fresh] = _fn_entry[fn]
+            set _ctx_labels[_fresh] = _fn_labels[fn]
+            
             set tmp = _fresh
             set _fresh = _context_alloc()
             return tmp

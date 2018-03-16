@@ -1,3 +1,5 @@
+// scope Wrap
+
 globals
     code _call_anything_ref
     force _call_anything_f
