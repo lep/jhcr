@@ -50,11 +50,24 @@ import Unsafe.Coerce (unsafeCoerce)
 
 import Debug.Trace
 
-type Register = Int32
-type Label = Int32
+--type Register = Int32
+--type Label = Int32
 
+newtype Register = Register Int16
+    deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
+
+reg :: Register -> Builder
+reg (Register r) = int16Dec r
+
+
+newtype Label = Lbl Int32
+    deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
+
+label :: Label -> Builder
+label (Lbl l) = int32Dec l
 
 data Instruction
+    -- three regs
     = Lt Type Register Register Register
     | Le Type Register Register Register
     | Gt Type Register Register Register
@@ -65,30 +78,33 @@ data Instruction
     | Sub Type Register Register Register
     | Mul Type Register Register Register
     | Div Type Register Register Register
-    | Negate Type Register Register
-
-    | Literal Type Register (Hot.Ast Var Expr)
     
-    | Set Type Register Register
+    | SetGlobalArray Type Name Register Register
+    | GetGlobalArray Type Register Name Register
     | SetArray Type Register Register Register
     | GetArray Type Register Register Register
-    | SetGlobal Type Register Register
-    | GetGlobal Type Register Register
-    | SetGlobalArray Type Register Register Register
-    | GetGlobalArray Type Register Register Register
-
-    | Call Type Register Register
+    
+    -- two regs
+    | Negate Type Register Register
+    | Set Type Register Register
+    | SetGlobal Type Name Register
+    | GetGlobal Type Register Name
     | Bind Type Register Register
 
-    | Not Register Register
-
-    | Label Register
-    | Jmp Register
-    | JmpT Register Register
-
+    -- special
+    | Literal Type Register (Hot.Ast Var Expr)
+    | Call Type Register Name
     | Convert Type Register Type Register
 
-    | Function Label
+    -- one label
+    | Label Label
+    | Jmp Label
+    | Function Name
+    
+    | JmpT Label Register -- this is encoded as jmpt reg label
+    
+    | Not Register Register
+    
     | Ret
     deriving (Show)
 
@@ -108,51 +124,52 @@ serialize = unlines . map s
         Hot.Bool s -> stringUtf8 $ show s
         Hot.Null -> stringUtf8 "null"
 
-    bla ins args = unwords [ins, unwords $ map int32Dec args]
+    bla ins args = unwords [ins, unwords args]
 
-    typeToId = (Hot.types Map.! )
+    --typeToId x = int32Dec (Hot.types Map.! x)
+    typeToId x = lazyByteString   x
 
     s ins =
       case ins of
-        Lt t s a b -> bla "lt" [typeToId t, s, a, b]
-        Le t s a b -> bla "le" [typeToId t, s, a, b]
-        Gt t s a b -> bla "gt" [typeToId t, s, a, b]
-        Ge t s a b -> bla "ge" [typeToId t, s, a, b]
-        Eq t s a b -> bla "eq" [typeToId t, s, a, b]
-        Neq t s a b -> bla "neq" [typeToId t, s, a, b]
-        Add t s a b -> bla "add" [typeToId t, s, a, b]
-        Sub t s a b -> bla "sub" [typeToId t, s, a, b]
-        Mul t s a b -> bla "mul" [typeToId t, s, a, b]
-        Div t s a b -> bla "div" [typeToId t, s, a, b]
+        Lt t s a b -> unwords [ "lt", typeToId t, reg s, reg a, reg b]
+        Le t s a b -> unwords [ "le", typeToId t, reg s, reg a, reg b]
+        Gt t s a b -> unwords [ "gt", typeToId t, reg s, reg a, reg b]
+        Ge t s a b -> unwords [ "ge", typeToId t, reg s, reg a, reg b]
+        Eq t s a b -> unwords [ "eq", typeToId t, reg s, reg a, reg b]
+        Neq t s a b -> unwords [ "neq", typeToId t, reg s, reg a, reg b]
+        Add t s a b -> unwords [ "add", typeToId t, reg s, reg a, reg b]
+        Sub t s a b -> unwords [ "sub", typeToId t, reg s, reg a, reg b]
+        Mul t s a b -> unwords [ "mul", typeToId t, reg s, reg a, reg b]
+        Div t s a b -> unwords [ "div", typeToId t, reg s, reg a, reg b]
 
-        Negate t s a -> bla "neg" [typeToId t, s, a]
+        Negate t s a -> bla "neg" [typeToId t, reg s, reg a]
 
-        Set t s a -> bla "set" [typeToId t, s, a]
-        SetGlobal t s a -> bla "setglobal" [typeToId t, s, a]
-        GetGlobal t s a -> bla "getglobal" [typeToId t, s, a]
+        Set t s a -> unwords [ "set", typeToId t, reg s, reg a]
+        SetGlobal ty g s -> unwords [ "sg", typeToId ty, lazyByteString g, reg s]
+        GetGlobal ty s g -> unwords [ "gg", typeToId ty, reg s, lazyByteString g]
 
-        SetArray ty ar idx r -> bla "setarray" [typeToId ty, ar, idx, r]
-        GetArray ty t ar idx -> bla "getarray" [typeToId ty, t, ar, idx]
+        SetArray ty ar idx r -> unwords [ "sla", typeToId ty, reg ar, reg idx, reg r]
+        GetArray ty t ar idx -> unwords [ "gla", typeToId ty, reg t, reg ar, reg idx]
 
-        SetGlobalArray t ar idx v -> bla "setglobalarray" [typeToId t, ar, idx, v]
-        GetGlobalArray ty t ar idx -> bla "getglobalarray" [typeToId ty, t, ar, idx]
+        SetGlobalArray t ar idx v -> unwords [ "sga", typeToId t, lazyByteString ar, reg idx, reg v]
+        GetGlobalArray ty t ar idx -> unwords[ "gga", typeToId ty, reg t, lazyByteString ar, reg idx]
 
-        Call t s f -> bla "call" [typeToId t, s, f]
-        Bind t s a -> bla "bind" [typeToId t, s, a]
+        Call t s f -> unwords ["call", typeToId t, reg s, lazyByteString f]
+        Bind t s a -> bla "bind" [typeToId t, reg s, reg a]
 
-        Not s a -> bla "not" [s, a]
+        Not s a -> bla "not" [reg s, reg a]
 
-        Function f -> bla "fun" [f]
+        Function f -> "fun" <> " " <> lazyByteString f
 
-        Label l -> bla "label" [l]
-        Jmp l -> bla "jmp" [l]
-        JmpT l a-> bla "jmpt" [l, a]
+        Label l -> unwords [ "label", label l]
+        Jmp l -> unwords [ "jmp", label l]
+        JmpT l a -> unwords [ "jmpt", reg a, label l]
 
-        Convert t s t' s' -> bla "conv" [typeToId t, s, typeToId t', s']
+        Convert t s t' s' -> unwords [ "conv", typeToId t, reg s, typeToId t', reg s']
 
-        Ret -> bla "ret" []
+        Ret -> "ret"
 
-        Literal t s l -> unwords [string8 "lit", int32Dec $ typeToId t, int32Dec s, serializeLit l]
+        Literal t s l -> unwords ["lit", typeToId t, reg s, serializeLit l]
 
 
 

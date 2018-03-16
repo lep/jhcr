@@ -5,7 +5,7 @@
 import Control.Applicative
 import Control.Monad
 
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import Control.Monad.IO.Class
 
 import Control.Arrow (second)
@@ -34,15 +34,17 @@ import qualified Hot.Instruction.Compiler as H
 
 import Data.Composeable
 
+exceptT = ExceptT . return
+
 main = do
     [common'j, blizzard'j] <- getArgs
 
-    prelude <- runEitherT $ do
+    prelude <- runExceptT $ do
         src <- liftIO $ BL.readFile common'j
-        J.Programm cj <- hoistEither $ J.parse J.programm src
+        J.Programm cj <- exceptT $ J.parse J.programm src
 
         src <- liftIO $ BL.readFile blizzard'j
-        J.Programm bj <- hoistEither $ J.parse J.programm src
+        J.Programm bj <- exceptT $ J.parse J.programm src
 
         return $ J.Programm $ cj <> bj
 
@@ -69,14 +71,23 @@ loop prelude = forever $ do
         case p of
             Left err -> hPutStrLn stderr $ show err
             Right ast -> do
-                let ast' = H.execRenameM preludeState ast
+                let 
+                    ast' :: J.Ast H.Var H.Programm
+                    ast' = H.execRenameM preludeState ast
+                    
+                    generated :: [J.Ast H.Var H.Programm]
                     generated = H.generate $ concatPrograms prelude' ast'
+                    
+                    stubs :: J.Ast H.Var H.Programm
                     stubs = H.stubify ast'
+                    
+                    generated' :: [J.Ast H.Var H.Programm]
                     generated' = stubs:generated
                     --generatedFns = H.generate $ concatPrograms prelude' ast'
                 forM_ (zip generated' ["stubs.j", "i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
                     hdl <- openBinaryFile path WriteMode
-                    hPutBuilder hdl $ J.pretty $ addPrefix "JHCR" p
+                    --hSetBuffering hdl BlockBuffering
+                    hPutBuilder hdl $ J.pretty . J.fmap H.nameOf $ addPrefix "JHCR" p
                     hFlush hdl
                     hClose hdl
 

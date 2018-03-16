@@ -35,7 +35,7 @@ n ## v =
   case v of
     Local name ty isarray id -> Local (n <> name) ty isarray id
     Global c name ty isarray id -> Global c (n <> name) ty isarray id
-    Op name -> Op $ n <> name
+    Op name -> v
     Fn name args ret id -> Fn (n <> name) args ret id
 
 nameOf :: Var -> Name
@@ -46,12 +46,12 @@ nameOf v =
     Op name -> name
     Fn name _ _ _ -> name
 
-getId :: Var -> Int32
+getId :: Integral a => Var -> a
 getId v =
   case v of
-    Local _ _ _ id -> id
-    Global _ _ _ _ id -> id
-    Fn _ _ _ id -> id
+    Local _ _ _ id -> fromIntegral id
+    Global _ _ _ _ id -> fromIntegral id
+    Fn _ _ _ id -> fromIntegral id
     
 
 getId' :: Var -> ByteString

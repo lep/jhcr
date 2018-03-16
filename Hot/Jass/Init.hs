@@ -23,14 +23,40 @@ import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Data.Set (Set)
+import qualified Data.Set as Set
+
 
 import Jass.Ast hiding (fmap, foldMap, traverse)
+
+import Data.Composeable
 
 import Hot.Var (Var, mkFn, mkGlobal, mkLocal, mkOp, getId, getId', nameOf, (##))
 import qualified Hot.Var as H
 
 import Unsafe.Coerce
 import Debug.Trace
+
+{-
+init_name2ids :: Ast Var Programm -> Ast Var Toplevel
+init_name2ids x = go x
+  where
+    go :: Ast Var x -> Set (Ast Var Stmt)
+    go x =
+      case x of
+        Global (SDef _ v _ _) -> Set.singleton $ addInit v
+        Function _ v _ _ _ -> Set.singleton $ addInit v
+        Native _ v _ _ -> Set.singleton $ addInit v
+        _ -> composeFold go x
+    addInit v =
+      case v of
+        Global _ name ty isarray uid ->
+        {-
+            local stringtable tmp = LoadInteger(some_ht, ty, isarray)
+            call SetGlobalsNameToId(tmp, name, uid)
+        -}
+        Fn name _ _ uid -> [jass|call stringtable_set(some_table, name, uid)|]
+-}
 
 stubify :: Ast Var Programm -> Ast Var Programm
 stubify (Programm pr) = Programm $ concatMap stubifyFn pr
@@ -50,22 +76,22 @@ stubifyFn e =
 
                                 
             ret :: Ast Var Stmt
-            ret = if retty /= "nothing"
-                  then Return . Just $ Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]
-                  else if retty == "code"
+            ret = if retty == "code"
                   then Return . Just $ Call (mkFn "_i2code") [Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]]
+                  else if retty /= "nothing"
+                  then Return . Just $ Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]
                   else Return Nothing
 
             call :: Ast Var Stmt
             call = Call (mkFn "_call_anything_around") [Int $ getId' n]
 
-            body = binds ++ [call, ret]
+            body' = binds ++ [call, ret]
 
 
-        in [ Function c ("_" ## n) args retty body
+        in [ Function c ("_" ## n) args retty  $ map (rename n) body
         , Function c n args retty [
             If (Call (mkFn "_modified") [Int $ getId' n])
-                  body
+                  body'
                 [] (Just [
                   if retty == "nothing"
                   then Call ("_" ## n) $ map (Var . SVar . snd) args
@@ -77,6 +103,16 @@ stubifyFn e =
   where
     bind = mkLocal "_binding"
     scope = mkLocal "_scope"
+    
+    rename :: Var -> Ast Var x -> Ast Var x
+    rename v x =
+      case x of
+        Call n args -> Call (r n) $ map (rename v) args
+        Code n -> Code $ r n
+        _ -> composeOp (rename v) x
+      where
+        r n = if n == v then ("_" ## n) else n
+    
 
 data Signatur = FunctionSig [Type] Type
               | GlobalDef Type Bool
@@ -116,6 +152,18 @@ split (Programm p) =
   where
     g = groupBy ((==) `on` signatur)
 
+
+{-
+removeCodeVars :: Ast Var x -> Ast Var x
+removeCodeVars x =
+  case x of
+    SDef c v "code" init -> SDef c v "integer" $ fmap removeCodeVars init
+    Code c -> Int $ getId' c
+    SVar (Local name ty isarray uid)
+      | ty == "code" = SVar $ Local name "integer" isarray uid
+    SVar (Global c name ty isarray uid)
+      | ty == "code" = SVar $ Global c name "integer" isarray uid
+-}
 
 generate :: Ast Var Programm -> [Ast Var Programm]
 generate pr =

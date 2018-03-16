@@ -125,7 +125,7 @@ compileProgram (Programm toplevel) = mapM_ compileToplevel toplevel
 
 compileToplevel :: Ast Var Toplevel -> CompileMonad ()
 compileToplevel (H.Function n args r body) = do
-    let fn = Function $ getId n
+    let fn = Function $ nameOf n
     emit fn
 
     labelId .= 1
@@ -139,7 +139,7 @@ typed t = local (const t)
 
 typedGet sourcetype source = do
     wanted <- ask
-    if wanted /= sourcetype
+    if wanted /= sourcetype && wanted /= "nothing"
     then do
         r <- newRegister
         emit $ Convert wanted r sourcetype source
@@ -151,7 +151,7 @@ typedGet sourcetype source = do
 compileCall :: Ast Var a -> CompileMonad Register
 compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
     r <- newRegister
-    let v = getId n
+    let v = nameOf n
     forM_ (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
         emit $ Bind typ pos r
@@ -207,7 +207,7 @@ compileStmt e =
     H.Set (SVar v@Global{}) e -> do
         let t = typeOfVar v
         r <- typed t $ compileExpr e
-        emit $ SetGlobal t (getId v) r
+        emit $ SetGlobal t (nameOf v) r
 
     H.Set (AVar v@Local{} idx) e -> do
         let t = typeOfVar v
@@ -219,7 +219,7 @@ compileStmt e =
         let t = typeOfVar v
         idx' <- typed "integer" $ compileExpr idx
         r <- typed t $ compileExpr e
-        emit $ SetGlobalArray t (getId v) idx' r
+        emit $ SetGlobalArray t (nameOf v) idx' r
 
     Block blk -> mapM_ compileStmt blk
 
@@ -245,9 +245,9 @@ compileExpr e =
         r <- newRegister
         cont <- newLabel
         a' <- typed "boolean" $ compileExpr a
-        b' <- typed "boolean" $ compileExpr b
         emit $ Set "boolean" r a'
         emit $ JmpT cont r
+        b' <- typed "boolean" $ compileExpr b
         emit $ Set "boolean" r b'
         emit $ Label cont
         return r
@@ -256,14 +256,14 @@ compileExpr e =
         r <- newRegister
         cont <- newLabel
         a' <- typed "boolean" $ compileExpr a
-        b' <- typed "boolean" $ compileExpr b
         emit $ Set "boolean" r a'
         emit $ Not r r
         emit $ JmpT cont r
+        b' <- typed "boolean" $ compileExpr b
         emit $ Set "boolean" r b'
         emit $ Label cont
         return r
-        
+
     H.Call (Op n) [a, b] -> do
         let op = name2op n
         let t = numericType (typeOfExpr a) (typeOfExpr b)
@@ -271,8 +271,9 @@ compileExpr e =
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
-        emit $ op (typeOfExpr a) r a' b'
-        typedGet t r
+        emit $ op (typeOfExpr a) r a' b' 
+        return r
+        --typedGet t r
 
     
     H.Call{} -> compileCall e
@@ -280,7 +281,7 @@ compileExpr e =
     Var (SVar l@Local{}) -> typedGet (typeOfVar l) (getId l)
     Var (SVar g@Global{}) -> do
         r <- newRegister
-        emit $ GetGlobal (typeOfVar g) r (getId g)
+        emit $ GetGlobal (typeOfVar g) r (nameOf g)
         typedGet (typeOfVar g) r
 
     Var (AVar l@Local{} idx) -> do
@@ -297,7 +298,7 @@ compileExpr e =
         
         r <- newRegister
         idx' <- typed "integer" $ compileExpr idx
-        emit $ GetGlobalArray t r (getId g) idx'
+        emit $ GetGlobalArray t r (nameOf g) idx'
         typedGet t r
 
 
