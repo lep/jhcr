@@ -1,6 +1,6 @@
 RUNTIME:= runtime/table.j runtime/stringtable.j runtime/instruction-parser.j
 RUNTIME+= runtime/modified.j runtime/scopes.j runtime/wrap-around.j
-RUNTIME+= runtime/heap.j
+RUNTIME+= runtime/heap.j runtime/convert.j
 
 PROCESSED:=$(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
@@ -9,7 +9,7 @@ PROCESSED:=$(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 all: ${PROCESSED}
 
 out/%.j: runtime/%.j
-	bash process.sh $^ $@
+	bash process.sh $^ $@ JHCR_
 
 Jass/Tokenizer.hs: Jass/jass.x
 	alex -o $@ $^

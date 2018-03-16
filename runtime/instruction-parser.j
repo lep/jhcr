@@ -1,8 +1,8 @@
 // scope Ins
 
-#include "alloc.j"
-
 globals
+    #include "alloc-globals.j"
+    
     integer _current_fn
     integer _prev_ins = 0
     
@@ -12,6 +12,8 @@ globals
     integer array _fn_labels
     integer array _fn_entry
 endglobals
+
+#include "alloc.j"
 
 function _parse_line takes string s returns integer
     local integer i = 0
@@ -192,9 +194,9 @@ function _parse_with_context takes string instruction returns nothing
         set _prev_ins = 0
         set _current_fn = _fn_alloc()
         set _fn_entry[_current_fn] = ins
-        call _set_integer(_functions, _ins_a1[ins], _current_fn)
+        call Table#_set_integer(_functions, _ins_a1[ins], _current_fn)
     elseif _ins_op[ins] == _Label then
-        call _set_integer(_fn_labels[_current_fn], _ins_a1[ins], ins)
+        call Table#_set_integer(_fn_labels[_current_fn], _ins_a1[ins], ins)
     endif
 endfunction
 

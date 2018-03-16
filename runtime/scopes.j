@@ -1,4 +1,4 @@
-// scope Scope
+// scope Scopes
 
 globals
     integer _binding

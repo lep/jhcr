@@ -1,8 +1,8 @@
 // scope Table
 
-#include "alloc.j"
-
 globals
+    #include "alloc-globals.j"
+    
     hashtable _ht = InitHashtable()
 
     agent array _agent
@@ -19,7 +19,10 @@ globals
     
     integer array _aux
     integer array _next
+
 endglobals
+
+#include "alloc.j"
 
 function _get_boolean takes integer this,integer key returns boolean
     return LoadBoolean(_ht, this, key)

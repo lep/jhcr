@@ -1,6 +1,7 @@
 // scope Heap
 
 globals
+    #include "alloc-globals.j"
 
     // struct node
     //   real key
@@ -17,6 +18,8 @@ globals
 
 endglobals
 
+#include "alloc.j"
+
 function _isEmpty takes integer heap returns boolean
     return _root[heap] == 0
 endfunction
@@ -25,12 +28,12 @@ function _min takes integer heap returns integer
     return _node_value[_root[heap]]
 endfunction
 
-function _merge takes integer node1, integer node2 returns integer
+function _node_merge takes integer node1, integer node2 returns integer
     if node1 == 0 then
         return node2
     elseif node2 == 0 then
         return node1
-    elseif _node_key[node1] >= _node_key[b] then
+    elseif _node_key[node1] >= _node_key[node2] then
         set _node_next[node1] = _node_child[node2]
         set _node_child[node2] = node1
         return node2
@@ -42,7 +45,7 @@ function _merge takes integer node1, integer node2 returns integer
 endfunction
 
 function _singleton takes real k, integer v returns integer
-    local integer node = _allocate() // node allocate
+    local integer node = _alloc() // node allocate
     set _node_key[node] = k
     set _node_value[node] = v
     set _node_next[node] = 0
@@ -51,7 +54,7 @@ function _singleton takes real k, integer v returns integer
 endfunction
 
 function _insert takes integer heap, real k, integer v returns nothing
-    set _root[heap] = _merge(_root[heap], _singleton(k, v))
+    set _root[heap] = _node_merge(_root[heap], _singleton(k, v))
 endfunction
 
 function _merge_pairs takes integer node returns integer
@@ -63,7 +66,7 @@ function _merge_pairs takes integer node returns integer
     elseif node2 == 0 then
         return node
     else
-        return _merge(_merge(node, node2), _merge_pairs(node3))
+        return _node_merge(_node_merge(node, node2), _merge_pairs(node3))
     endif
 endfunction
 
@@ -78,6 +81,6 @@ function _deleteMin takes integer heap returns integer
 endfunction
 
 function _merge takes integer heap1, integer heap2 returns nothing
-    set _root[heap1] = _merge(_root[heap1], _root[heap2])
+    set _root[heap1] = _node_merge(_root[heap1], _root[heap2])
     call _free(heap2) // heap free
 endfunction

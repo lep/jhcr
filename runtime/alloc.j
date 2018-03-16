@@ -1,8 +1,3 @@
-globals
-    integer _F = 0
-    integer array _V
-    integer _I = 0
-endglobals
 
 function _alloc takes nothing returns integer
     local integer this = _F

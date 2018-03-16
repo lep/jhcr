@@ -1,8 +1,8 @@
 // scope StringTable
 
-#include "alloc.j"
-
 globals
+    #include "alloc-globals.j"
+    
     // struct node
     //   node next
     //   integer value
@@ -13,6 +13,8 @@ globals
 
     hashtable _ht
 endglobals
+
+#include "alloc.j"
 
 function _create takes string name, integer value, integer next returns integer
     local integer node = _alloc()
@@ -35,6 +37,10 @@ function _lookup takes string name returns integer
 endfunction
 
 function _insert takes string name, integer value returns nothing
-    local integer node = LoadInteger(_ht, StringHash(name), 0)
-    call StoreInteger(_ht, StringHash(name), _create(name, value, node)
+    local integer node = _lookup(name)
+    if node == 0 then
+        call StoreInteger(_ht, StringHash(name), 0, _create(name, value, node))
+    else
+        set _node_value[node] = value
+    endif
 endfunction
