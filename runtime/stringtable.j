@@ -1,4 +1,4 @@
-// scope StringTable
+// scope FunTable
 
 globals
     #include "alloc-globals.j"
@@ -39,7 +39,7 @@ endfunction
 function _insert takes string name, integer value returns nothing
     local integer node = _lookup(name)
     if node == 0 then
-        call StoreInteger(_ht, StringHash(name), 0, _create(name, value, node))
+        call SaveInteger(_ht, StringHash(name), 0, _create(name, value, node))
     else
         set _node_value[node] = value
     endif

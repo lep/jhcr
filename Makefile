@@ -1,6 +1,7 @@
 RUNTIME:= runtime/table.j runtime/stringtable.j runtime/instruction-parser.j
 RUNTIME+= runtime/modified.j runtime/scopes.j runtime/wrap-around.j
-RUNTIME+= runtime/heap.j runtime/convert.j
+RUNTIME+= runtime/heap.j runtime/convert.j runtime/context.j
+RUNTIME+= runtime/instruction.j runtime/interpreter.j
 
 PROCESSED:=$(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 

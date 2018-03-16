@@ -67,7 +67,7 @@ stubifyFn e =
     Function c n args retty body ->
         let binds :: [Ast Var Stmt]
             binds = zipWith (\(ty, var) idx ->
-                                Call (mkFn $ "_set_" <> ty)
+                                Call (mkFn $ "_Table_set_" <> ty)
                                       [ Var $ SVar bind
                                       , Int . fromString $ show idx
                                       , Var $ SVar var])
@@ -77,20 +77,20 @@ stubifyFn e =
                                 
             ret :: Ast Var Stmt
             ret = if retty == "code"
-                  then Return . Just $ Call (mkFn "_i2code") [Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]]
+                  then Return . Just $ Call (mkFn "_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]]
                   else if retty /= "nothing"
-                  then Return . Just $ Call (mkFn $ "_get_" <> retty) [Var $ SVar scope, Int "0"]
+                  then Return . Just $ Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]
                   else Return Nothing
 
             call :: Ast Var Stmt
-            call = Call (mkFn "_call_anything_around") [Int $ getId' n]
+            call = Call (mkFn "_Wrap_call_anything_around") [Int $ getId' n]
 
             body' = binds ++ [call, ret]
 
 
         in [ Function c ("_" ## n) args retty  $ map (rename n) body
         , Function c n args retty [
-            If (Call (mkFn "_modified") [Int $ getId' n])
+            If (Call (mkFn "_Modified_modified") [Int $ getId' n])
                   body'
                 [] (Just [
                   if retty == "nothing"
@@ -101,8 +101,8 @@ stubifyFn e =
         ]
     _ -> [e]
   where
-    bind = mkLocal "_binding"
-    scope = mkLocal "_scope"
+    bind = mkLocal "_Scopes_binding"
+    scope = mkLocal "_Scopes_scope"
     
     rename :: Var -> Ast Var x -> Ast Var x
     rename v x =
@@ -186,8 +186,8 @@ generate pr =
     idx = mkLocal "_idx"
     val = mkLocal "_v"
 
-    bind = mkLocal "_binding"
-    scope = mkLocal "_scope"
+    bind = mkLocal "_Scopes_binding"
+    scope = mkLocal "_Scopes_scope"
 
     --dummyCodeVars = [Global $ SDef Normal (H.Global Normal ("_dummy_code" <> fromString (show i)) "code" False 0) "code" Nothing | i <- [0..100]]
 
@@ -208,7 +208,7 @@ generate pr =
             mkDummyFn idx =
                 let idx' = fromString . show $ negate idx
                 in Function Normal (mkFn $ "_dummyFunction_" <> idx') [] "nothing" [
-                    Call (mkFn "_call_anything_around") [Call (H.Op "-") [Int idx']] 
+                    Call (mkFn "_Wrap_call_anything_around") [Call (H.Op "-") [Int idx']] 
                     --Return . Just . Var $ AVar (mkGlobal "_dummyFunctions") (Int idx')
                 ]
             fns' :: [Ast Var Toplevel]
@@ -226,15 +226,15 @@ generate pr =
                                                     Function _ v _ _ _ -> v
                         args = zipWith (\ty pos -> 
                                     if ty == "code"
-                                    then Call (mkFn "_i2code") [Call (mkFn "_get_integer") [Var $ SVar bind, Int . fromString $ show pos]]
-                                    else Call (mkFn $ "_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] )
+                                    then Call (mkFn "_i2code") [Call (mkFn "_Table_get_integer") [Var $ SVar bind, Int . fromString $ show pos]]
+                                    else Call (mkFn $ "_Table_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] )
                                 types [1, 2 ..]
 
                         stmt = if ret == "nothing"
                                then Call v args
                                else if ret == "code"
-                               then Call (mkFn "_set_code") [Call (mkFn "_i2code") [Var $ SVar scope, Int "0", Call v args]]
-                               else Call (mkFn $ "_set_" <> ret) [Var $ SVar scope, Int "0", Call v args]
+                               then Call (mkFn "_Table_set_code") [Call (mkFn "_i2code") [Var $ SVar scope, Int "0", Call v args]]
+                               else Call (mkFn $ "_Table_set_" <> ret) [Var $ SVar scope, Int "0", Call v args]
                     in stmt
         
         in Function Normal (mkFn "_call_predefined") [("integer", uid)] "nothing" [
