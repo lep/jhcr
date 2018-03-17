@@ -706,3 +706,6 @@ endif
 endif
 endif
 endfunction
+
+function _init takes nothing returns nothing
+endfunction

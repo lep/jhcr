@@ -20,6 +20,9 @@ import Data.String
 import Data.Function
 import Data.Maybe
 
+import Data.DList (DList)
+import qualified Data.DList as DList
+
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -33,30 +36,43 @@ import Data.Composeable
 
 import Hot.Var (Var, mkFn, mkGlobal, mkLocal, mkOp, getId, getId', nameOf, (##))
 import qualified Hot.Var as H
+import qualified Hot.Types as Hot
 
 import Unsafe.Coerce
 import Debug.Trace
 
-{-
-init_name2ids :: Ast Var Programm -> Ast Var Toplevel
-init_name2ids x = go x
+
+init_name2ids :: Ast Var Programm -> Ast Var Programm
+init_name2ids x =
+    Programm
+        [ Function Normal (mkFn "_init_name_tables") [] "nothing" $
+            DList.toList $ go x
+        ]
   where
-    go :: Ast Var x -> Set (Ast Var Stmt)
+    go :: Ast Var x -> DList (Ast Var Stmt)
     go x =
       case x of
-        Global (SDef _ v _ _) -> Set.singleton $ addInit v
-        Function _ v _ _ _ -> Set.singleton $ addInit v
-        Native _ v _ _ -> Set.singleton $ addInit v
+        Global (SDef _ v _ _) -> DList.singleton $ addInit v
+        Function _ v _ _ _ -> DList.singleton $ addInit v
+        Native _ v _ _ -> DList.singleton $ addInit v
         _ -> composeFold go x
     addInit v =
       case v of
-        Global _ name ty isarray uid ->
-        {-
-            local stringtable tmp = LoadInteger(some_ht, ty, isarray)
-            call SetGlobalsNameToId(tmp, name, uid)
-        -}
-        Fn name _ _ uid -> [jass|call stringtable_set(some_table, name, uid)|]
--}
+        -- call _Names_insert_global(ty, name, uid)
+        H.Global _ name ty isarray uid ->
+            Call (mkFn "_Names_insert_global")
+                 [ Int . fromString . show $ (Hot.types Map.! ty)
+                 , String name
+                 , Int . fromString $ show uid
+                 ]
+
+        -- call _Names_insert_function(name, uid)
+        H.Fn name _ _ uid ->
+            Call (mkFn "_Names_insert_function")
+                 [ String name
+                 , Int . fromString $ show uid
+                 ]
+
 
 stubify :: Ast Var Programm -> Ast Var Programm
 stubify (Programm pr) = Programm $ concatMap stubifyFn pr

@@ -1,4 +1,4 @@
-// scope FunTable
+// scope StringTable
 
 globals
     #include "alloc-globals.j"
@@ -11,7 +11,7 @@ globals
     integer array _node_value
     string array _node_key
 
-    hashtable _ht
+    hashtable _ht = InitHashtable()
 endglobals
 
 #include "alloc.j"
@@ -24,8 +24,8 @@ function _create takes string name, integer value, integer next returns integer
     return node
 endfunction
 
-function _lookup takes string name returns integer
-    local integer node = LoadInteger(_ht, StringHash(name), 0)
+function _lookup takes integer tbl, string name returns integer
+    local integer node = LoadInteger(_ht, tbl, StringHash(name))
     loop
     exitwhen _node_key[node] == name
         if _node_next[node] == 0 then
@@ -36,10 +36,10 @@ function _lookup takes string name returns integer
     return _node_value[node]
 endfunction
 
-function _insert takes string name, integer value returns nothing
-    local integer node = _lookup(name)
+function _insert takes integer tbl, string name, integer value returns nothing
+    local integer node = _lookup(tbl, name)
     if node == 0 then
-        call SaveInteger(_ht, StringHash(name), 0, _create(name, value, node))
+        call SaveInteger(_ht, tbl, StringHash(name), _create(name, value, node))
     else
         set _node_value[node] = value
     endif

@@ -1,7 +1,7 @@
 // scope Interpreter
 
 globals
-    integer _fresh
+    integer _fresh = 0
 endglobals
 
 // interp :: Context -> IO Context
@@ -140,8 +140,7 @@ function interp takes integer ctx returns integer
             // auto generated call for natives/BJ-functions
         else
             // user-defined function
-            //set fn = Table#_get_integer(Parser#_functions, Ins#_a2[op])
-            set fn = FunTable#_lookup(Ins#_literal[op])
+            set fn = Names#_get_function(Ins#_literal[op])
             set Context#_parent[_fresh] = ctx
             set Context#_pc[_fresh] = Parser#_fn_entry[fn]
             set Context#_labels[_fresh] = Parser#_fn_labels[fn]

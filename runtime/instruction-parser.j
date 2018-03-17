@@ -11,8 +11,6 @@ globals
     //   Instruction entry
     integer array _fn_labels
     integer array _fn_entry
-    
-    hashtable _functions
 endglobals
 
 #include "alloc.j"
@@ -196,7 +194,7 @@ function _parse_with_context takes string instruction returns nothing
         set _previns = 0
         set _current_fn = _alloc()
         set _fn_entry[_current_fn] = ins
-        call FunTable#_insert(Ins#_literal[ins], _current_fn)
+        call Names#_insert_function(Ins#_literal[ins], _current_fn)
     elseif Ins#_op[ins] == Ins#_Label then
         call Table#_set_integer(_fn_labels[_current_fn], Ins#_a1[ins], ins)
     endif

@@ -16,6 +16,8 @@ import System.IO
 import System.Environment
 import System.Exit
 
+import System.FilePath ((</>))
+
 import qualified Data.ByteString.Lazy as BL
 import Data.ByteString.Builder
 
@@ -81,11 +83,14 @@ loop prelude = forever $ do
                     stubs :: J.Ast H.Var H.Programm
                     stubs = H.stubify ast'
                     
+                    init_tables :: J.Ast H.Var H.Programm
+                    init_tables = H.init_name2ids $ concatPrograms prelude' ast'
+                    
                     generated' :: [J.Ast H.Var H.Programm]
-                    generated' = stubs:generated
+                    generated' = init_tables:stubs:generated
                     --generatedFns = H.generate $ concatPrograms prelude' ast'
-                forM_ (zip generated' ["stubs.j", "i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
-                    hdl <- openBinaryFile path WriteMode
+                forM_ (zip generated' ["init_tables.j", "stubs.j", "i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
+                    hdl <- openBinaryFile ("generated" </> path) WriteMode
                     --hSetBuffering hdl BlockBuffering
                     hPutBuilder hdl $ J.pretty . J.fmap H.nameOf $ addPrefix "JHCR" p
                     hFlush hdl
