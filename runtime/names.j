@@ -17,6 +17,10 @@ function _insert_global takes integer ty, string name, integer uid returns nothi
     call StringTable#_insert(tmp, name, uid)
 endfunction
 
+function _get_global takes integer ty, string name returns integer
+    return StringTable#_lookup(Table#_get_integer(_type_table, ty), name)
+endfunction
+
 function _insert_function takes string name, integer uid returns nothing
     call StringTable#_insert(_fun_table, name, uid)
 endfunction

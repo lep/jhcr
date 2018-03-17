@@ -136,10 +136,9 @@ function interp takes integer ctx returns integer
         return Ins#_next[Context#_parent[ctx]]
         
     elseif t == Ins#_Call then
-        if Ins#_a2[op] < 0 then
-            // auto generated call for natives/BJ-functions
-        else
-            // user-defined function
+        set tmp = Names#_get_function(Ins#_literal[op])
+        if tmp < 0 or Modified#_modified(tmp) then
+            // user-defined or reloaded function
             set fn = Names#_get_function(Ins#_literal[op])
             set Context#_parent[_fresh] = ctx
             set Context#_pc[_fresh] = Parser#_fn_entry[fn]
@@ -148,6 +147,10 @@ function interp takes integer ctx returns integer
             set tmp = _fresh
             set _fresh = Context#_alloc()
             return tmp
+        elseif tmp > 0 then
+            // auto generated call for pre-defined functions
+            call Auto#_call_predefined(Ins#_a1[op], tmp)
+            
         endif
 
     elseif t == Ins#_Bind then // should be same as Set except different target table
@@ -158,9 +161,21 @@ function interp takes integer ctx returns integer
         // ...
         endif
     elseif t == Ins#_SetGlobal then
+        if Ins#_type[op] == Ins#_type_Integer then
+            call Auto#_set_global_integer(Names#_get_global(Ins#_type[op], Ins#_literal[op]), Ins#_a1[op])
+        endif
     elseif t == Ins#_GetGlobal then
+        if Ins#_type[op] == Ins#_type_Integer then
+            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Auto#_get_global_integer(Names#_get_global(Ins#_type[op], Ins#_literal[op])))
+        endif
     elseif t == Ins#_SetGlobalArray then
+        if Ins#_type[op] == Ins#_type_Integer then
+            call Auto#_array_set_global_integer(Names#_get_global(Ins#_type[op], Ins#_literal[op]), Ins#_a1[op], Ins#_a2[op])
+        endif
     elseif t == Ins#_GetGlobalArray then
+        if Ins#_type[op] == Ins#_type_Integer then
+            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Auto#_array_get_global_integer(Names#_get_global(Ins#_type[op], Ins#_literal[op]), Ins#_a2[op]))
+        endif
     elseif t == Ins#_Convert then
         call Convert#_convert(Ins#_type[op], Ins#_a1[op], Ins#_a2[op], Ins#_a3[op])
     endif
