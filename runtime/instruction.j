@@ -36,6 +36,9 @@ globals
     constant integer _Gt = 26
     constant integer _Convert = 27
     constant integer _Fun = 28
+    
+    string array _OpNames
+    string array _TypeNames
 
 
     #include "alloc-globals.j"
@@ -63,3 +66,40 @@ globals
 endglobals
 
 #include "alloc.j"
+
+function _init takes nothing returns nothing
+    set _OpNames[_Not]="Not"
+    set _OpNames[_Neq]="Neq"
+    set _OpNames[_JmpT]="JmpT"
+    set _OpNames[_Jmp]="Jmp"
+    set _OpNames[_Lit]="Lit"
+    set _OpNames[_Bind]="Bind"
+    set _OpNames[_Set]="Set"
+    set _OpNames[_Call]="Call"
+    set _OpNames[_Add]="Add"
+    set _OpNames[_Mul]="Mul"
+    set _OpNames[_Div]="Div"
+    set _OpNames[_Sub]="Sub"
+    set _OpNames[_Negate]="Negate"
+    set _OpNames[_SetArray]="SetArray"
+    set _OpNames[_GetArray]="GetArray"
+    set _OpNames[_SetGlobalArray]="SetGlobalArray"
+    set _OpNames[_GetGlobalArray]="GetGlobalArray"
+    set _OpNames[_SetGlobal]="SetGlobal"
+    set _OpNames[_GetGlobal]="GetGlobal"
+    set _OpNames[_Ret]="Ret"
+    set _OpNames[_Label]="Label"
+    set _OpNames[_Eq]="Eq"
+    set _OpNames[_Lt]="Lt"
+    set _OpNames[_Le]="Le"
+    set _OpNames[_Ge]="Ge"
+    set _OpNames[_Gt]="Gt"
+    set _OpNames[_Convert]="Convert"
+    set _OpNames[_Fun]="Fun"
+    
+    set _TypeNames[_type_Boolean]="boolean"
+    set _TypeNames[_type_Integer]="integer"
+    set _TypeNames[_type_Real]="real"
+    set _TypeNames[_type_Code]="code"
+    set _TypeNames[_type_String]="string"
+endfunction

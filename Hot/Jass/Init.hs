@@ -45,7 +45,7 @@ import Debug.Trace
 init_name2ids :: Ast Var Programm -> Ast Var Programm
 init_name2ids x =
     Programm
-        [ Function Normal (mkFn "_Auto_init_name_tables") [] "nothing" $
+        [ Function Normal (mkFn "_Auto_name_tables_init") [] "nothing" $
             DList.toList $ go x
         ]
   where

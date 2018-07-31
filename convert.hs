@@ -21,10 +21,12 @@ import Data.Int
 import Data.String
 import Data.List
 
-import Jass.Ast
+import Jass.Ast hiding (foldMap)
 import Jass.Printer
 
 import qualified Hot.Types as Hot
+
+import Data.ByteString.Builder
 
 import System.IO
 
@@ -91,14 +93,25 @@ bin xs v cond stmt = go xs
 
     i = Int . fromString . show
 
-convert :: [Tree Name] -> Ast Name Toplevel
-convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toReg"), ("integer", "fromType"), ("integer", "fromReg")] "nothing" [
-        bin (filter isBranch $ concatMap allChildren' ts) toType' ((offsetMap Map.!) . getId) convTo
+    
+offsetMap :: Map Int32 Int32
+offsetMap = Map.fromList $ zip [1,36,42,58,59,88,91,93] [1..]
+
+initFn :: Ast Name Toplevel
+initFn = Function Normal "_init" [] "nothing" [
+    Set (AVar "_toTypeOffset" $ i tyid) $ i off
+    | (tyid, off) <- zip [1,36,42,58,59,88,91,93] [1..]
     ]
   where
-    
-    offsetMap :: Map Int32 Int32
-    offsetMap = Map.fromList $ zip [1,36,42,58,59,88,91,93] [1..]
+    i = Int . fromString . show
+
+convert :: [Tree Name] -> Ast Name Toplevel
+convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toReg"), ("integer", "fromType"), ("integer", "fromReg")] "nothing" [
+        Set (SVar "toType") $ Var $ AVar "_toTypeOffset" $ Var $ SVar "toType",
+        bin (filter isBranch $ concatMap allChildren' ts) toType ((offsetMap Map.!) . getId) convTo
+    ]
+  where
+
 
     toReg = Var $ SVar "toReg"
     fromReg = Var $ SVar "fromReg"
@@ -107,7 +120,7 @@ convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toR
 
     toType' = Var $ AVar "_toTypeOffset" toType
 
-    scope = Var $ SVar "_scope"
+    scope = Var $ SVar "Scopes#_scope"
 
     convTo :: Tree Name -> Ast Name Stmt
     convTo t =
@@ -115,7 +128,7 @@ convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toR
         in bin children fromType getId (convFrom t)
 
     convFrom :: Tree Name -> Tree Name -> Ast Name Stmt
-    convFrom to t = Call ("_set_" <> valueOf to) [scope, toReg, Call ("_get_" <> valueOf t) [Var $ SVar "_scope", fromReg]]
+    convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Scopes#_scope", fromReg]]
     
 valueOf t =
   case t of
@@ -172,10 +185,12 @@ ancestors x =
 ancestors' x = x:ancestors x
 
 
-main =
+main = do
+    putStrLn "// scope Convert"
     let (a, b) = evalState ((,) <$> go "handle" <*> go "real") 1
-    in hPutBuilder stdout . pretty $ Programm
+    hPutBuilder stdout . pretty $ Programm
         [ Global (ADef "_toTypeOffset" "integer")
         , convert [a, b]
+        , initFn
         ]
 
