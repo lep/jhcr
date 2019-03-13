@@ -84,7 +84,7 @@ stubifyFn e =
         let binds :: [Ast Var Stmt]
             binds = zipWith (\(ty, var) idx ->
                                 Call (mkFn $ "_Table_set_" <> ty)
-                                      [ Var $ SVar bind
+                                      [ Var $ SVar scope
                                       , Int . fromString $ show idx
                                       , Var $ SVar var])
                                 args

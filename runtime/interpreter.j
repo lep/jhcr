@@ -172,23 +172,14 @@ function _step takes integer ctx returns integer
         endif
         
     elseif t == Ins#_Ret then
-        
-
         //call ctx.tbl.clean()
         //call ctx.destroy()
-        if Context#_parent[ctx] == 0 then
-            if Ins#_type[Context#_pc[Context#_parent[ctx]]] == Ins#_type_Integer then
-                //set some_global_integer_varialbe = Table#_get_integer(Context#_locals[ctx], 0)
-            endif
-            return 0
-        else
-            if Ins#_type[Context#_pc[Context#_parent[ctx]]] == Ins#_type_Integer then
-                call Table#_set_integer(Context#_locals[Context#_parent[ctx]], Ins#_a1[Context#_pc[Context#_parent[ctx]]], Table#_get_integer(Context#_locals[ctx], 0))
+        if Ins#_type[Context#_pc[Context#_parent[ctx]]] == Ins#_type_Integer then
+            call Table#_set_integer(Context#_locals[Context#_parent[ctx]], Ins#_a1[Context#_pc[Context#_parent[ctx]]], Table#_get_integer(Context#_locals[ctx], 0))
 
-            // etc.
-            endif
-            return Ins#_next[Context#_parent[ctx]]
+        // etc.
         endif
+        return Ins#_next[Context#_parent[ctx]]
         
     elseif t == Ins#_Call then
         //set tmp = Names#_get_function(Ins#_literal[op])
@@ -203,6 +194,8 @@ function _step takes integer ctx returns integer
             
             set tmp = _fresh
             set _fresh = Context#_alloc()
+            set Scopes#_binding = _fresh
+            set Scopes#_scope = tmp
             return tmp
         elseif tmp > 0 then
             // auto generated call for pre-defined functions
@@ -269,6 +262,9 @@ function _start_interpreter takes integer fn returns nothing
     set Context#_pc[ctx]     = Parser#_fn_entry[fn + 100]
     set Context#_parent[ctx] = 0
     set Context#_labels[ctx] = Table#_get_integer(Parser#_fn_labels, fn)
+    set Context#_locals[ctx] = _fresh
+    set _fresh = Context#_alloc()
+    set Scopes#_binding = _fresh
     
     loop
     exitwhen ctx == 0
@@ -276,6 +272,22 @@ function _start_interpreter takes integer fn returns nothing
     endloop
 endfunction
 
+function _start_interpreter_wrap takes nothing returns boolean
+    local integer ctx = Context#_alloc()
+    set Context#_pc[ctx]     = Parser#_fn_entry[Wrap#_p + 100]
+    set Context#_parent[ctx] = 0
+    set Context#_labels[ctx] = Table#_get_integer(Parser#_fn_labels, Wrap#_p)
+    set Context#_locals[ctx] = Scopes#_scope
+    
+    loop
+    exitwhen ctx == 0
+        set ctx = _step(ctx)
+    endloop
+    
+    return true
+endfunction
+
 function _init takes nothing returns nothing
     set _fresh = Context#_alloc()
+    call TriggerAddCondition(Wrap#_t, Condition(function _start_interpreter_wrap))
 endfunction

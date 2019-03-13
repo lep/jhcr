@@ -377,6 +377,13 @@ function _set_alliancetype takes integer this,integer key,alliancetype value ret
     call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
 endfunction
 
+function _get_animtype takes integer this,integer key returns animtype
+    return ConvertAnimType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+endfunction
+function _set_animtype takes integer this,integer key,animtype value returns nothing
+    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+endfunction
+
 
 function _get_attacktype takes integer this,integer key returns attacktype
     return ConvertAttackType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
@@ -529,6 +536,13 @@ function _set_mapvisibility takes integer this,integer key,mapvisibility value r
     call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
 endfunction
 
+function _get_mousebuttontype takes integer this,integer key returns mousebuttontype
+    return ConvertMouseButtonType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+endfunction
+function _set_mousebuttontype takes integer this,integer key,mousebuttontype value returns nothing
+    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+endfunction
+
 
 function _get_pathingtype takes integer this,integer key returns pathingtype
     return ConvertPathingType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
@@ -638,6 +652,13 @@ function _get_startlocprio takes integer this,integer key returns startlocprio
     return ConvertStartLocPrio(GetHandleId(LoadFogStateHandle(_ht, this, key)))
 endfunction
 function _set_startlocprio takes integer this,integer key,startlocprio value returns nothing
+    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+endfunction
+
+function _get_subanimtype takes integer this,integer key returns subanimtype
+    return ConvertSubAnimType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+endfunction
+function _set_subanimtype takes integer this,integer key,subanimtype value returns nothing
     call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
 endfunction
 

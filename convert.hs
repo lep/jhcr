@@ -26,7 +26,7 @@ import Data.List
 import Jass.Ast hiding (foldMap)
 import Jass.Printer
 
-import qualified Hot.Types as Hot
+--import qualified Hot.Types as Hot
 
 import Data.ByteString.Builder
 
@@ -224,20 +224,53 @@ script2typehierachy x =
     _ -> composeFold script2typehierachy x
 
 
+
 main = do
     x <- parse programm "common.j" <$> readFile "common.j"
     case x of
         Left err -> putStrLn $ errorBundlePretty err
         Right j -> do
             let base2children = getMonoidMap $ script2typehierachy j <> singleton "real" ["integer"]
+            let types@[a, b, c, d, e] = evalState (mapM (go base2children) ["handle", "real", "code", "string", "boolean"]) 1
+
+            printHaskell types
+            printRuntime [a, b]
+  where
+    printHaskell ty = do
+        f <- openFile "Hot/Types.hs" WriteMode
+        hPutStrLn f $ unlines
+          [ "{-# LANGUAGE OverloadedStrings #-}"
+          , "module Hot.Types (types) where"
+          , "import Data.Map (Map)"
+          , "import qualified Data.Map as Map"
+          , "import Data.Int"
+          , "types :: Map String Int8"
+          , ("types = Map.fromList " <> ) . show . map swap $ concatMap allChildren ty
+          ]
+        hClose f
+    
+    
+    printRuntime ty = do
+        f <- openFile "runtime/convert.j" WriteMode
+        hPutStrLn f "// scope Convert"
+        hPutBuilder f . pretty $ Programm
+            [ Global (ADef "_toTypeOffset" "integer")
+            , convert ty
+            , initFn ty
+            ]
+        hClose f
+        
             --print $ Map.map sort base2children
             --putStrLn ""
             --print $ Map.map sort base2children'
-            putStrLn "// scope Convert"
-            let (a, b) = evalState ((,) <$> go base2children "handle" <*> go base2children "real") 1
-            hPutBuilder stdout . pretty $ Programm
-                [ Global (ADef "_toTypeOffset" "integer")
-                , convert [a, b]
-                , initFn [a, b]
-                ]
+            
+            
+            --putStrLn . ("Map.fromList " <> ) . show . map swap $ concatMap allChildren types
+            --let (a, b) = evalState ((,) <$> go base2children "handle" <*> go base2children "real") 1
+            --print $ allChildren a
+            --print $ allChildren b
+            --print $ allChildren c
+            --print $ allChildren d
+            --print $ allChildren e
+            
 
