@@ -1,6 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
-
 module Jass.Parser
     ( expression
     , statement
@@ -13,10 +10,9 @@ module Jass.Parser
     , reallit
     , rawcode
     
-    , Jass.Parser.parse
     ) where
 
-import Control.Applicative
+import Control.Applicative hiding (many, some)
 import Control.Monad
 
 import qualified Data.ByteString.Lazy as BL
@@ -27,58 +23,90 @@ import Data.Monoid
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import Data.Text (Text)
+import qualified Data.Text as Text
+
 import Data.List.NonEmpty ( NonEmpty(..) )
+
+import Data.Void
 
 
 import Jass.Ast
-import qualified Jass.Tokenizer as Tok
-import Jass.Parser.Internal
 
 import Text.Megaparsec
-import Text.Megaparsec.Expr
-import Text.Megaparsec.Pos
+import Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer as L
 
+import Control.Monad.Combinators.Expr
 
-ident :: Parsec Dec TokenStream BL.ByteString
-ident = token p Nothing
+type Parser = Parsec Void String
+
+sc = L.space sc' lc empty
   where
-    p (TokenPos (Tok.Id i) _) = Right i
-    p t' = Left (Set.singleton (Tokens (t':|[])), Set.empty, Set.empty)
+    sc' =void $ takeWhile1P (Just "white space") (\w -> w == ' ' || w == '\t')
+    lc = L.skipLineComment "//"
 
 
-stringlit :: Parsec Dec TokenStream BL.ByteString
-stringlit = token p Nothing
+lexeme = L.lexeme sc
+
+--reallit = lexeme $ some digitChar 
+--stringlit = lexeme $ char '"' >* some digitChar 
+stringlit = lexeme $ char '"' >> manyTill L.charLiteral (char '"')
+
+rawcode :: Parser String
+rawcode = lexeme $ char '\'' *> (escaped <|> anyCC) 
   where
-    p (TokenPos (Tok.String s) _) = Right s
-    p t' = Left (Set.singleton (Tokens (t':|[])), Set.empty, Set.empty)
+    escaped = do
+       char '\\'
+       c <- oneOf ("btrnf" :: String)
+       char '\''
+       return ['\\', c]
+    anyCC = manyTill anySingle (char '\'')
+
+intlit :: Parser String
+intlit = show <$> (lexeme (try hexlit <|> try octlit <|> L.decimal))
+
+hexlit = char '0' *> (char 'X' <|> char 'x') *> L.hexadecimal
+octlit = char '0' *> L.octal
 
 
-intlit = token p Nothing
+reallit = lexeme $ dotReal <|> realDot
+dotReal = do
+    char '.'
+    a <- some digitChar
+    return $ "0" <> a
+realDot = do
+    a <- some digitChar
+    char '.'
+    b <- many digitChar
+    return $ a <> "." <> b
+
+
+symbol = L.symbol sc
+
+reserved :: String -> Parser ()
+reserved w = (lexeme . try) (string w *> notFollowedBy alphaNumChar)
+
+identifier :: Parser String
+identifier = (lexeme . try) (p >>= check)
   where
-    p (TokenPos (Tok.Intlit i) _) = Right i
-    p t' = Left (Set.singleton (Tokens (t':|[])), Set.empty, Set.empty)
+    p = (:) <$> letterChar <*> many (alphaNumChar <|> char '_')
+    check x = if x `elem` keywords
+            then fail $ "keyword " ++ show x ++ " cannot be an identifier"
+            else return x
+    keywords = [ "globals", "endglobals", "if", "then", "elseif", "else"
+               , "endif", "loop", "endloop", "set", "call", "return"
+               , "takes", "returns", "constant", "native", "function"
+               , "nothing", "true", "false", "null", "and", "or", "not"
+               , "local", "array"
+               ]
+
+parens :: Parser a -> Parser a
+parens = between (symbol "(") (symbol ")")
+brackets = between (symbol "[") (symbol "]")
 
 
-reallit = token p Nothing
-  where
-    p (TokenPos (Tok.Reallit r) _) = Right r
-    p t' = Left (Set.singleton (Tokens (t':|[])), Set.empty, Set.empty)
-
-
-rawcode = token p Nothing
-  where
-    p (TokenPos (Tok.Rawcode r) _) = Right r
-    p t' = Left (Set.singleton (Tokens (t':|[])), Set.empty, Set.empty)
-
-
-
-
-identifier = ident
-
-parens = between (tok Tok.LParen) (tok Tok.RParen)
-brackets = between (tok Tok.LBracket) (tok Tok.RBracket)
-
-horizontalSpace = some $ tok Tok.Newline
+horizontalSpace = void $ some $ lexeme $ optional (L.skipLineComment "//") *> newline
 
 toplevel = globals
         <|> typedef
@@ -86,44 +114,44 @@ toplevel = globals
 
   where
     functionLike = do
-        const <- fromMaybe Normal <$> optional (tok Tok.Constant *> pure Jass.Ast.Const)
+        const <- fromMaybe Normal <$> optional (reserved "constant"*> pure Jass.Ast.Const)
         native const <|> function const
 
-    globals = between (tok Tok.Globals <* horizontalSpace)
-                      (tok Tok.Endglobals <* horizontalSpace) $ many $ do
-        const <- fromMaybe Normal <$> optional (tok Tok.Constant *> pure Jass.Ast.Const)
+    globals = between (reserved "globals"<* horizontalSpace)
+                      (reserved "endglobals" <* horizontalSpace) $ many $ do
+        const <- fromMaybe Normal <$> optional (reserved "constant" *> pure Jass.Ast.Const)
         vdecl <- vardecl const
         return $ Global vdecl
 
     typedef = do
-    tok Tok.Type
+    reserved "type"
     new <- identifier
-    tok Tok.Extends
+    reserved "extends"
     base <- identifier
     horizontalSpace
     return [Typedef new base]
 
 
 native const = do
-    tok Tok.Native
+    reserved "native"
     name <- identifier
-    tok Tok.Takes
-    args <- (tok Tok.Nothin *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` (tok Tok.Comma)
-    tok Tok.Returns
-    ret <- (tok Tok.Nothin *> pure "nothing") <|> identifier
+    reserved "takes"
+    args <- (reserved "nothing" *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` (symbol ",")
+    reserved "returns"
+    ret <- (reserved "nothing" *> pure "nothing") <|> identifier
     horizontalSpace
     return [Native const name args ret]
 
 function const = do
-    tok Tok.Function
+    reserved "function"
     name <- identifier
-    tok Tok.Takes
-    args <- (tok Tok.Nothin *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` (tok Tok.Comma)
-    tok Tok.Returns
-    ret <- (tok Tok.Nothin *> pure "nothing") <|> identifier
+    reserved "takes"
+    args <- (reserved "nothing" *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` (symbol ",")
+    reserved "returns"
+    ret <- (reserved "nothing" *> pure "nothing") <|> identifier
     horizontalSpace
     body <- many statement
-    tok Tok.Endfunction
+    reserved "endfunction"
     horizontalSpace
     return [Function const name args ret body]
 
@@ -136,13 +164,13 @@ statement = returnStmt
           <|> local
           <?> "statement"
     where
-        local = Local <$> (tok Tok.Local *> vardecl Normal)
-        returnStmt = Return <$> (tok Tok.Return *> optional expression <* horizontalSpace)
-        callStmt = Call <$> (tok Tok.Call *> identifier) <*> parens arglist <* horizontalSpace
+        local = Local <$> (reserved "local"*> vardecl Normal)
+        returnStmt = Return <$> (reserved "return" *> optional expression <* horizontalSpace)
+        callStmt = Call <$> (reserved "call" *> identifier) <*> parens arglist <* horizontalSpace
         loop = Loop <$> between startLoop endLoop (many statement)
 
-        set = Set <$> (tok Tok.Set *> lvar)
-                  <*> (tok Tok.Equal *> expression)
+        set = Set <$> (reserved "set" *> lvar)
+                  <*> (symbol "=" *> expression)
                   <* horizontalSpace
         lvar = do
             v <- identifier
@@ -152,65 +180,64 @@ statement = returnStmt
                 Nothing -> return $ SVar v
 
             
-        exitwhen = Exitwhen <$> (tok Tok.Exitwhen *> expression <* horizontalSpace)
+        exitwhen = Exitwhen <$> (reserved "exitwhen" *> expression <* horizontalSpace)
 
-        if_ = If <$> (tok Tok.If *> expression <* tok Tok.Then <* horizontalSpace)
+        if_ = If <$> (reserved "if" *> expression <* reserved "then" <* horizontalSpace)
                  <*> (many statement)
                  <*> many elseif
                  <*> optional else_
-                 <*  tok Tok.Endif <* horizontalSpace
+                 <*  reserved "endif" <* horizontalSpace
 
 
         elseif =
-            (,) <$> (tok Tok.Elseif *> expression)
-                <*> (tok Tok.Then >> horizontalSpace *> many statement)
+            (,) <$> (reserved "elseif" *> expression)
+                <*> (reserved "then" >> horizontalSpace *> many statement)
 
 
-        else_ = tok Tok.Else *> horizontalSpace *> many statement
+        else_ = reserved "else" *> horizontalSpace *> many statement
 
-        startLoop = tok Tok.Loop <* horizontalSpace
-        endLoop = tok Tok.Endloop <* horizontalSpace
+        startLoop = reserved "loop" <* horizontalSpace
+        endLoop = reserved "endloop" <* horizontalSpace
 
 vardecl constantness = do
     typ <- identifier
-    isArray <- tok Tok.Array *> pure True <|> pure False
+    isArray <- reserved "array" *> pure True <|> pure False
     if isArray
     then varArray typ <* horizontalSpace
     else varNormal typ <* horizontalSpace
 
   where
     varArray typ = ADef <$> identifier <*> pure typ
-    varNormal typ = SDef constantness <$> identifier <*> pure typ <*> optional (tok Tok.Equal *> expression)
+    varNormal typ = SDef constantness <$> identifier <*> pure typ <*> optional (reserved "=" *> expression)
 
 expression = makeExprParser term table
             <?> "expression"
   where
-    table = [ [ binary Tok.Mult "*", binary Tok.Div "/"]
-            , [ binary Tok.Plus "+", binary Tok.Minus "-"]
+    table = [ [ binary (symbol "%") "%", binary (symbol "*") "*", binary (symbol "/") "/"]
+            , [ binary (symbol "+") "+", binary (symbol "-") "-"]
             , zipWith binary
-                [Tok.LEQ, Tok.LTtok, Tok.GEQ, Tok.GTtok, Tok.NEQ, Tok.EQtok]
-                ["<="   , "<"      , ">="   , ">"      , "!="   , "==" ]
-            , [ binary Tok.Or "or"]
-            , [ binary Tok.And "and"]
+                [symbol "<=", symbol "<" , symbol ">=", symbol ">", symbol "!=" , symbol "==" ]
+                ["<="       , "<"        , ">="   , ">"      , "!="   , "==" ]
+            , [ binary (reserved "or") "or"]
+            , [ binary (reserved "and") "and"]
             ]
-    binary t op = InfixL (tok t *> pure (\a b -> Call op [a, b]))
+    binary t op = InfixL (t *> pure (\a b -> Call op [a, b]))
 
 term = parens expression
-    <|> tok Tok.Not   *> (((\e -> Call "not" [e])) <$> expression)
-    <|> tok Tok.Minus *> (((\e -> Call "-" [e])) <$> expression)
-    <|> tok Tok.Plus  *> (((\e -> Call "+" [e])) <$> expression)
+    <|> reserved "not"   *> (((\e -> Call "not" [e])) <$> expression)
+    <|> symbol "-" *> (((\e -> Call "-" [e])) <$> expression)
+    <|> symbol "+"  *> (((\e -> Call "+" [e])) <$> expression)
     <|> literal
     <|> varOrCall
     <?> "term"
   where
     literal = String <$> stringlit
-            <|> Int <$> intlit
-            <|> Real <$> reallit
+            <|> either Real Int <$> eitherP (try reallit) intlit
             <|> Rawcode <$> rawcode
-            <|> (tok Tok.FALSE *> pure ( Bool False))
-            <|> (tok Tok.TRUE *> pure ( Bool True))
-            <|> (tok Tok.NULL *> pure Null)
-            <|> Code <$> (tok Tok.Function *> identifier)
+            <|> (reserved "true" *> pure ( Bool True))
+            <|> (reserved "false" *> pure ( Bool False))
+            <|> (reserved "null" *> pure Null)
+            <|> Code <$> (reserved "function" *> identifier)
 
     varOrCall = do
         name <- identifier
@@ -220,11 +247,11 @@ term = parens expression
     a name = Var . AVar name <$> brackets expression
     v name = return . Var $ SVar name
 
-arglist = expression `sepBy` tok Tok.Comma
+arglist = expression `sepBy` symbol ","
 
 programm = Programm . concat <$> (many horizontalSpace *> many toplevel <* eof)
 
 
-parse :: Parsec e TokenStream a -> BL.ByteString -> Either (ParseError TokenPos e) a
-parse parser = Text.Megaparsec.parse parser ""
-                . TokenStream . map (uncurry TokenPos) . Tok.alexScanTokens
+--parse :: Parsec e TokenStream a -> BL.ByteString -> Either (ParseError TokenPos e) a
+--parse parser = Text.Megaparsec.parse parser ""
+--                . TokenStream . map (uncurry TokenPos) . Tok.alexScanTokens

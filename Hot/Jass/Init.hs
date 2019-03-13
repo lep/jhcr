@@ -352,7 +352,8 @@ execRenameM' = execRenameM defaultRenameVariableState
 addLocal :: Name -> Type -> IsArray -> RenameVariablesM Var
 addLocal name ty isArray = do
     r <- ( . fromIntegral) <$> ask
-    id <- uses localScope (r . succ . Map.size)
+    let successor = if isArray then (+32768) else (+1)
+    id <- uses localScope (r . successor . Map.size)
     let v = H.Local name ty isArray id
     localScope %= (at name ?~ v)
     return v
@@ -382,7 +383,7 @@ getVar n = do
    let g = First $ Map.lookup n gt
    let f = First $ Map.lookup n fn
    let l = First $ Map.lookup n lt
-   return . fromJust . getFirst $ l <> g <> f
+   return . fromMaybe (error $ show n) . getFirst $ l <> g <> f
 
 
 enter :: RenameVariablesM ()

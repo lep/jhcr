@@ -5,9 +5,12 @@ RUNTIME+= runtime/instruction.j runtime/interpreter.j runtime/names.j
 
 PROCESSED:=$(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
-.PHONY: all
+.PHONY: all Main
 
 all: ${PROCESSED}
+
+Main:
+	cabal exec -- ghc Main
 
 out/%.j: runtime/%.j
 	bash process.sh $^ $@ JHCR_

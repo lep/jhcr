@@ -38,13 +38,13 @@ printFns fns = unlines $ map printFn fns
 
 printFn :: Ast Name Toplevel -> Builder
 printFn (Function c name args retty body) = unlines
-    [ unwords [ printConst c, "function", lazyByteString name, "takes", printArgs args, "returns", lazyByteString retty ]
+    [ unwords [ printConst c, "function", stringUtf8  name, "takes", printArgs args, "returns", stringUtf8  retty ]
     , block body
     , "endfunction"
     ]
 
 printArgs [] = "nothing"
-printArgs args = unlist $ map (\(ty, name) -> unwords [lazyByteString ty, lazyByteString name]) args
+printArgs args = unlist $ map (\(ty, name) -> unwords [stringUtf8  ty, stringUtf8  name]) args
 
 
 unwords = mconcat . intersperse (charUtf8 ' ')
@@ -65,7 +65,7 @@ printStmt a =
     Local vdef -> unwords ["local", printVDef vdef]
     Exitwhen cond -> unwords ["exitwhen", printExpr cond]
     Return e -> unwords ["return", maybe mempty printExpr e ]
-    Call n args -> unwords ["call", lazyByteString n, parens $ unlist $ map printExpr args]
+    Call n args -> unwords ["call", stringUtf8  n, parens $ unlist $ map printExpr args]
     Loop b -> unlines
         [ "loop" 
         , block b
@@ -101,33 +101,33 @@ printExpr e =
   case e of
     Call n args
         | isOp n -> printOp n args
-        | otherwise -> unwords [lazyByteString n, parens $ unlist $ map printExpr args]
+        | otherwise -> unwords [stringUtf8  n, parens $ unlist $ map printExpr args]
     Null -> "null"
-    Code n -> unwords ["function", lazyByteString n]
+    Code n -> unwords ["function", stringUtf8  n]
     Bool False -> "false"
     Bool True -> "true"
-    Rawcode r -> charUtf8 '\'' <> lazyByteString r <> charUtf8 '\''
-    Int i -> lazyByteString i
-    Real r -> lazyByteString r
-    String s -> "\"" <> lazyByteString s <> "\""
+    Rawcode r -> charUtf8 '\'' <> stringUtf8  r <> charUtf8 '\''
+    Int i -> stringUtf8  i
+    Real r -> stringUtf8  r
+    String s -> "\"" <> stringUtf8  s <> "\""
     Var lvar -> printLVar lvar
 
 printOp "not" [x] = parens $ unwords ["not", printExpr x]
 printOp "-" [x] = unwords ["-", printExpr x]
 printOp "+" [x] = printExpr x
-printOp op [a, b] = parens $ unwords [printExpr a, lazyByteString op, printExpr b]
+printOp op [a, b] = parens $ unwords [printExpr a, stringUtf8  op, printExpr b]
 
 printLVar :: Ast Name LVar -> Builder
 printLVar lv =
   case lv of
-    AVar n idx -> unwords [lazyByteString n, brackets $ printExpr idx ]
-    SVar n -> lazyByteString n
+    AVar n idx -> unwords [stringUtf8  n, brackets $ printExpr idx ]
+    SVar n -> stringUtf8  n
 
 printVDef :: Ast Name VarDef -> Builder
 printVDef vdef =
   case vdef of
-    SDef c name ty init -> unwords [printConst c, lazyByteString ty, lazyByteString name, printInit init]
-    ADef name ty -> unwords [lazyByteString ty, "array", lazyByteString name]
+    SDef c name ty init -> unwords [printConst c, stringUtf8  ty, stringUtf8  name, printInit init]
+    ADef name ty -> unwords [stringUtf8  ty, "array", stringUtf8  name]
 
 printConst Const = "constant"
 printConst Normal = mempty

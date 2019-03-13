@@ -55,7 +55,7 @@ newtype CompileMonad a = CompileMonad { runCompileMonad :: ReaderT Type (StateT 
 
 name2op n = fromJust $ lookup n [ ("<", Lt), ("<=", Le), (">", Gt), (">=", Ge)
                                 , ("==", Eq), ("!=", Neq), ("-", Sub)
-                                , ("+", Add), ("*", Mul), ("/", Div)
+                                , ("+", Add), ("*", Mul), ("/", Div), ("%", Mod)
                                 ]
 
 
@@ -125,7 +125,8 @@ compileProgram (Programm toplevel) = mapM_ compileToplevel toplevel
 
 compileToplevel :: Ast Var Toplevel -> CompileMonad ()
 compileToplevel (H.Function n args r body) = do
-    let fn = Function $ nameOf n
+    --let fn = Function $ nameOf n
+    let fn = Function $ getId n
     emit fn
 
     labelId .= 1
@@ -151,7 +152,8 @@ typedGet sourcetype source = do
 compileCall :: Ast Var a -> CompileMonad Register
 compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
     r <- newRegister
-    let v = nameOf n
+    --let v = nameOf n
+    let v = getId n
     forM_ (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
         emit $ Bind typ pos r
@@ -207,19 +209,19 @@ compileStmt e =
     H.Set (SVar v@Global{}) e -> do
         let t = typeOfVar v
         r <- typed t $ compileExpr e
-        emit $ SetGlobal t (nameOf v) r
+        emit $ SetGlobal t (getId v) r
 
     H.Set (AVar v@Local{} idx) e -> do
         let t = typeOfVar v
         idx' <- typed "integer" $ compileExpr idx
         r <- typed t $ compileExpr e
-        emit $ SetArray t (getId v) idx' r
+        emit $ SetLocalArray t (getId v) idx' r
 
     H.Set (AVar v@Global{} idx) e -> do
         let t = typeOfVar v
         idx' <- typed "integer" $ compileExpr idx
         r <- typed t $ compileExpr e
-        emit $ SetGlobalArray t (nameOf v) idx' r
+        emit $ SetGlobalArray t (getId v) idx' r
 
     Block blk -> mapM_ compileStmt blk
 
@@ -281,7 +283,7 @@ compileExpr e =
     Var (SVar l@Local{}) -> typedGet (typeOfVar l) (getId l)
     Var (SVar g@Global{}) -> do
         r <- newRegister
-        emit $ GetGlobal (typeOfVar g) r (nameOf g)
+        emit $ GetGlobal (typeOfVar g) r (getId g)
         typedGet (typeOfVar g) r
 
     Var (AVar l@Local{} idx) -> do
@@ -290,7 +292,7 @@ compileExpr e =
         r <- newRegister
         idx' <- typed "integer" $ compileExpr idx
 
-        emit $ GetArray t r (getId l) idx'
+        emit $ GetLocalArray t r (getId l) idx'
         typedGet t r
 
     Var (AVar g@Global{} idx) -> do
@@ -298,7 +300,7 @@ compileExpr e =
         
         r <- newRegister
         idx' <- typed "integer" $ compileExpr idx
-        emit $ GetGlobalArray t r (nameOf g) idx'
+        emit $ GetGlobalArray t r (getId g) idx'
         typedGet t r
 
 

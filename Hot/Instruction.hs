@@ -53,18 +53,18 @@ import Debug.Trace
 --type Register = Int32
 --type Label = Int32
 
-newtype Register = Register Int16
+newtype Register = Register Int32
     deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
 
 reg :: Register -> Builder
-reg (Register r) = int16Dec r
+reg (Register r) = pad32Dec r
 
 
-newtype Label = Lbl Int32
+newtype Label = Lbl Int16
     deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
 
 label :: Label -> Builder
-label (Lbl l) = int32Dec l
+label (Lbl l) = pad16Dec l
 
 data Instruction
     -- three regs
@@ -78,98 +78,153 @@ data Instruction
     | Sub Type Register Register Register
     | Mul Type Register Register Register
     | Div Type Register Register Register
-    
-    | SetGlobalArray Type Name Register Register
-    | GetGlobalArray Type Register Name Register
-    | SetArray Type Register Register Register
-    | GetArray Type Register Register Register
+    | Mod Type Register Register Register -- Mod only works on integers but for ease we still include the Type
+
+    | SetGlobalArray Type Register Register Register
+    | GetGlobalArray Type Register Register Register
+    | SetLocalArray Type Register Register Register
+    | GetLocalArray Type Register Register Register
     
     -- two regs
     | Negate Type Register Register
     | Set Type Register Register
-    | SetGlobal Type Name Register
-    | GetGlobal Type Register Name
+    | SetGlobal Type Register Register
+    | GetGlobal Type Register Register
     | Bind Type Register Register
 
     -- special
-    | Literal Type Register (Hot.Ast Var Expr)
-    | Call Type Register Name
+    | Literal Type Register (Hot.Ast Var Expr) -- encoded as: lit ty reg len string
+    | Call Type Register Label
     | Convert Type Register Type Register
 
     -- one label
     | Label Label
     | Jmp Label
-    | Function Name
+    | Function Label
     
-    | JmpT Label Register -- this is encoded as jmpt reg label
+    | JmpT Label Register --encoded as: jmpt reg label
     
     | Not Register Register
+
     
     | Ret
     deriving (Show)
 
+pad5Dec :: Int8 -> Builder
+pad5Dec x =
+  let l = intlog10 $ abs x
+      w = 2 - if x < 0 then 1 else 0
+  in int8Dec x <> stringUtf8 (replicate (w-l) ' ')
 
+pad7Dec :: Int8 -> Builder
+pad7Dec x =
+  let l = intlog10 $ abs x
+      w = 3 - if x < 0 then 1 else 0
+  in int8Dec x <> stringUtf8 (replicate (w-l) ' ')
+
+pad8Dec :: Int8 -> Builder
+pad8Dec x =
+  let l = intlog10 $ abs x
+      w = 4 - if x < 0 then 1 else 0
+  in int8Dec x <> stringUtf8 (replicate (w-l) ' ')
+
+
+pad16Dec :: Int16 -> Builder
+pad16Dec x =
+  let l = intlog10 $ abs x
+      w = 6 - if x < 0 then 1 else 0
+  in int16Dec x <> stringUtf8 (replicate (w-l) ' ')
+
+pad32Dec :: Int32 -> Builder
+pad32Dec x =
+  let l = intlog10 $ abs x
+      w = 11 - if x < 0 then 1 else 0
+  in int32Dec x <> stringUtf8 (replicate (w-l) ' ')
+
+
+intlog10 :: (Integral a, Num b) => a -> b
+intlog10 = fromIntegral . log10 . fromIntegral
+  where
+    log10 :: Integer -> Integer
+    log10 0 = 1
+    log10 x = fst . head . filter ( (x <) . snd ) $ zip [0..] (iterate (*10) 1)
+  
 serialize :: [Instruction] -> Builder
 serialize = unlines . map s
   where
     unlines = mconcat . intersperse (charUtf8 '\n')
-    unwords = mconcat . intersperse (charUtf8 ' ')
+    unwords = mconcat {-. intersperse (charUtf8 ' ')-}
 
     serializeLit :: Hot.Ast Var Expr -> Builder
     serializeLit l =
       case l of
         Hot.Int i -> int32Dec i
         Hot.Real r -> floatDec r
-        Hot.String s -> lazyByteString s
+        Hot.String s -> stringUtf8 s
         Hot.Bool s -> stringUtf8 $ show s
         Hot.Null -> stringUtf8 "null"
 
     bla ins args = unwords [ins, unwords args]
 
-    --typeToId x = int32Dec (Hot.types Map.! x)
-    typeToId x = lazyByteString   x
+    typeToId x = pad7Dec (Hot.types Map.! x)
+    --typeToId x = stringUtf8   x
+    
+    --ins2id = id
+    ins2id n = pad5Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
+    
+    instable =
+      [ ("lt", 1), ("le", 2), ("gt", 3), ("ge", 4), ("eq", 5), ("neq", 6)
+      , ("add", 7), ("sub", 8), ("mul", 9), ("div", 10), ("mod", 11)
+      , ("sla", 12), ("gla", 13), ("sga", 14), ("gga", 15), ("neg", 16)
+      , ("set", 17), ("sg", 18), ("gg", 19), ("bind", 20), ("lit", 21)
+      , ("call", 22), ("conv", 23), ("label", 24), ("jmp", 25), ("fun", 26)
+      , ("jmpt", 27), ("not", 28), ("ret", 29)
+      ]
 
     s ins =
       case ins of
-        Lt t s a b -> unwords [ "lt", typeToId t, reg s, reg a, reg b]
-        Le t s a b -> unwords [ "le", typeToId t, reg s, reg a, reg b]
-        Gt t s a b -> unwords [ "gt", typeToId t, reg s, reg a, reg b]
-        Ge t s a b -> unwords [ "ge", typeToId t, reg s, reg a, reg b]
-        Eq t s a b -> unwords [ "eq", typeToId t, reg s, reg a, reg b]
-        Neq t s a b -> unwords [ "neq", typeToId t, reg s, reg a, reg b]
-        Add t s a b -> unwords [ "add", typeToId t, reg s, reg a, reg b]
-        Sub t s a b -> unwords [ "sub", typeToId t, reg s, reg a, reg b]
-        Mul t s a b -> unwords [ "mul", typeToId t, reg s, reg a, reg b]
-        Div t s a b -> unwords [ "div", typeToId t, reg s, reg a, reg b]
+        Lt t s a b -> unwords [ ins2id "lt", typeToId t, reg s, reg a, reg b]
+        Le t s a b -> unwords [ ins2id "le", typeToId t, reg s, reg a, reg b]
+        Gt t s a b -> unwords [ ins2id "gt", typeToId t, reg s, reg a, reg b]
+        Ge t s a b -> unwords [ ins2id "ge", typeToId t, reg s, reg a, reg b]
+        Eq t s a b -> unwords [ ins2id "eq", typeToId t, reg s, reg a, reg b]
+        Neq t s a b -> unwords [ ins2id "neq", typeToId t, reg s, reg a, reg b]
+        Add t s a b -> unwords [ ins2id "add", typeToId t, reg s, reg a, reg b]
+        Sub t s a b -> unwords [ ins2id "sub", typeToId t, reg s, reg a, reg b]
+        Mul t s a b -> unwords [ ins2id "mul", typeToId t, reg s, reg a, reg b]
+        Div t s a b -> unwords [ ins2id "div", typeToId t, reg s, reg a, reg b]
+        Mod t s a b -> unwords [ ins2id "mod", typeToId t, reg s, reg a, reg b]
 
-        Negate t s a -> bla "neg" [typeToId t, reg s, reg a]
+        Negate t s a -> bla (ins2id "neg") [typeToId t, reg s, reg a]
 
-        Set t s a -> unwords [ "set", typeToId t, reg s, reg a]
-        SetGlobal ty g s -> unwords [ "sg", typeToId ty, lazyByteString g, reg s]
-        GetGlobal ty s g -> unwords [ "gg", typeToId ty, reg s, lazyByteString g]
+        Set t s a -> unwords [ ins2id "set", typeToId t, reg s, reg a]
+        SetGlobal ty g s -> unwords [ ins2id "sg", typeToId ty, reg g, reg s]
+        GetGlobal ty s g -> unwords [ ins2id "gg", typeToId ty, reg s, reg g]
 
-        SetArray ty ar idx r -> unwords [ "sla", typeToId ty, reg ar, reg idx, reg r]
-        GetArray ty t ar idx -> unwords [ "gla", typeToId ty, reg t, reg ar, reg idx]
+        SetLocalArray ty ar idx r -> unwords [ ins2id "sla", typeToId ty, reg ar, reg idx, reg r]
+        GetLocalArray ty t ar idx -> unwords [ ins2id "gla", typeToId ty, reg t, reg ar, reg idx]
 
-        SetGlobalArray t ar idx v -> unwords [ "sga", typeToId t, lazyByteString ar, reg idx, reg v]
-        GetGlobalArray ty t ar idx -> unwords[ "gga", typeToId ty, reg t, lazyByteString ar, reg idx]
+        SetGlobalArray t ar idx v -> unwords [ ins2id "sga", typeToId t, reg ar, reg idx, reg v]
+        GetGlobalArray ty t ar idx -> unwords[ ins2id "gga", typeToId ty, reg t, reg ar, reg idx]
 
-        Call t s f -> unwords ["call", typeToId t, reg s, lazyByteString f]
-        Bind t s a -> bla "bind" [typeToId t, reg s, reg a]
+        Call t s f -> unwords [ins2id "call", typeToId t, reg s, label f]
+        Bind t s a -> bla (ins2id "bind") [typeToId t, reg s, reg a]
 
-        Not s a -> bla "not" [reg s, reg a]
+        Not s a -> bla (ins2id "not") [reg s, reg a]
 
-        Function f -> "fun" <> " " <> lazyByteString f
+        Function f -> ins2id "fun" <> " " <> label f
 
-        Label l -> unwords [ "label", label l]
-        Jmp l -> unwords [ "jmp", label l]
-        JmpT l a -> unwords [ "jmpt", reg a, label l]
+        Label l -> unwords [ ins2id "label", label l]
+        Jmp l -> unwords [ ins2id "jmp", label l]
+        JmpT l a -> unwords [ ins2id "jmpt", reg a, label l]
 
-        Convert t s t' s' -> unwords [ "conv", typeToId t, reg s, typeToId t', reg s']
+        Convert t s t' s' -> unwords [ ins2id "conv", typeToId t, reg s, typeToId t', reg s']
 
-        Ret -> "ret"
+        Ret -> ins2id "ret"
 
-        Literal t s l -> unwords ["lit", typeToId t, reg s, serializeLit l]
-
+        Literal t s l ->
+            let litRendered = serializeLit l
+                litLen = fromIntegral . BL.length $ toLazyByteString litRendered
+            in unwords [ins2id "lit", typeToId t, reg s, pad16Dec litLen, litRendered]
 
 

@@ -13,6 +13,7 @@ module Jass.Ast
     , Programm
     , Name
     , Type
+    , Lit
     , Constant (..)
     , fmap, foldMap, traverse
     , s2i, s2r, rawcode2int
@@ -43,6 +44,7 @@ import qualified Data.ByteString.Lazy as BL
 import Unsafe.Coerce
 
 import Data.Int
+import Data.Char
 
 
 data Expr
@@ -56,8 +58,9 @@ data Programm
 data Constant = Const | Normal
     deriving (Eq, Ord, Show)
 
-type Name = ByteString
-type Type = ByteString
+type Name = String
+type Type = String
+type Lit = String
 
 data Ast var a where
     Programm :: [Ast var Toplevel] -> Ast var Programm
@@ -77,11 +80,11 @@ data Ast var a where
     Call :: var -> [Ast var Expr] -> Ast var a
 
     Var :: Ast var LVar -> Ast var Expr
-    Int :: ByteString -> Ast var Expr
-    Rawcode :: ByteString -> Ast var Expr
-    Real :: ByteString -> Ast var Expr
+    Int :: Lit -> Ast var Expr
+    Rawcode :: Lit -> Ast var Expr
+    Real :: Lit -> Ast var Expr
     Bool :: Bool -> Ast var Expr
-    String :: ByteString -> Ast var Expr
+    String :: Lit -> Ast var Expr
     Code :: var -> Ast var Expr
     Null :: Ast var Expr
 
@@ -240,25 +243,25 @@ traverse :: Applicative f => (a -> f b) -> Ast a r -> f (Ast b r)
 traverse f = liftA getAst . T.traverse f . FAst
 
 
-s2i :: ByteString -> Int32
-s2i = go . L8.unpack
+s2i :: Lit -> Int32
+s2i = go 
   where
     go ('-':s) = negate $ go s
     go ('+':s) = go s
     go ('$':s) = read $ "0x" <> s
     go s = read s
 
-s2r :: ByteString -> Float
-s2r = go . L8.unpack
+s2r :: Lit -> Float
+s2r = go 
   where
     go ('-':s) = negate $ go s
     go ('+':s) = go s
     go s = read $ "0" <> s <> "0"
 
-rawcode2int :: ByteString -> Int32
-rawcode2int = BL.foldl (\acc word -> acc*256 + fromIntegral word) 0 . ex
+rawcode2int :: Lit -> Int32
+rawcode2int = foldl (\acc word -> acc*256 + fromIntegral (ord word)) 0 . ex
   where
-    ex = BL.drop 1 . BL.reverse . BL.drop 1 . BL.reverse
+    ex = drop 1 . reverse . drop 1 . reverse
 
 eliminateElseIfs :: Ast v Stmt -> Ast v Stmt
 eliminateElseIfs (If cond tb eis eb) =

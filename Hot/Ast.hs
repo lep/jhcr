@@ -65,7 +65,7 @@ data Ast var a where
     Int :: Int32 -> Ast var Expr
     Real :: Float -> Ast var Expr
     Bool :: Bool -> Ast var Expr
-    String :: ByteString -> Ast var Expr
+    String :: Jass.Lit -> Ast var Expr
     Code :: var -> Ast var Expr
     Null :: Ast var Expr
 

@@ -21,6 +21,8 @@ import System.FilePath ((</>))
 import qualified Data.ByteString.Lazy as BL
 import Data.ByteString.Builder
 
+import Data.List (isPrefixOf)
+
 
 
 import qualified Jass.Parser as J
@@ -36,11 +38,26 @@ import qualified Hot.Instruction.Compiler as H
 
 import Data.Composeable
 
+import Text.Megaparsec (errorBundlePretty, parse)
+
+import qualified Data.Text.IO as Text
+
 exceptT = ExceptT . return
 
 main = do
-    [common'j, blizzard'j] <- getArgs
+    args <- getArgs
 
+    --prelude <- J.Programm . mappend <$> runExceptT . forM args $ \j ->  do
+    --    src <- liftIO $ BL.readFile j
+     --   exceptT $ J.parse J.programm src
+    
+    prelude <- runExceptT $ forM args $ \j -> do
+        src <- liftIO $ readFile j
+        J.Programm ast <- exceptT $ parse J.programm j src
+        return ast
+
+    {-
+    [common'j, blizzard'j] <- getArgs
     prelude <- runExceptT $ do
         src <- liftIO $ BL.readFile common'j
         J.Programm cj <- exceptT $ J.parse J.programm src
@@ -49,12 +66,14 @@ main = do
         J.Programm bj <- exceptT $ J.parse J.programm src
 
         return $ J.Programm $ cj <> bj
+    -}
+
 
     case prelude of
         Left err -> do
-            hPutStrLn stderr $ show err
+            hPutStrLn stderr $ errorBundlePretty err
             exitFailure
-        Right p -> loop p
+        Right p -> loop $ J.Programm $ mconcat p
 
 
 loop prelude = forever $ do
@@ -69,9 +88,9 @@ loop prelude = forever $ do
 
     init file = do
         hPutStrLn stderr "Initializeing...."
-        p <- J.parse J.programm <$> BL.readFile file
+        p <- parse J.programm file <$> readFile file
         case p of
-            Left err -> hPutStrLn stderr $ show err
+            Left err -> hPutStrLn stderr $ errorBundlePretty err
             Right ast -> do
                 let 
                     ast' :: J.Ast H.Var H.Programm
@@ -90,18 +109,20 @@ loop prelude = forever $ do
                     generated' = init_tables:stubs:generated
                     --generatedFns = H.generate $ concatPrograms prelude' ast'
                 forM_ (zip generated' ["init_tables.j", "stubs.j", "i2code.j", "call_predefined.j", "setget.j"]) $ \(p, path) -> do
+                    hPutStrLn stderr $ unwords ["Writing", path]
                     hdl <- openBinaryFile ("generated" </> path) WriteMode
                     --hSetBuffering hdl BlockBuffering
                     hPutBuilder hdl $ J.pretty . J.fmap H.nameOf $ addPrefix "JHCR" p
+                    hPutStrLn stderr $ unwords ["Done Writing", path]
                     hFlush hdl
                     hClose hdl
 
                 hPutStrLn stderr "Ok."
 
     compile file = do
-        p <- J.parse J.programm <$> BL.readFile file
+        p <- parse J.programm file <$> readFile file
         case p of
-            Left err -> hPutStrLn stderr $ show err
+            Left err -> hPutStrLn stderr $ errorBundlePretty err
             Right ast -> do
                 let ast' = H.execRenameM preludeState ast
                     ast'' = H.jass2hot ast'
@@ -112,7 +133,7 @@ loop prelude = forever $ do
     concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
     concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
 
-addPrefix :: BL.ByteString -> J.Ast H.Var a -> J.Ast H.Var a
+addPrefix :: H.Name -> J.Ast H.Var a -> J.Ast H.Var a
 addPrefix p e =
   case e of
     J.Native c n args ret -> J.Native c (r n) (map (second r) args) ret
@@ -128,5 +149,5 @@ addPrefix p e =
 
   where
     r v 
-        | "_" `BL.isPrefixOf` H.nameOf v = p H.## v
+        | "_" `isPrefixOf` H.nameOf v = p H.## v
         | otherwise = v

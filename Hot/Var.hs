@@ -13,7 +13,7 @@ import Data.String
 
 import Data.ByteString.Lazy (ByteString)
 
-import Jass.Ast (Name, Type, Constant(..))
+import Jass.Ast (Name, Type, Lit, Constant(..))
 
 
 data Var = Local Name Type Bool Int32
@@ -54,8 +54,8 @@ getId v =
     Fn _ _ _ id -> fromIntegral id
     
 
-getId' :: Var -> ByteString
-getId' = fromString . show . getId
+getId' :: Var -> Lit
+getId' =  show . getId
 
 isConst :: Var -> Bool
 isConst (Global Const _ _ _ _) = True
