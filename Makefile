@@ -9,6 +9,12 @@ PROCESSED:=$(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
 all: ${PROCESSED}
 
+convert: convert.hs
+	cabal exec -- ghc convert
+
+runtime/convert.j: convert common.j
+	./convert > runtime/convert.j
+
 Main:
 	cabal exec -- ghc Main
 

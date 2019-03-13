@@ -1,5 +1,6 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GADTs #-}
 
 
 import Data.Map (Map)
@@ -10,6 +11,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Data.Monoid
+import Data.Semigroup (Semigroup)
 import Control.Arrow
 
 
@@ -30,7 +32,10 @@ import Data.ByteString.Builder
 
 import System.IO
 
-
+import Text.Megaparsec (parse, errorBundlePretty)
+import Jass.Parser
+import Jass.Ast (Ast)
+import Data.Composeable
 
 
 child2base :: Map Name Name
@@ -40,8 +45,8 @@ basetypes :: [Name]
 basetypes = ["handle", "code", "real", "string"]
 
 
-base2children :: Map Name [Name]
-base2children = Map.fromListWith (++) . map (second return) . map swap $ Map.toList child2base
+base2children' :: Map Name [Name]
+base2children' = Map.fromListWith (++) . map (second return) . map swap $ Map.toList child2base
 
 data Min n = NInf
            | Min n
@@ -51,20 +56,26 @@ data Max n = PInf
            | Max n
            deriving (Show)
 
+instance Ord n => Semigroup (Min n) where
+    (Min a) <> NInf = Min a
+    NInf    <> (Min a) = Min a
+    (Min a) <> (Min b) = Min $ min a b
+
 instance Ord n => Monoid (Min n) where
     mempty = NInf
-    (Min a) `mappend` NInf = Min a
-    NInf `mappend` (Min a) = Min a
-    (Min a) `mappend` (Min b) = Min $ min a b
+    
+
+instance Ord n => Semigroup (Max n) where
+    (Max a) <> PInf = Max a
+    PInf    <> (Max a) = Max a
+    (Max a) <> (Max b) = Max $ max a b
 
 instance Ord n => Monoid (Max n) where
     mempty = PInf
-    (Max a) `mappend` PInf = Max a
-    PInf `mappend` (Max a) = Max a
-    (Max a) `mappend` (Max b) = Max $ max a b
 
-go :: Name -> State Int32 (Tree Name)
-go name = do
+
+go :: Map Name [Name] -> Name -> State Int32 (Tree Name)
+go base2children name = do
     case Map.lookup name base2children of
         Nothing -> do
             cnt <- get
@@ -74,7 +85,7 @@ go name = do
         Just children -> do
             cnt <- get
             modify succ
-            children' <- mapM go children
+            children' <- mapM (go base2children) children
             let bounds = foldMap getBounds children'
             return $ Branch name cnt bounds children'
 
@@ -94,13 +105,17 @@ bin xs v cond stmt = go xs
     i = Int . fromString . show
 
     
-offsetMap :: Map Int32 Int32
-offsetMap = Map.fromList $ zip [1,36,42,58,59,88,91,93] [1..]
+--offsetMap :: Map Int32 Int32
+--offsetMap = Map.fromList $ zip [1,36,42,58,59,88,91,93] [1..]
 
-initFn :: Ast Name Toplevel
-initFn = Function Normal "_init" [] "nothing" [
+offsets :: [Tree Name] -> [Int32]
+offsets ts = concatMap allChildren'' ts
+
+
+initFn :: [Tree Name] -> Ast Name Toplevel
+initFn ts = Function Normal "_init" [] "nothing" [
     Set (AVar "_toTypeOffset" $ i tyid) $ i off
-    | (tyid, off) <- zip [1,36,42,58,59,88,91,93] [1..]
+    | (tyid, off) <- zip (offsets ts) [1..]
     ]
   where
     i = Int . fromString . show
@@ -129,6 +144,8 @@ convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toR
 
     convFrom :: Tree Name -> Tree Name -> Ast Name Stmt
     convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Scopes#_scope", fromReg]]
+    
+    offsetMap = Map.fromList $ zip (offsets ts) [1..]
     
 valueOf t =
   case t of
@@ -170,6 +187,11 @@ allChildren' t =
     Leaf{} -> [t]
     Branch _ _ _ children -> t:concatMap allChildren' children
 
+allChildren'' t =
+  case t of
+    Leaf{} -> []
+    Branch _ a _ children -> a:concatMap allChildren'' children
+
 isLeaf Leaf{} = True
 isLeaf _ = False
 
@@ -184,13 +206,38 @@ ancestors x =
 
 ancestors' x = x:ancestors x
 
+newtype MonoidMap k v = MonoidMap { getMonoidMap :: Map k v }
+
+singleton :: (Ord k, Monoid v) => k -> v -> MonoidMap k v
+singleton k v = MonoidMap $ Map.singleton k v
+
+instance (Ord k, Semigroup v) => Semigroup (MonoidMap k v) where
+    (MonoidMap a) <> (MonoidMap b) = MonoidMap $ Map.unionWith (<>) a b
+
+instance (Ord k, Monoid v) => Monoid (MonoidMap k v) where
+    mempty = MonoidMap mempty
+
+script2typehierachy :: Ast v x -> MonoidMap Name [Name]
+script2typehierachy x =
+  case x of
+    Typedef a b -> singleton b [a]
+    _ -> composeFold script2typehierachy x
+
 
 main = do
-    putStrLn "// scope Convert"
-    let (a, b) = evalState ((,) <$> go "handle" <*> go "real") 1
-    hPutBuilder stdout . pretty $ Programm
-        [ Global (ADef "_toTypeOffset" "integer")
-        , convert [a, b]
-        , initFn
-        ]
+    x <- parse programm "common.j" <$> readFile "common.j"
+    case x of
+        Left err -> putStrLn $ errorBundlePretty err
+        Right j -> do
+            let base2children = getMonoidMap $ script2typehierachy j <> singleton "real" ["integer"]
+            --print $ Map.map sort base2children
+            --putStrLn ""
+            --print $ Map.map sort base2children'
+            putStrLn "// scope Convert"
+            let (a, b) = evalState ((,) <$> go base2children "handle" <*> go base2children "real") 1
+            hPutBuilder stdout . pretty $ Programm
+                [ Global (ADef "_toTypeOffset" "integer")
+                , convert [a, b]
+                , initFn [a, b]
+                ]
 
