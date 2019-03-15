@@ -61,7 +61,7 @@ init_name2ids x =
         -- call _Names_insert_global(ty, name, uid)
         H.Global _ name ty isarray uid ->
             Call (mkFn "_Names_insert_global")
-                 [ Int . fromString . show $ (Hot.types Map.! ty)
+                 [ Int . fromString . show $ (Map.findWithDefault (error "Unknown type") ty Hot.types)
                  , String name
                  , Int . fromString $ show uid
                  ]
@@ -80,6 +80,8 @@ stubify (Programm pr) = Programm $ concatMap stubifyFn pr
 stubifyFn :: Ast Var Toplevel -> [Ast Var Toplevel]
 stubifyFn e =
   case e of
+    Function _ (H.Fn n _ _ _) _ _ _ | n `elem` donttouch -> [e]
+    --Function _ (H.Fn "config" _ _ _) _ _ _ -> [e]
     Function c n args retty body ->
         let binds :: [Ast Var Stmt]
             binds = zipWith (\(ty, var) idx ->
@@ -117,6 +119,9 @@ stubifyFn e =
         ]
     _ -> [e]
   where
+    donttouch =
+      [ "main", "config", "InitCustomPlayerSlots", "SetPlayerSlotAvailable"
+      , "InitGenericPlayerSlots", "InitCustomTeams"]
     bind = mkLocal "_Scopes_binding"
     scope = mkLocal "_Scopes_scope"
     
@@ -218,7 +223,8 @@ generate pr =
                             Global (SDef _ v _ _) -> (Var $ SVar v, [])
                     in if null args
                     then Return $ Just v
-                    else Return $ Just Null
+                    else Return . Just . Code $ mkFn "DoNothing"
+                    --else Return $ Just Null
 
 
             mkDummyFn idx =
@@ -351,29 +357,41 @@ execRenameM' = execRenameM defaultRenameVariableState
 
 addLocal :: Name -> Type -> IsArray -> RenameVariablesM Var
 addLocal name ty isArray = do
-    r <- ( . fromIntegral) <$> ask
-    let successor = if isArray then (+32768) else (+1)
-    id <- uses localScope (r . successor . Map.size)
-    let v = H.Local name ty isArray id
-    localScope %= (at name ?~ v)
-    return v
+    v' <- uses globalScope $ Map.lookup name
+    case v' of
+        Just v -> return v
+        Nothing -> do
+            r <- ( . fromIntegral) <$> ask
+            let successor = if isArray then (+32768) else (+1)
+            id <- uses localScope (r . successor . Map.size)
+            let v = H.Local name ty isArray id
+            localScope %= (at name ?~ v)
+            return v
 
 addGlobal :: Constant -> Name -> Type -> IsArray -> RenameVariablesM Var
 addGlobal c name ty isArray = do
-    r <- ( . fromIntegral) <$> ask
-    globalCount %= (Map.insertWith (+) (ty, isArray) 1)
-    id <- uses globalCount (r . (Map.! (ty, isArray)))
-    let v = H.Global c name ty isArray id
-    globalScope %= (at name ?~ v)
-    return v
+    v' <- uses globalScope $ Map.lookup name
+    case v' of
+        Just v -> return v
+        Nothing -> do
+            r <- ( . fromIntegral) <$> ask
+            globalCount %= (Map.insertWith (+) (ty, isArray) 1)
+            id <- uses globalCount (r . (Map.findWithDefault (error "xxx") (ty, isArray)))    --Map.! (ty, isArray)))
+            let v = H.Global c name ty isArray id
+            globalScope %= (at name ?~ v)
+            return v
 
 addFunction :: Name -> [Type] -> Type -> RenameVariablesM Var
 addFunction name args ret = do
-    r <- ( . fromIntegral) <$> ask
-    id <- uses fnScope (r . succ . Map.size)
-    let v = H.Fn name args ret id
-    fnScope %= (at name ?~ v)
-    return v
+    v' <- uses fnScope $ Map.lookup name
+    case v' of
+        Just v -> return v
+        Nothing -> do
+            r <- ( . fromIntegral) <$> ask
+            id <- uses fnScope (r . succ . Map.size)
+            let v = H.Fn name args ret id
+            fnScope %= (at name ?~ v)
+            return v
 
 getVar :: Name -> RenameVariablesM Var
 getVar n = do

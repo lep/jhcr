@@ -8,12 +8,12 @@ globals
     constant integer _RegWidth = 11
     constant integer _LabelWidth = 6
     
-    integer _S
-    integer _current_fn
+    integer _S = 0
+    integer _current_fn = 0
     integer _previns = 0
     
     // table from (fn, label) -> ins
-    integer _fn_labels
+    integer _fn_labels = 0 
     // use (fid + 100) as index where 100 is the number of dummy functions
     integer array _fn_entry
 endglobals
@@ -98,19 +98,27 @@ function _parse_and_print takes string instruction returns nothing
     call Ins#_print(ins)
 endfunction
 
-function _parse_with_context takes string instruction returns nothing
-    local integer ins = _parse_ins(instruction)
-    set Ins#_next[_previns] = ins
-    set _previns = ins
-    
-    if Ins#_op[ins] == Ins#_Fun then
-        set _previns = 0
-        set _current_fn = Ins#_a1[ins]
-        set _fn_entry[_current_fn + 100] = ins
-        //call Names#_insert_function(Ins#_literal[ins], _current_fn)
-    elseif Ins#_op[ins] == Ins#_Label then
-        call Table#_set_integer(_current_fn, Ins#_a1[ins], ins)
-    endif
+function _parse_and_init takes string instruction returns nothing
+    local integer len = StringLength(instruction)
+    local integer ins
+    set _S = 0
+    loop
+    exitwhen _S >= len
+        set ins = _parse_ins(instruction)
+        call Ins#_print(ins)
+        set Ins#_next[_previns] = ins
+        set _previns = ins
+        
+        if Ins#_op[ins] == Ins#_Fun then
+            set _previns = 0
+            set _current_fn = Ins#_a1[ins]
+            set _fn_entry[_current_fn + 100] = ins
+            call Modified#_set_modified(_current_fn)
+            //call Names#_insert_function(Ins#_literal[ins], _current_fn)
+        elseif Ins#_op[ins] == Ins#_Label then
+            call Table#_set_integer(_current_fn, Ins#_a1[ins], ins)
+        endif
+    endloop
 endfunction
 
 //function _parse_line takes string s returns integer

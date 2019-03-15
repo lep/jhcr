@@ -152,7 +152,7 @@ intlog10 = fromIntegral . log10 . fromIntegral
 serialize :: [Instruction] -> Builder
 serialize = unlines . map s
   where
-    unlines = mconcat . intersperse (charUtf8 '\n')
+    unlines = mconcat {-. intersperse (charUtf8 '\n')-}
     unwords = mconcat {-. intersperse (charUtf8 ' ')-}
 
     serializeLit :: Hot.Ast Var Expr -> Builder
@@ -166,7 +166,7 @@ serialize = unlines . map s
 
     bla ins args = unwords [ins, unwords args]
 
-    typeToId x = pad7Dec (Hot.types Map.! x)
+    typeToId x = pad7Dec (Map.findWithDefault (error $  x) x Hot.types) --Hot.types Map.! x)
     --typeToId x = stringUtf8   x
     
     --ins2id = id

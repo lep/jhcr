@@ -231,7 +231,7 @@ main = do
         Left err -> putStrLn $ errorBundlePretty err
         Right j -> do
             let base2children = getMonoidMap $ script2typehierachy j <> singleton "real" ["integer"]
-            let types@[a, b, c, d, e] = evalState (mapM (go base2children) ["handle", "real", "code", "string", "boolean"]) 1
+            let types@(a:b:_) = evalState (mapM (go base2children) ["handle", "real", "code", "string", "boolean", "nothing"]) 1
 
             printHaskell types
             printRuntime [a, b]

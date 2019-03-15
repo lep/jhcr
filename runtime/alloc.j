@@ -8,7 +8,7 @@ function _alloc takes nothing returns integer
         set this = _I
     endif
     
-    if this >= 32768 then
+    if this >= JASS_MAX_ARRAY_SIZE then
         return 0
     endif
 

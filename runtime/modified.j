@@ -1,7 +1,7 @@
 // scope Modified
 
 globals
-    integer _m
+    integer _m = 0
 endglobals
 
 function _modified takes integer uid returns boolean

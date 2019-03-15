@@ -109,8 +109,11 @@ printExpr e =
     Rawcode r -> charUtf8 '\'' <> stringUtf8  r <> charUtf8 '\''
     Int i -> stringUtf8  i
     Real r -> stringUtf8  r
-    String s -> "\"" <> stringUtf8  s <> "\""
+    String s -> "\"" <> stringUtf8 ( concatMap escape s) <> "\""
     Var lvar -> printLVar lvar
+  where
+    escape '\\' = "\\\\"
+    escape x = [x]
 
 printOp "not" [x] = parens $ unwords ["not", printExpr x]
 printOp "-" [x] = unwords ["-", printExpr x]

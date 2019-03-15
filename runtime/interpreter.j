@@ -1,7 +1,7 @@
 // scope Interpreter
 
 globals
-    integer _fresh
+    integer _fresh = 0
 endglobals
 
 // interp :: Context -> IO Context
@@ -153,7 +153,7 @@ function _step takes integer ctx returns integer
             call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
         endif
     elseif t == Ins#_Mod then
-        call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) % Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+        call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], ModuloInteger(Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) , Table#_get_integer(Context#_locals[ctx], Ins#_a3[op])))
         
     elseif t == Ins#_Not then
         call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], not Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]))

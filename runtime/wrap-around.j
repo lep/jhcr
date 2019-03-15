@@ -1,7 +1,7 @@
 // scope Wrap
 
 globals
-    integer _p
+    integer _p = 0
     trigger _t = CreateTrigger()
 endglobals
 

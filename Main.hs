@@ -73,37 +73,48 @@ main = do
         Left err -> do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
-        Right p -> loop $ J.Programm $ mconcat p
+        Right p -> do
+            let prelude = J.Programm $ mconcat p
+            let (prelude', preludeState) = H.runRenameM' prelude
+            loop prelude' preludeState
 
 
-loop prelude = forever $ do
+loop prelude st =  do
     cmd <- words <$> getLine
-    case cmd of
-        ["init", file] -> init file
-        ["compile", file] -> compile file
+    case take 1 cmd of
+        ["init"] -> do
+            st' <- init (unwords $ tail cmd)
+            loop prelude st'
+        ["compile"] -> do
+            st' <- compile (unwords $ tail cmd)
+            loop prelude st'
         ["exit"] -> exitSuccess
-        _ -> hPutStrLn stderr "Unrecognized command"
+        _ -> do
+            hPutStrLn stderr "Unrecognized command"
+            loop prelude st
   where
-    (prelude', preludeState) = H.runRenameM' prelude
+    --(prelude', preludeState) = H.runRenameM' prelude
 
     init file = do
         hPutStrLn stderr "Initializeing...."
         p <- parse J.programm file <$> readFile file
         case p of
-            Left err -> hPutStrLn stderr $ errorBundlePretty err
+            Left err -> do
+                hPutStrLn stderr $ errorBundlePretty err
+                return st
             Right ast -> do
                 let 
                     ast' :: J.Ast H.Var H.Programm
-                    ast' = H.execRenameM preludeState ast
+                    (ast', st') = H.runRenameM st ast
                     
                     generated :: [J.Ast H.Var H.Programm]
-                    generated = H.generate $ concatPrograms prelude' ast'
+                    generated = H.generate $ concatPrograms prelude ast'
                     
                     stubs :: J.Ast H.Var H.Programm
                     stubs = H.stubify ast'
                     
                     init_tables :: J.Ast H.Var H.Programm
-                    init_tables = H.init_name2ids $ concatPrograms prelude' ast'
+                    init_tables = H.init_name2ids $ concatPrograms prelude ast'
                     
                     generated' :: [J.Ast H.Var H.Programm]
                     generated' = init_tables:stubs:generated
@@ -118,16 +129,21 @@ loop prelude = forever $ do
                     hClose hdl
 
                 hPutStrLn stderr "Ok."
+                return st'
 
     compile file = do
         p <- parse J.programm file <$> readFile file
         case p of
-            Left err -> hPutStrLn stderr $ errorBundlePretty err
+            Left err -> do
+                hPutStrLn stderr $ errorBundlePretty err
+                return st
             Right ast -> do
-                let ast' = H.execRenameM preludeState ast
+                let (ast', st') = H.runRenameM st ast
                     ast'' = H.jass2hot ast'
                 hPutBuilder stdout $ H.serialize $ H.compile ast''
+                hFlush stdout
                 hPutStrLn stderr "Ok."
+                return st'
                 
 
     concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm

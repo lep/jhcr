@@ -1,8 +1,8 @@
 // scope Scopes
 
 globals
-    integer _binding
-    integer _scope
+    integer _binding = 0
+    integer _scope = 0
 endglobals
 
 function _init takes nothing returns nothing
