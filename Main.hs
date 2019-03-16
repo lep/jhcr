@@ -25,6 +25,9 @@ import Data.List (isPrefixOf)
 
 import Data.Binary (encode, decode)
 
+import Data.Map (Map)
+import qualified Data.Map as Map
+
 
 
 import qualified Jass.Parser as J
@@ -39,6 +42,7 @@ import qualified Hot.Instruction as H
 import qualified Hot.Instruction.Compiler as H
 
 import Data.Composeable
+import Data.Hashable
 
 import Text.Megaparsec (errorBundlePretty, parse, ParseErrorBundle)
 
@@ -61,6 +65,15 @@ runtime2paths =
   [ "out/context.j", "out/instruction.j", "out/instruction-parser.j"
   , "out/interpreter.j", "out/init.j"
   ]
+
+mkHashMap :: J.Ast J.Name x -> Map J.Name Int
+mkHashMap x =
+  case x of
+  --
+    --Function :: Constant -> var -> [(Type, var)] -> Type -> [Ast var Stmt] -> Ast var Toplevel
+    J.Function _ name _ _ _ -> Map.singleton name $ hash x
+    _ -> composeFold mkHashMap x
+
 
 main = do
     args' <- getArgs
@@ -92,11 +105,29 @@ main = do
                     ast'' = H.jass2hot ast'
 
                 hPutBuilder stdout $ H.serializeAsm $ H.compile ast''
+    
+    isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
+    isUpdated old new x =
+      case x of
+        J.Function _ name _ _ _ ->
+            let o = Map.lookup name old
+                n = Map.lookup name new
+            in case (o, n) of
+                (Nothing, _) -> True
+                (Just h1, Just h2) -> h1 /= h2
+                _ -> True
+        _ -> True
 
+    isFunction :: J.Ast a J.Toplevel -> Bool
+    isFunction J.Function{} = True
+    isFunction _ = False
+    
+    getFnName :: J.Ast J.Name J.Toplevel -> J.Name
+    getFnName (J.Function _ name _ _ _) = name
         
     compile updatej = do
         stf <- openBinaryFile "jhcr.state" ReadWriteMode
-        st <- decode <$> BL.hGetContents stf
+        (st, hmap) <- decode <$> BL.hGetContents stf
 
         
         p <- parse J.programm updatej <$> readFile updatej
@@ -106,10 +137,18 @@ main = do
                 hClose stf
                 exitFailure
                 
-            Right ast -> do
-                let (ast', st') = H.runRenameM H.Compile st ast
+            Right prog@(J.Programm ast) -> do
+                let hmap' = mkHashMap prog
+                    astU = filter (isUpdated hmap hmap') ast
+                    nameU = map getFnName $ filter isFunction astU
+                    progU = J.Programm astU
+                
+                let (ast', st') = H.runRenameM H.Compile st progU
                     ast'' = H.jass2hot ast'
                 
+                forM_ nameU $ \n ->
+                    putStrLn $ unwords ["Updating function", n]
+  
                 hPutStrLn stderr "Writing bytecode"
                 cfd <- openBinaryFile "jhcr.txt" WriteMode
                 hPutBuilder cfd $ H.serialize $ H.compile ast''
@@ -118,7 +157,8 @@ main = do
 
                 hPutStrLn stderr "Writing state file"
 
-                BL.hPutStr stf $ encode st'
+                hSeek stf AbsoluteSeek 0
+                BL.hPutStr stf $ encode (st', hmap' <> hmap)
                 hFlush stf
                 hClose stf
                 
@@ -154,10 +194,6 @@ main = do
 
                 let (prelude', st) = H.runRenameM' H.Init prelude
                 
-                hPutStrLn stderr "Writing state file"
-                BL.writeFile "jhcr.state" $ encode st
-                
-                
                 p <- parse J.programm war3mapj <$> readFile war3mapj
                 case p of
                     Left err -> do
@@ -179,6 +215,11 @@ main = do
                             generated'' = J.fmap H.nameOf $ addPrefix "JHCR" generated'
                             
                             outj = concatPrograms (concatPrograms rt1 generated'') rt2
+                            
+                            hmap = mkHashMap ast
+                        
+                        hPutStrLn stderr "Writing state file"
+                        BL.writeFile "jhcr.state" $ encode (st, hmap)
 
                         hPutStrLn stderr "Writing map script"
                         jh <- openBinaryFile "jhcr.j" WriteMode

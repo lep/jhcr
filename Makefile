@@ -41,16 +41,17 @@ runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
 
 Main: $(SRC)
 	cabal exec -- ghc Main
+	strip Main
 
 out/%.j: runtime/%.j
 	bash process.sh $^ $@ JHCR_
 
 check: $(GEN) $(PROCESSED)
-	./pjass.exe common.j Blizzard.j out/table.j out/scopes.j out/convert.j \
+	./pjass.exe common.j Blizzard.j out/table.j out/convert.j \
     out/wrap-around.j out/modified.j generated/stubs.j generated/i2code.j \
     generated/setget.j generated/call_predefined.j out/context.j \
     out/instruction.j out/instruction-parser.j out/interpreter.j out/init.j
 
 clean:
 	rm -f $(PROCESSED) $(HS_O) $(HS_HI) runtime/convert.j runtime/types.j 
-	rm -f Hot/Types.hs Main convert tmp.w3x jhcr.j war3map.j
+	rm -f Hot/Types.hs Main convert tmp.w3x jhcr.j war3map.j jhcr.state jhcr.txt

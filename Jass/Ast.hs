@@ -48,6 +48,8 @@ import Unsafe.Coerce
 import Data.Int
 import Data.Char
 
+import Data.Hashable
+
 import GHC.Generics
 import Data.Binary
 
@@ -64,6 +66,7 @@ data Constant = Const | Normal
     deriving (Eq, Ord, Show, Generic)
 
 instance Binary Constant
+instance Hashable Constant
 
 type Name = String
 type Type = String
@@ -103,6 +106,52 @@ data Ast var a where
 
 deriving instance Show var => Show (Ast var a)
 deriving instance Eq var => Eq (Ast var a)
+
+newtype HashMonoid = HashMonoid { getHash :: Int }
+
+instance Semigroup HashMonoid where
+    HashMonoid a <> HashMonoid b = HashMonoid $ hashWithSalt a b
+
+instance Monoid HashMonoid where
+    mempty = HashMonoid 0
+
+h :: Hashable h => h -> HashMonoid
+h x = HashMonoid $ hash x
+
+instance Hashable var => Hashable (Ast var a) where
+    hashWithSalt salt x = hashWithSalt salt $ hash x
+    hash x = getHash $
+      case x of
+        Programm p -> h (-3 :: Int) <> F.foldMap h p
+        Native c v args ret ->
+            h (-2 :: Int) <> h c <> h v
+            <> F.foldMap h args <> h ret
+        Function c v args ret body ->
+            h (-1 :: Int) <> h c <> h v
+            <> F.foldMap h args <> h ret <> F.foldMap h body
+        Global vdef -> h (0::Int) <> h vdef
+        Typedef a b -> h (1::Int) <> h a <> h b
+        Set lvar expr -> h (2::Int) <> h lvar <> h expr
+        Local vdef -> h (3::Int) <>h vdef
+        If cond tb elseifs eb -> h (4::Int) <> h cond <> F.foldMap h tb <> F.foldMap h elseifs <> h eb
+        Loop body -> h (5::Int) <> h body
+        Exitwhen expr -> h (6::Int) <> h expr
+        Return expr -> h (7::Int) <> h expr
+        Call v args -> h (8::Int) <> h v <> h args
+        Var lvar -> h (9::Int) <> h lvar
+        Int i -> h (10::Int) <> h i
+        Real r -> h (11::Int) <> h r
+        Bool b -> h (12::Int) <> h b
+        Rawcode r -> h (13::Int) <> h r
+        String s -> h (14::Int) <> h s
+        Code c -> h (15::Int) <> h c
+        Null -> h (16::Int)
+        
+        AVar v idx -> h (17::Int) <> h v <> h idx
+        SVar v -> h (18::Int) <> h v
+        
+        ADef v ty -> h (19::Int) <> h v <> h ty
+        SDef c v ty init -> h (20::Int) <> h c <> h v <> h ty <> h init
 
 instance Compose (Ast var) where
     compose f a =
