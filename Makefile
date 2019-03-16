@@ -19,6 +19,7 @@ HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 process: $(PROCESSED)
 
 run: tmp.w3x
+	cp tmp.w3x /cygdrive/c/Users/lep/Documents/Warcraft\ III/Maps/jhcr/tmp.w3x
 	/cygdrive/e/Battle.Net/Warcraft\ III.exe -nativefullscr -loadfile 'C:\Users\lep\Documents\Warcraft III\Maps\jhcr\tmp.w3x'
 
 war3map.j: test.w3x
@@ -41,7 +42,6 @@ runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
 
 Main: $(SRC)
 	cabal exec -- ghc Main
-	strip Main
 
 out/%.j: runtime/%.j
 	bash process.sh $^ $@ JHCR_
