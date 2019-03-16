@@ -208,7 +208,7 @@ vardecl constantness = do
 
   where
     varArray typ = ADef <$> identifier <*> pure typ
-    varNormal typ = SDef constantness <$> identifier <*> pure typ <*> optional (reserved "=" *> expression)
+    varNormal typ = SDef constantness <$> identifier <*> pure typ <*> optional (symbol "=" *> expression)
 
 expression = makeExprParser term table
             <?> "expression"
