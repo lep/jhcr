@@ -225,7 +225,7 @@ serializeAsm = unlines . map s
 serialize :: [Instruction] -> Builder
 serialize = unlines . map s
   where
-    unlines = mconcat . intersperse (charUtf8 '\n')
+    unlines = mconcat {-. intersperse (charUtf8 '\n')-}
     unwords = mconcat {-. intersperse (charUtf8 ' ')-}
 
     serializeLit :: Hot.Ast Var Expr -> Builder

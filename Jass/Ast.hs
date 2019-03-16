@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE InstanceSigs #-}
 
 
@@ -47,6 +48,9 @@ import Unsafe.Coerce
 import Data.Int
 import Data.Char
 
+import GHC.Generics
+import Data.Binary
+
 
 data Expr
 data Stmt
@@ -57,7 +61,9 @@ data Block
 data Programm
 
 data Constant = Const | Normal
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Generic)
+
+instance Binary Constant
 
 type Name = String
 type Type = String

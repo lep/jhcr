@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE OverloadedStrings #-}
+
 
 
 import Control.Applicative
@@ -23,6 +23,8 @@ import Data.ByteString.Builder
 
 import Data.List (isPrefixOf)
 
+import Data.Binary (encode, decode)
+
 
 
 import qualified Jass.Parser as J
@@ -38,12 +40,157 @@ import qualified Hot.Instruction.Compiler as H
 
 import Data.Composeable
 
-import Text.Megaparsec (errorBundlePretty, parse)
+import Text.Megaparsec (errorBundlePretty, parse, ParseErrorBundle)
 
 import qualified Data.Text.IO as Text
 
+--exceptT :: Monad m => m a -> ExceptT e m a
+exceptT :: Either e a -> ExceptT e IO a
 exceptT = ExceptT . return
 
+
+concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
+concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
+
+runtime1paths =
+  [ "out/types.j", "out/table.j", "out/convert.j"
+  , "out/wrap-around.j", "out/modified.j"
+  ]
+
+runtime2paths =
+  [ "out/context.j", "out/instruction.j", "out/instruction-parser.j"
+  , "out/interpreter.j", "out/init.j"
+  ]
+
+main = do
+    args' <- getArgs
+    case args' of
+        ["init", cj, bj, uj] -> init [cj, bj, uj]
+        ["compile", uj] -> compile uj
+        ["asm", uj] -> asm uj
+        _ -> do
+            hPutStrLn stderr $
+              unlines [ "Usage:"
+                      , "  init common.j Blizzard.j war3map.j"
+                      , "  compile update.j"
+                      , "  asm update.j"
+                      ]
+            
+            exitFailure
+
+  where
+    asm updatej = do
+        st <- decode <$> BL.readFile "jhcr.state"
+        p <- parse J.programm updatej <$> readFile updatej
+        case p of
+            Left err -> do
+                hPutStrLn stderr $ errorBundlePretty err
+                exitFailure
+                
+            Right ast -> do
+                let (ast', st') = H.runRenameM H.Compile st ast
+                    ast'' = H.jass2hot ast'
+
+                hPutBuilder stdout $ H.serializeAsm $ H.compile ast''
+
+        
+    compile updatej = do
+        stf <- openBinaryFile "jhcr.state" ReadWriteMode
+        st <- decode <$> BL.hGetContents stf
+
+        
+        p <- parse J.programm updatej <$> readFile updatej
+        case p of
+            Left err -> do
+                hPutStrLn stderr $ errorBundlePretty err
+                hClose stf
+                exitFailure
+                
+            Right ast -> do
+                let (ast', st') = H.runRenameM H.Compile st ast
+                    ast'' = H.jass2hot ast'
+                
+                hPutStrLn stderr "Writing bytecode"
+                cfd <- openBinaryFile "jhcr.txt" WriteMode
+                hPutBuilder cfd $ H.serialize $ H.compile ast''
+                hFlush cfd
+                hClose cfd
+
+                hPutStrLn stderr "Writing state file"
+
+                BL.hPutStr stf $ encode st'
+                hFlush stf
+                hClose stf
+                
+                hPutStrLn stderr "Ok."
+  
+    init :: [FilePath] -> IO ()
+    init [commonj, blizzardj, war3mapj] = do
+    
+        x <- runExceptT $ do
+            prelude <- J.Programm . mconcat <$> forM [commonj, blizzardj] (\j -> do
+                src <- liftIO $ readFile j
+                J.Programm ast <- exceptT $ parse J.programm j src
+                return ast)
+                
+            rt1 <- J.Programm . mconcat <$> forM runtime1paths (\j -> do
+                src <- liftIO $ readFile j
+                J.Programm ast <- exceptT $ parse J.programm j src
+                return ast)
+            
+            rt2 <- J.Programm . mconcat <$> forM runtime2paths (\j -> do
+                src <- liftIO $ readFile j
+                J.Programm ast <- exceptT $ parse J.programm j src
+                return ast)
+                
+            return (prelude, rt1, rt2)
+            
+        case x of
+            Left err -> do
+                hPutStrLn stderr $ errorBundlePretty err
+                exitFailure
+            Right (prelude, rt1, rt2) -> do
+                hPutStrLn stderr "Initializing...."
+
+                let (prelude', st) = H.runRenameM' H.Init prelude
+                
+                hPutStrLn stderr "Writing state file"
+                BL.writeFile "jhcr.state" $ encode st
+                
+                
+                p <- parse J.programm war3mapj <$> readFile war3mapj
+                case p of
+                    Left err -> do
+                        hPutStrLn stderr $ errorBundlePretty err
+                        exitFailure
+                    Right ast -> do
+                        let ast' :: J.Ast H.Var H.Programm
+                            (ast', st') = H.runRenameM H.Init st ast
+                            
+                            generated :: [J.Ast H.Var H.Programm]
+                            generated = H.generate $ concatPrograms prelude' ast'
+                            
+                            stubs :: J.Ast H.Var H.Programm
+                            stubs = H.stubify ast'
+                            
+                            generated' :: J.Ast H.Var H.Programm
+                            generated' = foldr1 concatPrograms $ stubs:generated
+                            
+                            generated'' = J.fmap H.nameOf $ addPrefix "JHCR" generated'
+                            
+                            outj = concatPrograms (concatPrograms rt1 generated'') rt2
+
+                        hPutStrLn stderr "Writing map script"
+                        jh <- openBinaryFile "jhcr.j" WriteMode
+                        hPutBuilder jh $ J.pretty outj
+                        hFlush jh
+                        hClose jh
+
+                        hPutStrLn stderr "Ok."
+                
+                
+                
+{-
 main = do
     args <- getArgs
 
@@ -150,6 +297,8 @@ loop prelude st =  do
 
     concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
     concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
+-}
+
 
 addPrefix :: H.Name -> J.Ast H.Var a -> J.Ast H.Var a
 addPrefix p e =

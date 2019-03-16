@@ -14,14 +14,29 @@ PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 HS_O := $(patsubst %.hs, %.o, $(SRC))
 HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 
-.PHONY: process check clean
+.PHONY: process check clean run
 
 process: $(PROCESSED)
+
+run: tmp.w3x
+	/cygdrive/e/Battle.Net/Warcraft\ III.exe -nativefullscr -loadfile 'C:\Users\lep\Documents\Warcraft III\Maps\jhcr\tmp.w3x'
+
+war3map.j: test.w3x
+	cp test.w3x tmp.w3x
+	./MPQEditor /extract tmp.w3x war3map.j
+	rm tmp.w3x
+
+jhcr.j: war3map.j Main $(PROCESSED)
+	./Main init common.j Blizzard.j war3map.j
+
+tmp.w3x: jhcr.j test.w3x
+	cp test.w3x tmp.w3x
+	./MPQEditor /add tmp.w3x jhcr.j war3map.j
 
 convert: convert.hs
 	cabal exec -- ghc convert
 
-runtime/convert.j Hot/Types.hs: convert common.j
+runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
 	./convert
 
 Main: $(SRC)
@@ -37,4 +52,5 @@ check: $(GEN) $(PROCESSED)
     out/instruction.j out/instruction-parser.j out/interpreter.j out/init.j
 
 clean:
-	rm -f $(PROCESSED) $(HS_O) $(HS_HI) runtime/convert.j Main convert
+	rm -f $(PROCESSED) $(HS_O) $(HS_HI) runtime/convert.j runtime/types.j 
+	rm -f Hot/Types.hs Main convert tmp.w3x jhcr.j war3map.j

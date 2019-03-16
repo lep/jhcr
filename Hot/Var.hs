@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Hot.Var
     ( Var(..)
@@ -11,6 +12,9 @@ import Data.Int
 import Data.Monoid
 import Data.String
 
+import GHC.Generics
+import Data.Binary
+
 import Data.ByteString.Lazy (ByteString)
 
 import Jass.Ast (Name, Type, Lit, Constant(..))
@@ -20,7 +24,9 @@ data Var = Local Name Type Bool Int32
          | Global Constant Name Type Bool Int32
          | Op Name
          | Fn Name [Type] Type Int32
-    deriving (Eq, Ord, Show)
+    deriving (Eq, Ord, Show, Generic)
+
+instance Binary Var
 
 mkLocal n = Local n "_void" False 0
 

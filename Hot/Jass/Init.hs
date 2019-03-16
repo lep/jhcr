@@ -2,6 +2,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 
 module Hot.Jass.Init where
@@ -19,6 +20,9 @@ import Data.List
 import Data.String
 import Data.Function
 import Data.Maybe
+
+import GHC.Generics
+import Data.Binary
 
 import Data.DList (DList)
 import qualified Data.DList as DList
@@ -375,8 +379,10 @@ data RenameVariablesState = RenameVariablesState
     , _localScope :: Map Name Var
     , _fnScope :: Map Name Var
     , _newFnCount :: Int32
-    }
+    } deriving (Generic)
 makeLenses ''RenameVariablesState
+
+instance Binary RenameVariablesState
 
 defaultRenameVariableState = RenameVariablesState mempty mempty mempty mempty 0
 
