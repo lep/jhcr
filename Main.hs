@@ -75,7 +75,7 @@ main = do
             exitFailure
         Right p -> do
             let prelude = J.Programm $ mconcat p
-            let (prelude', preludeState) = H.runRenameM' prelude
+            let (prelude', preludeState) = H.runRenameM' H.Init prelude
             loop prelude' preludeState
 
 loop prelude st =  do
@@ -107,7 +107,7 @@ loop prelude st =  do
             Right ast -> do
                 let 
                     ast' :: J.Ast H.Var H.Programm
-                    (ast', st') = H.runRenameM st ast
+                    (ast', st') = H.runRenameM H.Init st ast
                     
                     generated :: [J.Ast H.Var H.Programm]
                     generated = H.generate $ concatPrograms prelude ast'
@@ -140,7 +140,7 @@ loop prelude st =  do
                 hPutStrLn stderr $ errorBundlePretty err
                 return st
             Right ast -> do
-                let (ast', st') = H.runRenameM st ast
+                let (ast', st') = H.runRenameM H.Compile st ast
                     ast'' = H.jass2hot ast'
                 hPutBuilder stdout $ serialize $ H.compile ast''
                 hFlush stdout
