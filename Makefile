@@ -1,10 +1,7 @@
 RUNTIME := runtime/table.j runtime/instruction-parser.j
-RUNTIME += runtime/modified.j runtime/scopes.j runtime/wrap-around.j
-RUNTIME += runtime/convert.j runtime/context.j
+RUNTIME += runtime/modified.j runtime/wrap-around.j
+RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
-
-GEN := generated/stubs.j generated/i2code.j
-GEN += generated/setget.j generated/call_predefined.j
 
 SRC := Jass/Parser.hs Jass/Ast.hs Jass/Printer.hs
 SRC += Hot/Ast.hs Hot/Instruction.hs Hot/Interpreter.hs Hot/Types.hs Hot/Var.hs

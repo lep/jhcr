@@ -125,8 +125,8 @@ compileProgram (Programm toplevel) = mapM_ compileToplevel toplevel
 
 compileToplevel :: Ast Var Toplevel -> CompileMonad ()
 compileToplevel (H.Function n args r body) = do
-    --let fn = Function $ nameOf n
-    let fn = Function $ getId n
+    let fname = nameOf n
+    let fn = Function (getId n) fname
     emit fn
 
     labelId .= 1
@@ -152,12 +152,12 @@ typedGet sourcetype source = do
 compileCall :: Ast Var a -> CompileMonad Register
 compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
     r <- newRegister
-    --let v = nameOf n
+    let vname = nameOf n
     let v = getId n
     forM_ (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
         emit $ Bind typ pos r
-    emit $ Call (typeOfVar n) r v
+    emit $ Call (typeOfVar n) r v vname
     typedGet (typeOfVar n) r
 
 compileStmt :: Ast Var Stmt -> CompileMonad ()

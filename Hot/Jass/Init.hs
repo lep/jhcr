@@ -166,12 +166,12 @@ isArray _ = False
 
 split :: Ast a Programm -> ([[Ast a Toplevel]], [[Ast a Toplevel]], [[Ast a Toplevel]])
 split (Programm p) = 
-  let sorted = sortOn signatur $ filter hasSignatur p
+  let sorted = {-sortOn signatur $-} filter hasSignatur p
       (vars, functions) = partition isVar sorted
       (arrays, normals) = partition isArray vars
-    in (g normals, g arrays, g functions)
+    in (g normals, g arrays, [functions])
   where
-    g = groupBy ((==) `on` signatur)
+    g = groupBy ((==) `on` signatur) . sortOn signatur
 
 
 {-
@@ -186,29 +186,71 @@ removeCodeVars x =
       | ty == "code" = SVar $ Global c name "integer" isarray uid
 -}
 
+
+
 generate :: Ast Var Programm -> [Ast Var Programm]
 generate pr =
     let (normals, arrays, functions) = split pr
+        unusedNormalTypes = Set.toList . Set.delete "nothing" $ Map.keysSet Hot.types Set.\\ Set.fromList (concatMap (map typeOf) normals)
+        unusedArrayTypes =  Set.toList . Set.delete "nothing" $ Map.keysSet Hot.types Set.\\ Set.fromList (concatMap (map typeOf) arrays)
         i2code_dummies = Programm $ i2code $ concat functions
 
         enter_predefined = Programm [ enterFunction $ concat functions ]
 
-        set_get = Programm $ concat [
-                map generateNormalGetters normals
+        set_get_avail =
+              [ map generateNormalGetters normals
               , map generateNormalSetters normals
               , map generateArraySetters arrays
               , map generateArrayGetters arrays
               ]
+      
+        set_get_empty = 
+          [ map generateEmptyNormalSetters unusedNormalTypes
+          , map generateEmptyNormalGetters unusedNormalTypes
+          , map generateEmptyArraySetters unusedArrayTypes
+          , map generateEmptyArrayGetters unusedArrayTypes
+          ]
+      
+        set_get = Programm $ concat [concat set_get_avail, concat set_get_empty]
 
         --stubs = Programm $ concatMap stubifyFn $ concat functions
     in [i2code_dummies, enter_predefined, set_get]
   where
+    defaultReturnValue "real" = Real "0.0"
+    defaultReturnValue "integer" = Int "0"
+    defaultReturnValue "string" = String ""
+    defaultReturnValue "code" = Code (mkFn "DoNothing")
+    defaultReturnValue _ = Null
+  
+    generateEmptyArrayGetters ty =
+        Function Normal (mkFn $ "_Auto_array_get_global_" <> ty) [("integer", uid), ("integer", idx)] ty [
+            Return $ Just $ defaultReturnValue ty
+        ]
+        
+    generateEmptyNormalGetters ty =
+        Function Normal (mkFn $ "_Auto_get_global_" <> ty) [("integer", uid)] ty [
+            Return $ Just $ defaultReturnValue ty
+        ]
+        
+    generateEmptyArraySetters ty =
+        Function Normal (mkFn $ "_Auto_array_set_global_" <> ty) [("integer", uid), ("integer", idx), (ty, val)] "nothing" []
+        
+    generateEmptyNormalSetters ty =
+        Function Normal (mkFn $ "_Auto_set_global_" <> ty) [("integer", uid), (ty, val)] "nothing" []
+  
+    typeOf :: Ast Var Toplevel -> Type
+    typeOf (Global (ADef _ ty)) = ty
+    typeOf (Global (SDef _ _ ty _)) = ty
+    
+    
     uid = mkLocal "_i"
     idx = mkLocal "_idx"
     val = mkLocal "_v"
+    
+    ctx = mkLocal "_ctx"
 
-    bind = mkLocal "_Scopes_binding"
-    scope = mkLocal "_Scopes_scope"
+    bind = AVar (mkLocal "_Context_bindings") (Var $ SVar ctx)
+    scope = AVar (mkLocal "_Context_locals") (Var $ SVar ctx)
 
     --dummyCodeVars = [Global $ SDef Normal (H.Global Normal ("_dummy_code" <> fromString (show i)) "code" False 0) "code" Nothing | i <- [0..100]]
 
@@ -249,18 +291,18 @@ generate pr =
                                                     Function _ v _ _ _ -> v
                         args = zipWith (\ty pos -> 
                                     if ty == "code"
-                                    then Call (mkFn "_Auto_i2code") [Call (mkFn "_Table_get_integer") [Var $ SVar bind, Int . fromString $ show pos]]
-                                    else Call (mkFn $ "_Table_get_" <> ty) [Var $ SVar bind, Int . fromString $ show pos] )
+                                    then Call (mkFn "_Auto_i2code") [Call (mkFn "_Table_get_integer") [Var $ bind, Int . fromString $ show pos]]
+                                    else Call (mkFn $ "_Table_get_" <> ty) [Var $ bind, Int . fromString $ show pos] )
                                 types [1, 2 ..]
 
                         stmt = if ret == "nothing"
                                then Call v args
                                else if ret == "code"
-                               then Call (mkFn "_Table_set_code") [Call (mkFn "_Auto_i2code") [Var $ SVar scope, Var $ SVar reg, Call v args]]
-                               else Call (mkFn $ "_Table_set_" <> ret) [Var $ SVar scope, Var $ SVar reg, Call v args]
+                               then Call (mkFn "_Table_set_code") [Call (mkFn "_Auto_i2code") [Var $ scope, Var $ SVar reg, Call v args]]
+                               else Call (mkFn $ "_Table_set_" <> ret) [Var $ scope, Var $ SVar reg, Call v args {-, Int $ show idx-}]
                     in stmt
         
-        in Function Normal (mkFn "_Auto_call_predefined") [("integer", reg), ("integer", uid)] "nothing" [
+        in Function Normal (mkFn "_Auto_call_predefined") [("integer", reg), ("integer", uid), ("integer", ctx)] "nothing" [
                bin 1 (length fns) (Var $ SVar uid) r
            ]
 

@@ -78,7 +78,6 @@ main = do
             let (prelude', preludeState) = H.runRenameM' prelude
             loop prelude' preludeState
 
-
 loop prelude st =  do
     cmd <- words <$> getLine
     case take 1 cmd of
@@ -86,7 +85,10 @@ loop prelude st =  do
             st' <- init (unwords $ tail cmd)
             loop prelude st'
         ["compile"] -> do
-            st' <- compile (unwords $ tail cmd)
+            st' <- compile H.serialize (unwords $ tail cmd)
+            loop prelude st'
+        ["asm"] -> do
+            st' <- compile H.serializeAsm (unwords $ tail cmd)
             loop prelude st'
         ["exit"] -> exitSuccess
         _ -> do
@@ -131,7 +133,7 @@ loop prelude st =  do
                 hPutStrLn stderr "Ok."
                 return st'
 
-    compile file = do
+    compile serialize file = do
         p <- parse J.programm file <$> readFile file
         case p of
             Left err -> do
@@ -140,7 +142,7 @@ loop prelude st =  do
             Right ast -> do
                 let (ast', st') = H.runRenameM st ast
                     ast'' = H.jass2hot ast'
-                hPutBuilder stdout $ H.serialize $ H.compile ast''
+                hPutBuilder stdout $ serialize $ H.compile ast''
                 hFlush stdout
                 hPutStrLn stderr "Ok."
                 return st'

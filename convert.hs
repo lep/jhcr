@@ -120,8 +120,26 @@ initFn ts = Function Normal "_init" [] "nothing" [
   where
     i = Int . fromString . show
 
+
+--  bin :: [a] -> Ast Name Expr -> (a -> Int32) -> (a -> Ast Name Stmt) -> Ast Name Stmt
+setAndBind ts = bin (concatMap allChildren ts) ty fst (mkSet . snd)
+
+  where
+    mkSet tyname = Call ("Table#_set_" <> tyname) [targetTbl, toReg, Call ("Table#_get_" <> tyname) [fromTbl, fromReg] ]
+
+    toReg = Var $ SVar "to_reg"
+    fromReg = Var $ SVar "from_reg"
+    ty = Var $ SVar "ty"
+    targetTbl = Var $ SVar "target_table"
+    fromTbl = Var $ SVar "from_table"
+
+gTypeBin ts = bin (concatMap allChildren ts) ty fst (mkCall . snd)
+  where
+    mkCall tyname = Call "hom" [Var $ SVar tyname, Var $ SVar "macro"]
+    ty = Var $ SVar "ty"
+
 convert :: [Tree Name] -> Ast Name Toplevel
-convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toReg"), ("integer", "fromType"), ("integer", "fromReg")] "nothing" [
+convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toReg"), ("integer", "fromType"), ("integer", "fromReg"), ("integer", "ctx")] "nothing" [
         Set (SVar "toType") $ Var $ AVar "_toTypeOffset" $ Var $ SVar "toType",
         bin (filter isBranch $ concatMap allChildren' ts) toType ((offsetMap Map.!) . getId) convTo
     ]
@@ -135,7 +153,7 @@ convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toR
 
     toType' = Var $ AVar "_toTypeOffset" toType
 
-    scope = Var $ SVar "Scopes#_scope"
+    scope = Var $ SVar "Context#_locals[ctx]"
 
     convTo :: Tree Name -> Ast Name Stmt
     convTo t =
@@ -143,7 +161,7 @@ convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toR
         in bin children fromType getId (convFrom t)
 
     convFrom :: Tree Name -> Tree Name -> Ast Name Stmt
-    convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Scopes#_scope", fromReg]]
+    convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Context#_locals[ctx]", fromReg]]
     
     offsetMap = Map.fromList $ zip (offsets ts) [1..]
     
@@ -223,7 +241,9 @@ script2typehierachy x =
     Typedef a b -> singleton b [a]
     _ -> composeFold script2typehierachy x
 
-
+mkJassTypes ty = Programm $ map mkGlobal $ concatMap allChildren ty
+  where
+    mkGlobal (id, name) = Global $ SDef Const ("_" <> name) "integer" $ Just (Int $ show id)
 
 main = do
     x <- parse programm "common.j" <$> readFile "common.j"
@@ -231,11 +251,30 @@ main = do
         Left err -> putStrLn $ errorBundlePretty err
         Right j -> do
             let base2children = getMonoidMap $ script2typehierachy j <> singleton "real" ["integer"]
-            let types@(a:b:_) = evalState (mapM (go base2children) ["handle", "real", "code", "string", "boolean", "nothing"]) 1
+            let types@(a:b:_) = evalState (mapM (go base2children) ["handle", "real", "string", "boolean", "code", "nothing"]) 1
 
             printHaskell types
             printRuntime [a, b]
+            printGBinTy $ take 4 types
+            printJassTypes types
   where
+    printJassTypes ty = do
+        f <- openFile "runtime/types.j" WriteMode
+        hPutStrLn f "// scope Types"
+        hPutBuilder f . pretty $ mkJassTypes ty
+        hClose f
+
+    printGBinTy ty = do
+        f <- openFile "runtime/g-type-bin.j" WriteMode
+        hPutStrLn f "#define hom(type, m) m(type)"
+        hPutBuilder f . printStmt $ gTypeBin ty
+        hClose f
+        
+    printSetAndBind ty = do
+        f <- openFile "runtime/set-and-bind.j" WriteMode
+        hPutBuilder f . printStmt $ setAndBind ty
+        hClose f
+  
     printHaskell ty = do
         f <- openFile "Hot/Types.hs" WriteMode
         hPutStrLn f $ unlines

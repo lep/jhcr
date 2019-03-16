@@ -1,14 +1,7 @@
 // scope Ins
 
 globals
-
-    constant integer _type_Integer = 94
-    constant integer _type_Real = 93
-    constant integer _type_Code = 96
-    constant integer _type_String = 95
-    constant integer _type_Boolean = 97
-
-   
+  
     constant integer _Lt = 1
     constant integer _Le = 2
     constant integer _Gt = 3
@@ -91,25 +84,25 @@ endfunction
 
 function _print takes integer ins returns nothing
 
+    call BJDebugMsg(I2S(_op[ins]) +" "+ I2S(_type[ins]) +" "+ I2S(_a1[ins]) +" "+ I2S(_a2[ins]) +" "+ I2S(_a3[ins]))
+
 
     if _op[ins] <= Ins#_GetLocalArray then
         call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ I2S(_a1[ins]) +" "+ I2S(_a2[ins]) +" "+ I2S(_a3[ins]))
     elseif _op[ins] <= Ins#_Bind then
         call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ I2S(_a1[ins]) +" "+ I2S(_a2[ins]) )
     elseif _op[ins] == Ins#_Lit then
-        if Ins#_type[ins] == Ins#_type_String then
+        if Ins#_type[ins] == Types#_string then
             call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ (_string[ins]) )
-        elseif Ins#_type[ins] == Ins#_type_Integer then
+        elseif Ins#_type[ins] == Types#_integer then
             call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ I2S(_integer[ins]) )
-        elseif Ins#_type[ins] == Ins#_type_Real then
+        elseif Ins#_type[ins] == Types#_real then
             call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]]  +" "+ R2S(_real[ins]) )
-        elseif Ins#_type[ins] == Ins#_type_Boolean then
+        elseif Ins#_type[ins] == Types#_boolean then
             call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ _B2S(_boolean[ins]) )
         endif
     elseif _op[ins] == Ins#_Call then
         call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ I2S(_a1[ins]) +" "+ I2S(_a2[ins]) )
-    //elseif _op[ins] == Ins#_Bind then
-    //    call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ I2S(_a1[ins]) +" "+ I2S(_a2[ins]) )
     elseif _op[ins] == Ins#_Convert then
         call BJDebugMsg(_OpNames[_op[ins]] +" "+ _TypeNames[_type[ins]] +" "+ I2S(_a1[ins]) +" "+ I2S(_a2[ins]) +" "+ I2S(_a3[ins]))
     elseif _op[ins] == Ins#_Label then
@@ -128,6 +121,7 @@ function _print takes integer ins returns nothing
         call BJDebugMsg("unknown op " +I2S(Ins#_op[ins]))
     endif
 
+    call BJDebugMsg("------------")
     
 endfunction
 
@@ -161,9 +155,106 @@ function _init takes nothing returns nothing
     set _OpNames[_Convert]="Convert"
     set _OpNames[_Fun]="Fun"
     
-    set _TypeNames[_type_Boolean]="boolean"
-    set _TypeNames[_type_Integer]="integer"
-    set _TypeNames[_type_Real]="real"
-    set _TypeNames[_type_Code]="code"
-    set _TypeNames[_type_String]="string"
+    set _TypeNames[Types#_handle] = "handle"
+    set _TypeNames[Types#_agent] = "agent"
+    set _TypeNames[Types#_event] = "event"
+    set _TypeNames[Types#_player] = "player"
+    set _TypeNames[Types#_widget] = "widget"
+    set _TypeNames[Types#_unit] = "unit"
+    set _TypeNames[Types#_destructable] = "destructable"
+    set _TypeNames[Types#_item] = "item"
+    set _TypeNames[Types#_ability] = "ability"
+    set _TypeNames[Types#_buff] = "buff"
+    set _TypeNames[Types#_force] = "force"
+    set _TypeNames[Types#_group] = "group"
+    set _TypeNames[Types#_trigger] = "trigger"
+    set _TypeNames[Types#_triggercondition] = "triggercondition"
+    set _TypeNames[Types#_timer] = "timer"
+    set _TypeNames[Types#_location] = "location"
+    set _TypeNames[Types#_region] = "region"
+    set _TypeNames[Types#_rect] = "rect"
+    set _TypeNames[Types#_boolexpr] = "boolexpr"
+    set _TypeNames[Types#_conditionfunc] = "conditionfunc"
+    set _TypeNames[Types#_filterfunc] = "filterfunc"
+    set _TypeNames[Types#_sound] = "sound"
+    set _TypeNames[Types#_effect] = "effect"
+    set _TypeNames[Types#_fogmodifier] = "fogmodifier"
+    set _TypeNames[Types#_dialog] = "dialog"
+    set _TypeNames[Types#_button] = "button"
+    set _TypeNames[Types#_quest] = "quest"
+    set _TypeNames[Types#_questitem] = "questitem"
+    set _TypeNames[Types#_defeatcondition] = "defeatcondition"
+    set _TypeNames[Types#_timerdialog] = "timerdialog"
+    set _TypeNames[Types#_leaderboard] = "leaderboard"
+    set _TypeNames[Types#_multiboard] = "multiboard"
+    set _TypeNames[Types#_multiboarditem] = "multiboarditem"
+    set _TypeNames[Types#_trackable] = "trackable"
+    set _TypeNames[Types#_gamecache] = "gamecache"
+    set _TypeNames[Types#_hashtable] = "hashtable"
+    set _TypeNames[Types#_triggeraction] = "triggeraction"
+    set _TypeNames[Types#_unitpool] = "unitpool"
+    set _TypeNames[Types#_itempool] = "itempool"
+    set _TypeNames[Types#_race] = "race"
+    set _TypeNames[Types#_alliancetype] = "alliancetype"
+    set _TypeNames[Types#_racepreference] = "racepreference"
+    set _TypeNames[Types#_gamestate] = "gamestate"
+    set _TypeNames[Types#_igamestate] = "igamestate"
+    set _TypeNames[Types#_fgamestate] = "fgamestate"
+    set _TypeNames[Types#_playerstate] = "playerstate"
+    set _TypeNames[Types#_playerscore] = "playerscore"
+    set _TypeNames[Types#_playergameresult] = "playergameresult"
+    set _TypeNames[Types#_unitstate] = "unitstate"
+    set _TypeNames[Types#_aidifficulty] = "aidifficulty"
+    set _TypeNames[Types#_eventid] = "eventid"
+    set _TypeNames[Types#_gameevent] = "gameevent"
+    set _TypeNames[Types#_playerevent] = "playerevent"
+    set _TypeNames[Types#_playerunitevent] = "playerunitevent"
+    set _TypeNames[Types#_unitevent] = "unitevent"
+    set _TypeNames[Types#_limitop] = "limitop"
+    set _TypeNames[Types#_widgetevent] = "widgetevent"
+    set _TypeNames[Types#_dialogevent] = "dialogevent"
+    set _TypeNames[Types#_unittype] = "unittype"
+    set _TypeNames[Types#_gamespeed] = "gamespeed"
+    set _TypeNames[Types#_gamedifficulty] = "gamedifficulty"
+    set _TypeNames[Types#_gametype] = "gametype"
+    set _TypeNames[Types#_mapflag] = "mapflag"
+    set _TypeNames[Types#_mapvisibility] = "mapvisibility"
+    set _TypeNames[Types#_mapsetting] = "mapsetting"
+    set _TypeNames[Types#_mapdensity] = "mapdensity"
+    set _TypeNames[Types#_mapcontrol] = "mapcontrol"
+    set _TypeNames[Types#_playerslotstate] = "playerslotstate"
+    set _TypeNames[Types#_volumegroup] = "volumegroup"
+    set _TypeNames[Types#_camerafield] = "camerafield"
+    set _TypeNames[Types#_camerasetup] = "camerasetup"
+    set _TypeNames[Types#_playercolor] = "playercolor"
+    set _TypeNames[Types#_placement] = "placement"
+    set _TypeNames[Types#_startlocprio] = "startlocprio"
+    set _TypeNames[Types#_raritycontrol] = "raritycontrol"
+    set _TypeNames[Types#_blendmode] = "blendmode"
+    set _TypeNames[Types#_texmapflags] = "texmapflags"
+    set _TypeNames[Types#_effecttype] = "effecttype"
+    set _TypeNames[Types#_weathereffect] = "weathereffect"
+    set _TypeNames[Types#_terraindeformation] = "terraindeformation"
+    set _TypeNames[Types#_fogstate] = "fogstate"
+    set _TypeNames[Types#_version] = "version"
+    set _TypeNames[Types#_itemtype] = "itemtype"
+    set _TypeNames[Types#_texttag] = "texttag"
+    set _TypeNames[Types#_attacktype] = "attacktype"
+    set _TypeNames[Types#_damagetype] = "damagetype"
+    set _TypeNames[Types#_weapontype] = "weapontype"
+    set _TypeNames[Types#_soundtype] = "soundtype"
+    set _TypeNames[Types#_lightning] = "lightning"
+    set _TypeNames[Types#_pathingtype] = "pathingtype"
+    set _TypeNames[Types#_mousebuttontype] = "mousebuttontype"
+    set _TypeNames[Types#_animtype] = "animtype"
+    set _TypeNames[Types#_subanimtype] = "subanimtype"
+    set _TypeNames[Types#_image] = "image"
+    set _TypeNames[Types#_ubersplat] = "ubersplat"
+    set _TypeNames[Types#_real] = "real"
+    set _TypeNames[Types#_integer] = "integer"
+    set _TypeNames[Types#_string] = "string"
+    set _TypeNames[Types#_boolean] = "boolean"
+    set _TypeNames[Types#_code] = "code"
+    set _TypeNames[Types#_nothing] = "nothing"
+
 endfunction

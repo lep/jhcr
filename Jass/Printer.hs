@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 
-module Jass.Printer (pretty) where
+module Jass.Printer (pretty, printStmt) where
 
 import Prelude hiding (unwords, unlines)
 
