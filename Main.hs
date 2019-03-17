@@ -164,7 +164,7 @@ main = do
                     ast'' = H.jass2hot ast'
                 
                 void $ forM_ nameU $ \n ->
-                    putStrLn $ unwords ["Updating function", n]
+                    hPutStrLn stderr $ unwords ["Updating function", n]
   
                 hPutStrLn stderr "Writing bytecode"
                 

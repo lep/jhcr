@@ -225,8 +225,8 @@ expression = makeExprParser term table
 
 term = parens expression
     <|> reserved "not"   *> (((\e -> Call "not" [e])) <$> expression)
-    <|> symbol "-" *> (((\e -> Call "-" [e])) <$> expression)
-    <|> symbol "+"  *> (((\e -> Call "+" [e])) <$> expression)
+    <|> symbol "-" *> (((\e -> Call "-" [e])) <$> term)
+    <|> symbol "+"  *> (((\e -> Call "+" [e])) <$> term)
     <|> literal
     <|> varOrCall
     <?> "term"

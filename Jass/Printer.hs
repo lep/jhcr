@@ -42,6 +42,7 @@ printFn (Function c name args retty body) = unlines
     , block body
     , "endfunction"
     ]
+printFn (Native c name args retty) = unwords [ printConst c, "native", stringUtf8  name, "takes", printArgs args, "returns", stringUtf8  retty ]
 
 printArgs [] = "nothing"
 printArgs args = unlist $ map (\(ty, name) -> unwords [stringUtf8  ty, stringUtf8  name]) args
