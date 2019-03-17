@@ -12,8 +12,8 @@ globals
     integer _current_fn = 0
     integer _previns = 0
     
-    // table from (fn, label) -> ins
-    integer _fn_labels = 0 
+    // Table<lbl, ins> array with idx = fid + 100
+    integer array _fn_labels
     // use (fid + 100) as index where 100 is the number of dummy functions
     integer array _fn_entry
 endglobals
@@ -109,11 +109,14 @@ function _parse_and_init takes string instruction returns nothing
         if Ins#_op[ins] == Ins#_Fun then
             set _current_fn = Ins#_a1[ins]
             set _fn_entry[_current_fn + 100] = ins
+            if _fn_labels[_current_fn + 100] == 0 then
+                set _fn_labels[_current_fn + 100] = Table#_alloc()
+            endif
             call Modified#_set_modified(_current_fn)
             set _previns = 0
 
         elseif Ins#_op[ins] == Ins#_Label then
-            call Table#_set_integer(_current_fn, Ins#_a1[ins], ins)
+            call Table#_set_integer(_fn_labels[_current_fn + 100], Ins#_a1[ins], ins)
         endif
         
         if _previns != 0 then
