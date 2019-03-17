@@ -9,7 +9,7 @@
 module Hot.Instruction
     ( Instruction (..)
     , Register, Label
-    , serialize, serializeAsm
+    , serialize, serializeAsm, serializeChunked
     ) where
 
 import qualified Hot.Ast as Hot
@@ -23,7 +23,7 @@ import Data.Composeable
 
 import Control.Arrow (second)
 
-import Data.List (intersperse)
+import Data.List (intersperse, foldl')
 
 import Data.Monoid
 
@@ -39,6 +39,7 @@ import Data.Maybe
 
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.ByteString.Builder
 
 import Control.Lens
@@ -222,12 +223,66 @@ serializeAsm = unlines . map s
                 litLen = fromIntegral . BL.length $ toLazyByteString litRendered
             in unwords [ins2id "lit", typeToId t, reg' s, int16Dec litLen, litRendered]
   
-serialize :: [Instruction] -> Builder
-serialize = unlines . map s
-  where
-    unlines = mconcat {-. intersperse (charUtf8 '\n')-}
-    unwords = mconcat {-. intersperse (charUtf8 ' ')-}
 
+serialize' :: Instruction -> Builder
+serialize' ins =
+  case ins of
+    Lt t s a b -> mconcat [ ins2id "lt", typeToId t, reg s, reg a, reg b]
+    Le t s a b -> mconcat [ ins2id "le", typeToId t, reg s, reg a, reg b]
+    Gt t s a b -> mconcat [ ins2id "gt", typeToId t, reg s, reg a, reg b]
+    Ge t s a b -> mconcat [ ins2id "ge", typeToId t, reg s, reg a, reg b]
+    Eq t s a b -> mconcat [ ins2id "eq", typeToId t, reg s, reg a, reg b]
+    Neq t s a b -> mconcat [ ins2id "neq", typeToId t, reg s, reg a, reg b]
+    Add t s a b -> mconcat [ ins2id "add", typeToId t, reg s, reg a, reg b]
+    Sub t s a b -> mconcat [ ins2id "sub", typeToId t, reg s, reg a, reg b]
+    Mul t s a b -> mconcat [ ins2id "mul", typeToId t, reg s, reg a, reg b]
+    Div t s a b -> mconcat [ ins2id "div", typeToId t, reg s, reg a, reg b]
+    Mod t s a b -> mconcat [ ins2id "mod", typeToId t, reg s, reg a, reg b]
+
+    Negate t s a -> mconcat [ins2id "neg", typeToId t, reg s, reg a]
+
+    Set t s a -> mconcat [ ins2id "set", typeToId t, reg s, reg a]
+    SetGlobal ty g s -> mconcat [ ins2id "sg", typeToId ty, reg g, reg s]
+    GetGlobal ty s g -> mconcat [ ins2id "gg", typeToId ty, reg s, reg g]
+
+    SetLocalArray ty ar idx r -> mconcat [ ins2id "sla", typeToId ty, reg ar, reg idx, reg r]
+    GetLocalArray ty t ar idx -> mconcat [ ins2id "gla", typeToId ty, reg t, reg ar, reg idx]
+
+    SetGlobalArray t ar idx v -> mconcat [ ins2id "sga", typeToId t, reg ar, reg idx, reg v]
+    GetGlobalArray ty t ar idx -> mconcat[ ins2id "gga", typeToId ty, reg t, reg ar, reg idx]
+
+    Call t s f _ -> mconcat [ins2id "call", typeToId t, reg s, label f]
+    Bind t s a -> mconcat [ ins2id "bind", typeToId t, reg s, reg a]
+
+    Not s a -> mconcat [ ins2id "not", reg s, reg a]
+
+    Function f _ -> mconcat [ins2id "fun", label f]
+
+    Label l -> mconcat [ ins2id "label", label l]
+    Jmp l -> mconcat [ ins2id "jmp", label l]
+    JmpT l a -> mconcat [ ins2id "jmpt", reg a, label l]
+
+    Convert t s t' s' -> mconcat [ ins2id "conv", typeToId t, reg s, typeToId t', reg s']
+
+    Ret -> ins2id "ret"
+
+    Literal t s l ->
+        let litRendered = serializeLit l
+            litLen = fromIntegral . BL.length $ toLazyByteString litRendered
+        in mconcat [ins2id "lit", typeToId t, reg s, pad16Dec litLen, litRendered]
+
+  where
+    typeToId x = pad7Dec (Map.findWithDefault (error $  x) x Hot.types)
+    ins2id n = pad5Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
+    instable =
+      [ ("lt", 1), ("le", 2), ("gt", 3), ("ge", 4), ("eq", 5), ("neq", 6)
+      , ("add", 7), ("sub", 8), ("mul", 9), ("div", 10), ("mod", 11)
+      , ("sla", 12), ("gla", 13), ("sga", 14), ("gga", 15), ("neg", 16)
+      , ("set", 17), ("sg", 18), ("gg", 19), ("bind", 20), ("lit", 21)
+      , ("call", 22), ("conv", 23), ("label", 24), ("jmp", 25), ("fun", 26)
+      , ("jmpt", 27), ("not", 28), ("ret", 29)
+      ]
+    
     serializeLit :: Hot.Ast Var Expr -> Builder
     serializeLit l =
       case l of
@@ -237,67 +292,30 @@ serialize = unlines . map s
         Hot.Bool s -> stringUtf8 $ show s
         Hot.Null -> stringUtf8 "null"
 
-    bla ins args = unwords [ins, unwords args]
+serialize :: [Instruction] -> Builder
+serialize = unlines . map serialize'
+  where
+    unlines = mconcat {-. intersperse (charUtf8 '\n')-}
 
-    typeToId x = pad7Dec (Map.findWithDefault (error $  x) x Hot.types) --Hot.types Map.! x)
-    --typeToId x = stringUtf8   x
-    
-    --ins2id = id
-    ins2id n = pad5Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
-    
-    instable =
-      [ ("lt", 1), ("le", 2), ("gt", 3), ("ge", 4), ("eq", 5), ("neq", 6)
-      , ("add", 7), ("sub", 8), ("mul", 9), ("div", 10), ("mod", 11)
-      , ("sla", 12), ("gla", 13), ("sga", 14), ("gga", 15), ("neg", 16)
-      , ("set", 17), ("sg", 18), ("gg", 19), ("bind", 20), ("lit", 21)
-      , ("call", 22), ("conv", 23), ("label", 24), ("jmp", 25), ("fun", 26)
-      , ("jmpt", 27), ("not", 28), ("ret", 29)
-      ]
+      
 
-    s ins =
-      case ins of
-        Lt t s a b -> unwords [ ins2id "lt", typeToId t, reg s, reg a, reg b]
-        Le t s a b -> unwords [ ins2id "le", typeToId t, reg s, reg a, reg b]
-        Gt t s a b -> unwords [ ins2id "gt", typeToId t, reg s, reg a, reg b]
-        Ge t s a b -> unwords [ ins2id "ge", typeToId t, reg s, reg a, reg b]
-        Eq t s a b -> unwords [ ins2id "eq", typeToId t, reg s, reg a, reg b]
-        Neq t s a b -> unwords [ ins2id "neq", typeToId t, reg s, reg a, reg b]
-        Add t s a b -> unwords [ ins2id "add", typeToId t, reg s, reg a, reg b]
-        Sub t s a b -> unwords [ ins2id "sub", typeToId t, reg s, reg a, reg b]
-        Mul t s a b -> unwords [ ins2id "mul", typeToId t, reg s, reg a, reg b]
-        Div t s a b -> unwords [ ins2id "div", typeToId t, reg s, reg a, reg b]
-        Mod t s a b -> unwords [ ins2id "mod", typeToId t, reg s, reg a, reg b]
 
-        Negate t s a -> bla (ins2id "neg") [typeToId t, reg s, reg a]
+serializeChunked :: Int64 ->[Instruction] -> [String]
+serializeChunked chunkSize =
+    map L8.unpack .
+    map toLazyByteString .
+    map fst .
+    foldl' go [mempty] .
+    map (\x -> (lazyByteString x, Sum $ BL.length x)) .
+    map toLazyByteString . 
+    map serialize'
+  where
+    go (x:xs) elem =
+        let x' = x <> elem
+        in if getSum (snd x') > chunkSize
+        then elem:x:xs
+        else x':xs
 
-        Set t s a -> unwords [ ins2id "set", typeToId t, reg s, reg a]
-        SetGlobal ty g s -> unwords [ ins2id "sg", typeToId ty, reg g, reg s]
-        GetGlobal ty s g -> unwords [ ins2id "gg", typeToId ty, reg s, reg g]
 
-        SetLocalArray ty ar idx r -> unwords [ ins2id "sla", typeToId ty, reg ar, reg idx, reg r]
-        GetLocalArray ty t ar idx -> unwords [ ins2id "gla", typeToId ty, reg t, reg ar, reg idx]
-
-        SetGlobalArray t ar idx v -> unwords [ ins2id "sga", typeToId t, reg ar, reg idx, reg v]
-        GetGlobalArray ty t ar idx -> unwords[ ins2id "gga", typeToId ty, reg t, reg ar, reg idx]
-
-        Call t s f _ -> unwords [ins2id "call", typeToId t, reg s, label f]
-        Bind t s a -> bla (ins2id "bind") [typeToId t, reg s, reg a]
-
-        Not s a -> bla (ins2id "not") [reg s, reg a]
-
-        Function f _ -> unwords [ins2id "fun", label f]
-
-        Label l -> unwords [ ins2id "label", label l]
-        Jmp l -> unwords [ ins2id "jmp", label l]
-        JmpT l a -> unwords [ ins2id "jmpt", reg a, label l]
-
-        Convert t s t' s' -> unwords [ ins2id "conv", typeToId t, reg s, typeToId t', reg s']
-
-        Ret -> ins2id "ret"
-
-        Literal t s l ->
-            let litRendered = serializeLit l
-                litLen = fromIntegral . BL.length $ toLazyByteString litRendered
-            in unwords [ins2id "lit", typeToId t, reg s, pad16Dec litLen, litRendered]
 
 

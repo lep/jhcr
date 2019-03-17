@@ -79,14 +79,14 @@ main = do
     args' <- getArgs
     case args' of
         ["init", cj, bj, uj] -> init [cj, bj, uj]
-        ["compile", uj] -> compile uj
+        ["compile", pf, uj] -> compile pf uj
         ["asm", uj] -> asm uj
         _ -> do
             hPutStrLn stderr $
               unlines [ "Usage:"
                       , "  init common.j Blizzard.j war3map.j"
-                      , "  compile update.j"
-                      , "  asm update.j"
+                      , "  compile preload.txt war3map.j"
+                      , "  asm war3map.j"
                       ]
             
             exitFailure
@@ -105,6 +105,8 @@ main = do
                     ast'' = H.jass2hot ast'
 
                 hPutBuilder stdout $ H.serializeAsm $ H.compile ast''
+                --let asms = H.serializeChunked 100 $ H.compile ast''
+                --forM_ asms putStrLn
     
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
     isUpdated old new x =
@@ -124,8 +126,23 @@ main = do
     
     getFnName :: J.Ast J.Name J.Toplevel -> J.Name
     getFnName (J.Function _ name _ _ _) = name
+    
+    mkPreload :: [String] -> J.Ast J.Name J.Programm
+    mkPreload = J.Programm . pure . mkF
+    
+    mkF :: [String] -> J.Ast J.Name J.Toplevel
+    mkF asms =
+        let availableIds = map J.Rawcode ["Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls", "Adis", "Acmg", "Amdf", "Adts"]
+            cnt = length asms
+            mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
+
+            setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int "1", J.Int $ show cnt ]
+            setCodes = zipWith mkC availableIds asms
+            
+        in J.Function J.Normal "PreloadFiles" [] "nothing" $ setCnt:setCodes
+            
         
-    compile updatej = do
+    compile pf updatej = do
         stf <- openBinaryFile "jhcr.state" ReadWriteMode
         (st, hmap) <- decode <$> BL.hGetContents stf
 
@@ -146,17 +163,20 @@ main = do
                 let (ast', st') = H.runRenameM H.Compile st progU
                     ast'' = H.jass2hot ast'
                 
-                forM_ nameU $ \n ->
+                void $ forM_ nameU $ \n ->
                     putStrLn $ unwords ["Updating function", n]
   
                 hPutStrLn stderr "Writing bytecode"
-                cfd <- openBinaryFile "jhcr.txt" WriteMode
-                hPutBuilder cfd $ H.serialize $ H.compile ast''
+                
+                let asms = H.serializeChunked 500 $ H.compile ast''
+                    preload = mkPreload asms
+
+                cfd <- openBinaryFile pf WriteMode
+                hPutBuilder cfd $ J.pretty preload
                 hFlush cfd
                 hClose cfd
 
                 hPutStrLn stderr "Writing state file"
-
                 hSeek stf AbsoluteSeek 0
                 BL.hPutStr stf $ encode (st', hmap' <> hmap)
                 hFlush stf
