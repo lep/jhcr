@@ -8,7 +8,7 @@ import Control.Monad
 import Control.Monad.Trans.Except
 import Control.Monad.IO.Class
 
-import Control.Arrow (second)
+import Control.Arrow (first, second)
 
 import Data.Monoid
 
@@ -40,6 +40,7 @@ import qualified Hot.Ast as H
 import qualified Hot.Var as H
 import qualified Hot.Instruction as H
 import qualified Hot.Instruction.Compiler as H
+import qualified Hot.HandleCode as HandleCode
 
 import Data.Composeable
 import Data.Hashable
@@ -101,7 +102,7 @@ main = do
                 exitFailure
                 
             Right ast -> do
-                let (ast', st') = H.runRenameM H.Compile st ast
+                let (ast', st') = H.runRenameM H.Compile id st ast
                     ast'' = H.jass2hot ast'
 
                 hPutBuilder stdout $ H.serializeAsm $ H.compile ast''
@@ -160,7 +161,7 @@ main = do
                     nameU = map getFnName $ filter isFunction astU
                     progU = J.Programm astU
                 
-                let (ast', st') = H.runRenameM H.Compile st progU
+                let (ast', st') = H.runRenameM H.Compile id st progU
                     ast'' = H.jass2hot ast'
                 
                 void $ forM_ nameU $ \n ->
@@ -212,7 +213,7 @@ main = do
             Right (prelude, rt1, rt2) -> do
                 hPutStrLn stderr "Initializing...."
 
-                let (prelude', st) = H.runRenameM' H.Init prelude
+                let (prelude', st) = H.runRenameM' H.Init id prelude
                 
                 p <- parse J.programm war3mapj <$> readFile war3mapj
                 case p of
@@ -221,7 +222,9 @@ main = do
                         exitFailure
                     Right ast -> do
                         let ast' :: J.Ast H.Var H.Programm
-                            (ast', st') = H.runRenameM H.Init st ast
+                            (ast', st') = first HandleCode.compile $ H.runRenameM H.Init conv st ast
+                            
+                            conv x = if x == "code" then "_replace_code" else x
                             
                             generated :: [J.Ast H.Var H.Programm]
                             generated = H.generate $ concatPrograms prelude' ast'

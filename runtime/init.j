@@ -6,32 +6,36 @@ globals
 endglobals
 
 function _parse takes nothing returns nothing
-    local integer cnt = _max
-    local string array tmp
+    local integer _cnt = _max
+    local string array _tmp
     
     call BJDebugMsg("esc")
     
     loop
-    exitwhen cnt == 0
-        set tmp[cnt] = BlzGetAbilityTooltip(_ids[cnt], 1)
-        set cnt = cnt -1
+    exitwhen _cnt == 0
+        set _tmp[_cnt] = BlzGetAbilityTooltip(_ids[_cnt], 1)
+        set _cnt = _cnt -1
     endloop
 
     call Preloader("JHCR.txt")
-    set cnt = GetPlayerTechMaxAllowed(Player(0), 1) 
+    set _cnt = GetPlayerTechMaxAllowed(Player(0), 1) 
     loop
-    exitwhen cnt == 0
-        call JHCR_Parser_parse_and_init(BlzGetAbilityTooltip(_ids[cnt], 1))
-        call BlzSetAbilityTooltip(_ids[cnt], tmp[cnt], 1)
-        set cnt = cnt -1
+    exitwhen _cnt == 0
+        call JHCR_Parser_parse_and_init(BlzGetAbilityTooltip(_ids[_cnt], 1))
+        call BlzSetAbilityTooltip(_ids[_cnt], _tmp[_cnt], 1)
+        set _cnt = _cnt -1
     endloop
+endfunction
+
+function _i2code takes nothing returns nothing
+    set Wrap#_ret = Auto#_i2code(Wrap#_p)
 endfunction
 
 
 function _init takes nothing returns nothing
-    local trigger t = CreateTrigger()
-    call TriggerRegisterPlayerEventEndCinematic( t, Player(0) )
-    call TriggerAddAction( t, function _parse )
+    local trigger _t = CreateTrigger()
+    call TriggerRegisterPlayerEventEndCinematic( _t, Player(0) )
+    call TriggerAddAction( _t, function _parse )
     
     // "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls", "Adis", "Acmg", "Amdf", "Adts"
     set _ids[1] = 'Agyv'
@@ -46,6 +50,8 @@ function _init takes nothing returns nothing
     set _ids[6] = 'Acmg'
     set _ids[6] = 'Amdf'
     set _ids[6] = 'Adts'
+    
+    call TriggerAddCondition(Wrap#_t2, Condition(function _i2code))
 
     call Wrap#_init()
     call Convert#_init()

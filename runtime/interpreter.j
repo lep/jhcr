@@ -276,5 +276,5 @@ function _start_interpreter_wrap takes nothing returns boolean
 endfunction
 
 function _init takes nothing returns nothing
-    call TriggerAddCondition(Wrap#_t, Condition(function _start_interpreter_wrap))
+    call TriggerAddCondition(Wrap#_t1, Condition(function _start_interpreter_wrap))
 endfunction

@@ -24,843 +24,843 @@ endglobals
 
 #include "alloc.j"
 
-function _destroy takes integer tbl returns nothing
-    call FlushChildHashtable(_ht, tbl)
-    call _free(tbl)
+function _destroy takes integer _tbl returns nothing
+    call FlushChildHashtable(_ht, _tbl)
+    call _free(_tbl)
 endfunction
 
-function _get_boolean takes integer this,integer key returns boolean
-    return LoadBoolean(_ht, this, key)
+function _get_boolean takes integer _this,integer _key returns boolean
+    return LoadBoolean(_ht, _this, _key)
 endfunction
-function _set_boolean takes integer this,integer key,boolean value returns nothing
-    call SaveBoolean(_ht, this, key, value)
+function _set_boolean takes integer _this,integer _key,boolean _value returns nothing
+    call SaveBoolean(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_integer takes integer this,integer key returns integer
-    return LoadInteger(_ht, this, key)
+function _get_integer takes integer _this,integer _key returns integer
+    return LoadInteger(_ht, _this, _key)
 endfunction
-function _set_integer takes integer this,integer key,integer value returns nothing
-    call SaveInteger(_ht, this, key, value)
+function _set_integer takes integer _this,integer _key,integer _value returns nothing
+    call SaveInteger(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_real takes integer this,integer key returns real
-    return LoadReal(_ht, this, key)
+function _get_real takes integer _this,integer _key returns real
+    return LoadReal(_ht, _this, _key)
 endfunction
-function _set_real takes integer this,integer key,real value returns nothing
-    call SaveReal(_ht, this, key, value)
+function _set_real takes integer _this,integer _key,real _value returns nothing
+    call SaveReal(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_string takes integer this,integer key returns string
-    return LoadStr(_ht, this, key)
+function _get_string takes integer _this,integer _key returns string
+    return LoadStr(_ht, _this, _key)
 endfunction
-function _set_string takes integer this,integer key,string value returns nothing
-    call SaveStr(_ht, this, key, value)
+function _set_string takes integer _this,integer _key,string _value returns nothing
+    call SaveStr(_ht, _this, _key, _value)
 endfunction
 
 
 
-function _get_ability takes integer this,integer key returns ability
-    return LoadAbilityHandle(_ht, this, key)
+function _get_ability takes integer _this,integer _key returns ability
+    return LoadAbilityHandle(_ht, _this, _key)
 endfunction
-function _set_ability takes integer this,integer key,ability value returns nothing
-    call SaveAbilityHandle(_ht, this, key, value)
+function _set_ability takes integer _this,integer _key,ability _value returns nothing
+    call SaveAbilityHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_boolexpr takes integer this,integer key returns boolexpr
-    return LoadBooleanExprHandle(_ht, this, key)
+function _get_boolexpr takes integer _this,integer _key returns boolexpr
+    return LoadBooleanExprHandle(_ht, _this, _key)
 endfunction
-function _set_boolexpr takes integer this,integer key,boolexpr value returns nothing
-    call SaveBooleanExprHandle(_ht, this, key, value)
+function _set_boolexpr takes integer _this,integer _key,boolexpr _value returns nothing
+    call SaveBooleanExprHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_button takes integer this,integer key returns button
-    return LoadButtonHandle(_ht, this, key)
+function _get_button takes integer _this,integer _key returns button
+    return LoadButtonHandle(_ht, _this, _key)
 endfunction
-function _set_button takes integer this,integer key,button value returns nothing
-    call SaveButtonHandle(_ht, this, key, value)
+function _set_button takes integer _this,integer _key,button _value returns nothing
+    call SaveButtonHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_defeatcondition takes integer this,integer key returns defeatcondition
-    return LoadDefeatConditionHandle(_ht, this, key)
+function _get_defeatcondition takes integer _this,integer _key returns defeatcondition
+    return LoadDefeatConditionHandle(_ht, _this, _key)
 endfunction
-function _set_defeatcondition takes integer this,integer key,defeatcondition value returns nothing
-    call SaveDefeatConditionHandle(_ht, this, key, value)
+function _set_defeatcondition takes integer _this,integer _key,defeatcondition _value returns nothing
+    call SaveDefeatConditionHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_destructable takes integer this,integer key returns destructable
-    return LoadDestructableHandle(_ht, this, key)
+function _get_destructable takes integer _this,integer _key returns destructable
+    return LoadDestructableHandle(_ht, _this, _key)
 endfunction
-function _set_destructable takes integer this,integer key,destructable value returns nothing
-    call SaveDestructableHandle(_ht, this, key, value)
+function _set_destructable takes integer _this,integer _key,destructable _value returns nothing
+    call SaveDestructableHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_dialog takes integer this,integer key returns dialog
-    return LoadDialogHandle(_ht, this, key)
+function _get_dialog takes integer _this,integer _key returns dialog
+    return LoadDialogHandle(_ht, _this, _key)
 endfunction
-function _set_dialog takes integer this,integer key,dialog value returns nothing
-    call SaveDialogHandle(_ht, this, key, value)
+function _set_dialog takes integer _this,integer _key,dialog _value returns nothing
+    call SaveDialogHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_effect takes integer this,integer key returns effect
-    return LoadEffectHandle(_ht, this, key)
+function _get_effect takes integer _this,integer _key returns effect
+    return LoadEffectHandle(_ht, _this, _key)
 endfunction
-function _set_effect takes integer this,integer key,effect value returns nothing
-    call SaveEffectHandle(_ht, this, key, value)
+function _set_effect takes integer _this,integer _key,effect _value returns nothing
+    call SaveEffectHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_fogmodifier takes integer this,integer key returns fogmodifier
-    return LoadFogModifierHandle(_ht, this, key)
+function _get_fogmodifier takes integer _this,integer _key returns fogmodifier
+    return LoadFogModifierHandle(_ht, _this, _key)
 endfunction
-function _set_fogmodifier takes integer this,integer key,fogmodifier value returns nothing
-    call SaveFogModifierHandle(_ht, this, key, value)
+function _set_fogmodifier takes integer _this,integer _key,fogmodifier _value returns nothing
+    call SaveFogModifierHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_fogstate takes integer this,integer key returns fogstate
-    return LoadFogStateHandle(_ht, this, key)
+function _get_fogstate takes integer _this,integer _key returns fogstate
+    return LoadFogStateHandle(_ht, _this, _key)
 endfunction
-function _set_fogstate takes integer this,integer key,fogstate value returns nothing
-    call SaveFogStateHandle(_ht, this, key, value)
+function _set_fogstate takes integer _this,integer _key,fogstate _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_force takes integer this,integer key returns force
-    return LoadForceHandle(_ht, this, key)
+function _get_force takes integer _this,integer _key returns force
+    return LoadForceHandle(_ht, _this, _key)
 endfunction
-function _set_force takes integer this,integer key,force value returns nothing
-    call SaveForceHandle(_ht, this, key, value)
+function _set_force takes integer _this,integer _key,force _value returns nothing
+    call SaveForceHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_group takes integer this,integer key returns group
-    return LoadGroupHandle(_ht, this, key)
+function _get_group takes integer _this,integer _key returns group
+    return LoadGroupHandle(_ht, _this, _key)
 endfunction
-function _set_group takes integer this,integer key,group value returns nothing
-    call SaveGroupHandle(_ht, this, key, value)
+function _set_group takes integer _this,integer _key,group _value returns nothing
+    call SaveGroupHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_hashtable takes integer this,integer key returns hashtable
-    return LoadHashtableHandle(_ht, this, key)
+function _get_hashtable takes integer _this,integer _key returns hashtable
+    return LoadHashtableHandle(_ht, _this, _key)
 endfunction
-function _set_hashtable takes integer this,integer key,hashtable value returns nothing
-    call SaveHashtableHandle(_ht, this, key, value)
+function _set_hashtable takes integer _this,integer _key,hashtable _value returns nothing
+    call SaveHashtableHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_image takes integer this,integer key returns image
-    return LoadImageHandle(_ht, this, key)
+function _get_image takes integer _this,integer _key returns image
+    return LoadImageHandle(_ht, _this, _key)
 endfunction
-function _set_image takes integer this,integer key,image value returns nothing
-    call SaveImageHandle(_ht, this, key, value)
+function _set_image takes integer _this,integer _key,image _value returns nothing
+    call SaveImageHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_item takes integer this,integer key returns item
-    return LoadItemHandle(_ht, this, key)
+function _get_item takes integer _this,integer _key returns item
+    return LoadItemHandle(_ht, _this, _key)
 endfunction
-function _set_item takes integer this,integer key,item value returns nothing
-    call SaveItemHandle(_ht, this, key, value)
+function _set_item takes integer _this,integer _key,item _value returns nothing
+    call SaveItemHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_itempool takes integer this,integer key returns itempool
-    return LoadItemPoolHandle(_ht, this, key)
+function _get_itempool takes integer _this,integer _key returns itempool
+    return LoadItemPoolHandle(_ht, _this, _key)
 endfunction
-function _set_itempool takes integer this,integer key,itempool value returns nothing
-    call SaveItemPoolHandle(_ht, this, key, value)
+function _set_itempool takes integer _this,integer _key,itempool _value returns nothing
+    call SaveItemPoolHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_leaderboard takes integer this,integer key returns leaderboard
-    return LoadLeaderboardHandle(_ht, this, key)
+function _get_leaderboard takes integer _this,integer _key returns leaderboard
+    return LoadLeaderboardHandle(_ht, _this, _key)
 endfunction
-function _set_leaderboard takes integer this,integer key,leaderboard value returns nothing
-    call SaveLeaderboardHandle(_ht, this, key, value)
+function _set_leaderboard takes integer _this,integer _key,leaderboard _value returns nothing
+    call SaveLeaderboardHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_lightning takes integer this,integer key returns lightning
-    return LoadLightningHandle(_ht, this, key)
+function _get_lightning takes integer _this,integer _key returns lightning
+    return LoadLightningHandle(_ht, _this, _key)
 endfunction
-function _set_lightning takes integer this,integer key,lightning value returns nothing
-    call SaveLightningHandle(_ht, this, key, value)
+function _set_lightning takes integer _this,integer _key,lightning _value returns nothing
+    call SaveLightningHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_location takes integer this,integer key returns location
-    return LoadLocationHandle(_ht, this, key)
+function _get_location takes integer _this,integer _key returns location
+    return LoadLocationHandle(_ht, _this, _key)
 endfunction
-function _set_location takes integer this,integer key,location value returns nothing
-    call SaveLocationHandle(_ht, this, key, value)
+function _set_location takes integer _this,integer _key,location _value returns nothing
+    call SaveLocationHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_multiboard takes integer this,integer key returns multiboard
-    return LoadMultiboardHandle(_ht, this, key)
+function _get_multiboard takes integer _this,integer _key returns multiboard
+    return LoadMultiboardHandle(_ht, _this, _key)
 endfunction
-function _set_multiboard takes integer this,integer key,multiboard value returns nothing
-    call SaveMultiboardHandle(_ht, this, key, value)
+function _set_multiboard takes integer _this,integer _key,multiboard _value returns nothing
+    call SaveMultiboardHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_multiboarditem takes integer this,integer key returns multiboarditem
-    return LoadMultiboardItemHandle(_ht, this, key)
+function _get_multiboarditem takes integer _this,integer _key returns multiboarditem
+    return LoadMultiboardItemHandle(_ht, _this, _key)
 endfunction
-function _set_multiboarditem takes integer this,integer key,multiboarditem value returns nothing
-    call SaveMultiboardItemHandle(_ht, this, key, value)
+function _set_multiboarditem takes integer _this,integer _key,multiboarditem _value returns nothing
+    call SaveMultiboardItemHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_player takes integer this,integer key returns player
-    return LoadPlayerHandle(_ht, this, key)
+function _get_player takes integer _this,integer _key returns player
+    return LoadPlayerHandle(_ht, _this, _key)
 endfunction
-function _set_player takes integer this,integer key,player value returns nothing
-    call SavePlayerHandle(_ht, this, key, value)
+function _set_player takes integer _this,integer _key,player _value returns nothing
+    call SavePlayerHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_quest takes integer this,integer key returns quest
-    return LoadQuestHandle(_ht, this, key)
+function _get_quest takes integer _this,integer _key returns quest
+    return LoadQuestHandle(_ht, _this, _key)
 endfunction
-function _set_quest takes integer this,integer key,quest value returns nothing
-    call SaveQuestHandle(_ht, this, key, value)
+function _set_quest takes integer _this,integer _key,quest _value returns nothing
+    call SaveQuestHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_questitem takes integer this,integer key returns questitem
-    return LoadQuestItemHandle(_ht, this, key)
+function _get_questitem takes integer _this,integer _key returns questitem
+    return LoadQuestItemHandle(_ht, _this, _key)
 endfunction
-function _set_questitem takes integer this,integer key,questitem value returns nothing
-    call SaveQuestItemHandle(_ht, this, key, value)
+function _set_questitem takes integer _this,integer _key,questitem _value returns nothing
+    call SaveQuestItemHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_rect takes integer this,integer key returns rect
-    return LoadRectHandle(_ht, this, key)
+function _get_rect takes integer _this,integer _key returns rect
+    return LoadRectHandle(_ht, _this, _key)
 endfunction
-function _set_rect takes integer this,integer key,rect value returns nothing
-    call SaveRectHandle(_ht, this, key, value)
+function _set_rect takes integer _this,integer _key,rect _value returns nothing
+    call SaveRectHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_region takes integer this,integer key returns region
-    return LoadRegionHandle(_ht, this, key)
+function _get_region takes integer _this,integer _key returns region
+    return LoadRegionHandle(_ht, _this, _key)
 endfunction
-function _set_region takes integer this,integer key,region value returns nothing
-    call SaveRegionHandle(_ht, this, key, value)
+function _set_region takes integer _this,integer _key,region _value returns nothing
+    call SaveRegionHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_sound takes integer this,integer key returns sound
-    return LoadSoundHandle(_ht, this, key)
+function _get_sound takes integer _this,integer _key returns sound
+    return LoadSoundHandle(_ht, _this, _key)
 endfunction
-function _set_sound takes integer this,integer key,sound value returns nothing
-    call SaveSoundHandle(_ht, this, key, value)
+function _set_sound takes integer _this,integer _key,sound _value returns nothing
+    call SaveSoundHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_texttag takes integer this,integer key returns texttag
-    return LoadTextTagHandle(_ht, this, key)
+function _get_texttag takes integer _this,integer _key returns texttag
+    return LoadTextTagHandle(_ht, _this, _key)
 endfunction
-function _set_texttag takes integer this,integer key,texttag value returns nothing
-    call SaveTextTagHandle(_ht, this, key, value)
+function _set_texttag takes integer _this,integer _key,texttag _value returns nothing
+    call SaveTextTagHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_timer takes integer this,integer key returns timer
-    return LoadTimerHandle(_ht, this, key)
+function _get_timer takes integer _this,integer _key returns timer
+    return LoadTimerHandle(_ht, _this, _key)
 endfunction
-function _set_timer takes integer this,integer key,timer value returns nothing
-    call SaveTimerHandle(_ht, this, key, value)
+function _set_timer takes integer _this,integer _key,timer _value returns nothing
+    call SaveTimerHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_timerdialog takes integer this,integer key returns timerdialog
-    return LoadTimerDialogHandle(_ht, this, key)
+function _get_timerdialog takes integer _this,integer _key returns timerdialog
+    return LoadTimerDialogHandle(_ht, _this, _key)
 endfunction
-function _set_timerdialog takes integer this,integer key,timerdialog value returns nothing
-    call SaveTimerDialogHandle(_ht, this, key, value)
+function _set_timerdialog takes integer _this,integer _key,timerdialog _value returns nothing
+    call SaveTimerDialogHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_trackable takes integer this,integer key returns trackable
-    return LoadTrackableHandle(_ht, this, key)
+function _get_trackable takes integer _this,integer _key returns trackable
+    return LoadTrackableHandle(_ht, _this, _key)
 endfunction
-function _set_trackable takes integer this,integer key,trackable value returns nothing
-    call SaveTrackableHandle(_ht, this, key, value)
+function _set_trackable takes integer _this,integer _key,trackable _value returns nothing
+    call SaveTrackableHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_trigger takes integer this,integer key returns trigger
-    return LoadTriggerHandle(_ht, this, key)
+function _get_trigger takes integer _this,integer _key returns trigger
+    return LoadTriggerHandle(_ht, _this, _key)
 endfunction
-function _set_trigger takes integer this,integer key,trigger value returns nothing
-    call SaveTriggerHandle(_ht, this, key, value)
+function _set_trigger takes integer _this,integer _key,trigger _value returns nothing
+    call SaveTriggerHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_triggeraction takes integer this,integer key returns triggeraction
-    return LoadTriggerActionHandle(_ht, this, key)
+function _get_triggeraction takes integer _this,integer _key returns triggeraction
+    return LoadTriggerActionHandle(_ht, _this, _key)
 endfunction
-function _set_triggeraction takes integer this,integer key,triggeraction value returns nothing
-    call SaveTriggerActionHandle(_ht, this, key, value)
+function _set_triggeraction takes integer _this,integer _key,triggeraction _value returns nothing
+    call SaveTriggerActionHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_triggercondition takes integer this,integer key returns triggercondition
-    return LoadTriggerConditionHandle(_ht, this, key)
+function _get_triggercondition takes integer _this,integer _key returns triggercondition
+    return LoadTriggerConditionHandle(_ht, _this, _key)
 endfunction
-function _set_triggercondition takes integer this,integer key,triggercondition value returns nothing
-    call SaveTriggerConditionHandle(_ht, this, key, value)
+function _set_triggercondition takes integer _this,integer _key,triggercondition _value returns nothing
+    call SaveTriggerConditionHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_event takes integer this,integer key returns event
-    return LoadTriggerEventHandle(_ht, this, key)
+function _get_event takes integer _this,integer _key returns event
+    return LoadTriggerEventHandle(_ht, _this, _key)
 endfunction
-function _set_event takes integer this,integer key,event value returns nothing
-    call SaveTriggerEventHandle(_ht, this, key, value)
+function _set_event takes integer _this,integer _key,event _value returns nothing
+    call SaveTriggerEventHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_ubersplat takes integer this,integer key returns ubersplat
-    return LoadUbersplatHandle(_ht, this, key)
+function _get_ubersplat takes integer _this,integer _key returns ubersplat
+    return LoadUbersplatHandle(_ht, _this, _key)
 endfunction
-function _set_ubersplat takes integer this,integer key,ubersplat value returns nothing
-    call SaveUbersplatHandle(_ht, this, key, value)
+function _set_ubersplat takes integer _this,integer _key,ubersplat _value returns nothing
+    call SaveUbersplatHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_unit takes integer this,integer key returns unit
-    return LoadUnitHandle(_ht, this, key)
+function _get_unit takes integer _this,integer _key returns unit
+    return LoadUnitHandle(_ht, _this, _key)
 endfunction
-function _set_unit takes integer this,integer key,unit value returns nothing
-    call SaveUnitHandle(_ht, this, key, value)
+function _set_unit takes integer _this,integer _key,unit _value returns nothing
+    call SaveUnitHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_unitpool takes integer this,integer key returns unitpool
-    return LoadUnitPoolHandle(_ht, this, key)
+function _get_unitpool takes integer _this,integer _key returns unitpool
+    return LoadUnitPoolHandle(_ht, _this, _key)
 endfunction
-function _set_unitpool takes integer this,integer key,unitpool value returns nothing
-    call SaveUnitPoolHandle(_ht, this, key, value)
+function _set_unitpool takes integer _this,integer _key,unitpool _value returns nothing
+    call SaveUnitPoolHandle(_ht, _this, _key, _value)
 endfunction
 
 
-function _get_widget takes integer this,integer key returns widget
-    return LoadWidgetHandle(_ht, this, key)
+function _get_widget takes integer _this,integer _key returns widget
+    return LoadWidgetHandle(_ht, _this, _key)
 endfunction
-function _set_widget takes integer this,integer key,widget value returns nothing
-    call SaveWidgetHandle(_ht, this, key, value)
+function _set_widget takes integer _this,integer _key,widget _value returns nothing
+    call SaveWidgetHandle(_ht, _this, _key, _value)
 endfunction
 
 
 
-function _get_aidifficulty takes integer this,integer key returns aidifficulty
-    return ConvertAIDifficulty(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_aidifficulty takes integer _this,integer _key returns aidifficulty
+    return ConvertAIDifficulty(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_aidifficulty takes integer this,integer key,aidifficulty value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_aidifficulty takes integer _this,integer _key,aidifficulty _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_alliancetype takes integer this,integer key returns alliancetype
-    return ConvertAllianceType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_alliancetype takes integer _this,integer _key returns alliancetype
+    return ConvertAllianceType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_alliancetype takes integer this,integer key,alliancetype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_alliancetype takes integer _this,integer _key,alliancetype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
-function _get_animtype takes integer this,integer key returns animtype
-    return ConvertAnimType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_animtype takes integer _this,integer _key returns animtype
+    return ConvertAnimType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_animtype takes integer this,integer key,animtype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_animtype takes integer _this,integer _key,animtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_attacktype takes integer this,integer key returns attacktype
-    return ConvertAttackType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_attacktype takes integer _this,integer _key returns attacktype
+    return ConvertAttackType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_attacktype takes integer this,integer key,attacktype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_attacktype takes integer _this,integer _key,attacktype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_blendmode takes integer this,integer key returns blendmode
-    return ConvertBlendMode(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_blendmode takes integer _this,integer _key returns blendmode
+    return ConvertBlendMode(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_blendmode takes integer this,integer key,blendmode value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_blendmode takes integer _this,integer _key,blendmode _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_camerafield takes integer this,integer key returns camerafield
-    return ConvertCameraField(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_camerafield takes integer _this,integer _key returns camerafield
+    return ConvertCameraField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_camerafield takes integer this,integer key,camerafield value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_camerafield takes integer _this,integer _key,camerafield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_damagetype takes integer this,integer key returns damagetype
-    return ConvertDamageType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_damagetype takes integer _this,integer _key returns damagetype
+    return ConvertDamageType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_damagetype takes integer this,integer key,damagetype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_damagetype takes integer _this,integer _key,damagetype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_dialogevent takes integer this,integer key returns dialogevent
-    return ConvertDialogEvent(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_dialogevent takes integer _this,integer _key returns dialogevent
+    return ConvertDialogEvent(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_dialogevent takes integer this,integer key,dialogevent value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_dialogevent takes integer _this,integer _key,dialogevent _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_effecttype takes integer this,integer key returns effecttype
-    return ConvertEffectType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_effecttype takes integer _this,integer _key returns effecttype
+    return ConvertEffectType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_effecttype takes integer this,integer key,effecttype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_effecttype takes integer _this,integer _key,effecttype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_fgamestate takes integer this,integer key returns fgamestate
-    return ConvertFGameState(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_fgamestate takes integer _this,integer _key returns fgamestate
+    return ConvertFGameState(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_fgamestate takes integer this,integer key,fgamestate value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_fgamestate takes integer _this,integer _key,fgamestate _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_gamedifficulty takes integer this,integer key returns gamedifficulty
-    return ConvertGameDifficulty(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_gamedifficulty takes integer _this,integer _key returns gamedifficulty
+    return ConvertGameDifficulty(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_gamedifficulty takes integer this,integer key,gamedifficulty value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_gamedifficulty takes integer _this,integer _key,gamedifficulty _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_gameevent takes integer this,integer key returns gameevent
-    return ConvertGameEvent(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_gameevent takes integer _this,integer _key returns gameevent
+    return ConvertGameEvent(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_gameevent takes integer this,integer key,gameevent value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_gameevent takes integer _this,integer _key,gameevent _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_gamespeed takes integer this,integer key returns gamespeed
-    return ConvertGameSpeed(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_gamespeed takes integer _this,integer _key returns gamespeed
+    return ConvertGameSpeed(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_gamespeed takes integer this,integer key,gamespeed value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_gamespeed takes integer _this,integer _key,gamespeed _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_gametype takes integer this,integer key returns gametype
-    return ConvertGameType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_gametype takes integer _this,integer _key returns gametype
+    return ConvertGameType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_gametype takes integer this,integer key,gametype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_gametype takes integer _this,integer _key,gametype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_igamestate takes integer this,integer key returns igamestate
-    return ConvertIGameState(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_igamestate takes integer _this,integer _key returns igamestate
+    return ConvertIGameState(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_igamestate takes integer this,integer key,igamestate value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_igamestate takes integer _this,integer _key,igamestate _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_itemtype takes integer this,integer key returns itemtype
-    return ConvertItemType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_itemtype takes integer _this,integer _key returns itemtype
+    return ConvertItemType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_itemtype takes integer this,integer key,itemtype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_itemtype takes integer _this,integer _key,itemtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_limitop takes integer this,integer key returns limitop
-    return ConvertLimitOp(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_limitop takes integer _this,integer _key returns limitop
+    return ConvertLimitOp(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_limitop takes integer this,integer key,limitop value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_limitop takes integer _this,integer _key,limitop _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_mapcontrol takes integer this,integer key returns mapcontrol
-    return ConvertMapControl(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_mapcontrol takes integer _this,integer _key returns mapcontrol
+    return ConvertMapControl(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_mapcontrol takes integer this,integer key,mapcontrol value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_mapcontrol takes integer _this,integer _key,mapcontrol _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_mapdensity takes integer this,integer key returns mapdensity
-    return ConvertMapDensity(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_mapdensity takes integer _this,integer _key returns mapdensity
+    return ConvertMapDensity(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_mapdensity takes integer this,integer key,mapdensity value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_mapdensity takes integer _this,integer _key,mapdensity _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_mapflag takes integer this,integer key returns mapflag
-    return ConvertMapFlag(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_mapflag takes integer _this,integer _key returns mapflag
+    return ConvertMapFlag(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_mapflag takes integer this,integer key,mapflag value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_mapflag takes integer _this,integer _key,mapflag _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_mapsetting takes integer this,integer key returns mapsetting
-    return ConvertMapSetting(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_mapsetting takes integer _this,integer _key returns mapsetting
+    return ConvertMapSetting(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_mapsetting takes integer this,integer key,mapsetting value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_mapsetting takes integer _this,integer _key,mapsetting _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_mapvisibility takes integer this,integer key returns mapvisibility
-    return ConvertMapVisibility(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_mapvisibility takes integer _this,integer _key returns mapvisibility
+    return ConvertMapVisibility(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_mapvisibility takes integer this,integer key,mapvisibility value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_mapvisibility takes integer _this,integer _key,mapvisibility _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
-function _get_mousebuttontype takes integer this,integer key returns mousebuttontype
-    return ConvertMouseButtonType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_mousebuttontype takes integer _this,integer _key returns mousebuttontype
+    return ConvertMouseButtonType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_mousebuttontype takes integer this,integer key,mousebuttontype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_mousebuttontype takes integer _this,integer _key,mousebuttontype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_pathingtype takes integer this,integer key returns pathingtype
-    return ConvertPathingType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_pathingtype takes integer _this,integer _key returns pathingtype
+    return ConvertPathingType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_pathingtype takes integer this,integer key,pathingtype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_pathingtype takes integer _this,integer _key,pathingtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_placement takes integer this,integer key returns placement
-    return ConvertPlacement(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_placement takes integer _this,integer _key returns placement
+    return ConvertPlacement(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_placement takes integer this,integer key,placement value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_placement takes integer _this,integer _key,placement _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playercolor takes integer this,integer key returns playercolor
-    return ConvertPlayerColor(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playercolor takes integer _this,integer _key returns playercolor
+    return ConvertPlayerColor(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playercolor takes integer this,integer key,playercolor value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playercolor takes integer _this,integer _key,playercolor _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playerevent takes integer this,integer key returns playerevent
-    return ConvertPlayerEvent(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playerevent takes integer _this,integer _key returns playerevent
+    return ConvertPlayerEvent(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playerevent takes integer this,integer key,playerevent value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playerevent takes integer _this,integer _key,playerevent _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playergameresult takes integer this,integer key returns playergameresult
-    return ConvertPlayerGameResult(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playergameresult takes integer _this,integer _key returns playergameresult
+    return ConvertPlayerGameResult(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playergameresult takes integer this,integer key,playergameresult value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playergameresult takes integer _this,integer _key,playergameresult _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playerscore takes integer this,integer key returns playerscore
-    return ConvertPlayerScore(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playerscore takes integer _this,integer _key returns playerscore
+    return ConvertPlayerScore(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playerscore takes integer this,integer key,playerscore value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playerscore takes integer _this,integer _key,playerscore _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playerslotstate takes integer this,integer key returns playerslotstate
-    return ConvertPlayerSlotState(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playerslotstate takes integer _this,integer _key returns playerslotstate
+    return ConvertPlayerSlotState(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playerslotstate takes integer this,integer key,playerslotstate value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playerslotstate takes integer _this,integer _key,playerslotstate _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playerstate takes integer this,integer key returns playerstate
-    return ConvertPlayerState(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playerstate takes integer _this,integer _key returns playerstate
+    return ConvertPlayerState(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playerstate takes integer this,integer key,playerstate value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playerstate takes integer _this,integer _key,playerstate _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_playerunitevent takes integer this,integer key returns playerunitevent
-    return ConvertPlayerUnitEvent(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_playerunitevent takes integer _this,integer _key returns playerunitevent
+    return ConvertPlayerUnitEvent(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_playerunitevent takes integer this,integer key,playerunitevent value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_playerunitevent takes integer _this,integer _key,playerunitevent _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_race takes integer this,integer key returns race
-    return ConvertRace(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_race takes integer _this,integer _key returns race
+    return ConvertRace(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_race takes integer this,integer key,race value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_race takes integer _this,integer _key,race _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_racepreference takes integer this,integer key returns racepreference
-    return ConvertRacePref(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_racepreference takes integer _this,integer _key returns racepreference
+    return ConvertRacePref(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_racepreference takes integer this,integer key,racepreference value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_racepreference takes integer _this,integer _key,racepreference _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_raritycontrol takes integer this,integer key returns raritycontrol
-    return ConvertRarityControl(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_raritycontrol takes integer _this,integer _key returns raritycontrol
+    return ConvertRarityControl(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_raritycontrol takes integer this,integer key,raritycontrol value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_raritycontrol takes integer _this,integer _key,raritycontrol _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_soundtype takes integer this,integer key returns soundtype
-    return ConvertSoundType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_soundtype takes integer _this,integer _key returns soundtype
+    return ConvertSoundType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_soundtype takes integer this,integer key,soundtype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_soundtype takes integer _this,integer _key,soundtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_startlocprio takes integer this,integer key returns startlocprio
-    return ConvertStartLocPrio(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_startlocprio takes integer _this,integer _key returns startlocprio
+    return ConvertStartLocPrio(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_startlocprio takes integer this,integer key,startlocprio value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_startlocprio takes integer _this,integer _key,startlocprio _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
-function _get_subanimtype takes integer this,integer key returns subanimtype
-    return ConvertSubAnimType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_subanimtype takes integer _this,integer _key returns subanimtype
+    return ConvertSubAnimType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_subanimtype takes integer this,integer key,subanimtype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_subanimtype takes integer _this,integer _key,subanimtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_texmapflags takes integer this,integer key returns texmapflags
-    return ConvertTexMapFlags(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_texmapflags takes integer _this,integer _key returns texmapflags
+    return ConvertTexMapFlags(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_texmapflags takes integer this,integer key,texmapflags value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_texmapflags takes integer _this,integer _key,texmapflags _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_unitevent takes integer this,integer key returns unitevent
-    return ConvertUnitEvent(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_unitevent takes integer _this,integer _key returns unitevent
+    return ConvertUnitEvent(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_unitevent takes integer this,integer key,unitevent value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_unitevent takes integer _this,integer _key,unitevent _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_unitstate takes integer this,integer key returns unitstate
-    return ConvertUnitState(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_unitstate takes integer _this,integer _key returns unitstate
+    return ConvertUnitState(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_unitstate takes integer this,integer key,unitstate value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_unitstate takes integer _this,integer _key,unitstate _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_unittype takes integer this,integer key returns unittype
-    return ConvertUnitType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_unittype takes integer _this,integer _key returns unittype
+    return ConvertUnitType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_unittype takes integer this,integer key,unittype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_unittype takes integer _this,integer _key,unittype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_version takes integer this,integer key returns version
-    return ConvertVersion(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_version takes integer _this,integer _key returns version
+    return ConvertVersion(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_version takes integer this,integer key,version value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_version takes integer _this,integer _key,version _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_volumegroup takes integer this,integer key returns volumegroup
-    return ConvertVolumeGroup(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_volumegroup takes integer _this,integer _key returns volumegroup
+    return ConvertVolumeGroup(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_volumegroup takes integer this,integer key,volumegroup value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_volumegroup takes integer _this,integer _key,volumegroup _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_weapontype takes integer this,integer key returns weapontype
-    return ConvertWeaponType(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_weapontype takes integer _this,integer _key returns weapontype
+    return ConvertWeaponType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_weapontype takes integer this,integer key,weapontype value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_weapontype takes integer _this,integer _key,weapontype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
-function _get_widgetevent takes integer this,integer key returns widgetevent
-    return ConvertWidgetEvent(GetHandleId(LoadFogStateHandle(_ht, this, key)))
+function _get_widgetevent takes integer _this,integer _key returns widgetevent
+    return ConvertWidgetEvent(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
 endfunction
-function _set_widgetevent takes integer this,integer key,widgetevent value returns nothing
-    call SaveFogStateHandle(_ht, this, key, ConvertFogState(GetHandleId(value)))
+function _set_widgetevent takes integer _this,integer _key,widgetevent _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
 
 
 
-function _get_agent takes integer this,integer key returns agent
-    return _agent[(LoadInteger(_ht, this, key))]
+function _get_agent takes integer _this,integer _key returns agent
+    return _agent[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_agent takes integer this,integer key,agent value returns nothing
+function _set_agent takes integer _this,integer _key,agent _value returns nothing
     local integer n= _alloc()
-    set _agent[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _agent[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_buff takes integer this,integer key returns buff
-    return _buff[(LoadInteger(_ht, this, key))]
+function _get_buff takes integer _this,integer _key returns buff
+    return _buff[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_buff takes integer this,integer key,buff value returns nothing
+function _set_buff takes integer _this,integer _key,buff _value returns nothing
     local integer n= _alloc()
-    set _buff[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _buff[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_camerasetup takes integer this,integer key returns camerasetup
-    return _camerasetup[(LoadInteger(_ht, this, key))]
+function _get_camerasetup takes integer _this,integer _key returns camerasetup
+    return _camerasetup[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_camerasetup takes integer this,integer key,camerasetup value returns nothing
+function _set_camerasetup takes integer _this,integer _key,camerasetup _value returns nothing
     local integer n= _alloc()
-    set _camerasetup[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _camerasetup[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_conditionfunc takes integer this,integer key returns conditionfunc
-    return _conditionfunc[(LoadInteger(_ht, this, key))]
+function _get_conditionfunc takes integer _this,integer _key returns conditionfunc
+    return _conditionfunc[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_conditionfunc takes integer this,integer key,conditionfunc value returns nothing
+function _set_conditionfunc takes integer _this,integer _key,conditionfunc _value returns nothing
     local integer n= _alloc()
-    set _conditionfunc[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _conditionfunc[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_eventid takes integer this,integer key returns eventid
-    return _eventid[(LoadInteger(_ht, this, key))]
+function _get_eventid takes integer _this,integer _key returns eventid
+    return _eventid[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_eventid takes integer this,integer key,eventid value returns nothing
+function _set_eventid takes integer _this,integer _key,eventid _value returns nothing
     local integer n= _alloc()
-    set _eventid[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _eventid[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_filterfunc takes integer this,integer key returns filterfunc
-    return _filterfunc[(LoadInteger(_ht, this, key))]
+function _get_filterfunc takes integer _this,integer _key returns filterfunc
+    return _filterfunc[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_filterfunc takes integer this,integer key,filterfunc value returns nothing
+function _set_filterfunc takes integer _this,integer _key,filterfunc _value returns nothing
     local integer n= _alloc()
-    set _filterfunc[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _filterfunc[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_gamecache takes integer this,integer key returns gamecache
-    return _gamecache[(LoadInteger(_ht, this, key))]
+function _get_gamecache takes integer _this,integer _key returns gamecache
+    return _gamecache[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_gamecache takes integer this,integer key,gamecache value returns nothing
+function _set_gamecache takes integer _this,integer _key,gamecache _value returns nothing
     local integer n= _alloc()
-    set _gamecache[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _gamecache[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_gamestate takes integer this,integer key returns gamestate
-    return _gamestate[(LoadInteger(_ht, this, key))]
+function _get_gamestate takes integer _this,integer _key returns gamestate
+    return _gamestate[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_gamestate takes integer this,integer key,gamestate value returns nothing
+function _set_gamestate takes integer _this,integer _key,gamestate _value returns nothing
     local integer n= _alloc()
-    set _gamestate[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _gamestate[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_handle takes integer this,integer key returns handle
-    return _handle[(LoadInteger(_ht, this, key))]
+function _get_handle takes integer _this,integer _key returns handle
+    return _handle[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_handle takes integer this,integer key,handle value returns nothing
+function _set_handle takes integer _this,integer _key,handle _value returns nothing
     local integer n= _alloc()
-    set _handle[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _handle[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_terraindeformation takes integer this,integer key returns terraindeformation
-    return _terraindeformation[(LoadInteger(_ht, this, key))]
+function _get_terraindeformation takes integer _this,integer _key returns terraindeformation
+    return _terraindeformation[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_terraindeformation takes integer this,integer key,terraindeformation value returns nothing
+function _set_terraindeformation takes integer _this,integer _key,terraindeformation _value returns nothing
     local integer n= _alloc()
-    set _terraindeformation[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _terraindeformation[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction
 
 
-function _get_weathereffect takes integer this,integer key returns weathereffect
-    return _weathereffect[(LoadInteger(_ht, this, key))]
+function _get_weathereffect takes integer _this,integer _key returns weathereffect
+    return _weathereffect[(LoadInteger(_ht, _this, _key))]
 endfunction
-function _set_weathereffect takes integer this,integer key,weathereffect value returns nothing
+function _set_weathereffect takes integer _this,integer _key,weathereffect _value returns nothing
     local integer n= _alloc()
-    set _weathereffect[n]=value
-    set _next[n]=_aux[this]
-    set _aux[this]=n
-    call SaveInteger(_ht, this, key, n)
+    set _weathereffect[n]=_value
+    set _next[n]=_aux[_this]
+    set _aux[_this]=n
+    call SaveInteger(_ht, _this, _key, n)
 endfunction

@@ -124,8 +124,16 @@ stubifyFn e =
     _ -> [e]
   where
     donttouch =
+    {-
+    call CreateAllUnits ()
+call InitBlizzard ()
+call InitGlobals ()
+call InitCustomTriggers ()
+-}
       [ "main", "config", "InitCustomPlayerSlots", "SetPlayerSlotAvailable"
-      , "InitGenericPlayerSlots", "InitCustomTeams"]
+      , "InitGenericPlayerSlots", "InitCustomTeams", "InitCustomTriggers"
+      , "CreateAllUnits", "InitBlizzard", "InitGlobals"
+      ]
     bind = mkLocal "_Scopes_binding"
     scope = mkLocal "_Wrap_args"
     
@@ -387,46 +395,48 @@ instance Binary RenameVariablesState
 defaultRenameVariableState = RenameVariablesState mempty mempty mempty mempty 0
 
 
-newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT Mode (State RenameVariablesState) a }
-    deriving (Functor, Applicative, Monad, MonadState RenameVariablesState, MonadReader Mode)
+newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, (Type -> Type)) (State RenameVariablesState) a }
+    deriving (Functor, Applicative, Monad, MonadState RenameVariablesState, MonadReader (Mode, Type -> Type))
 
-runRenameM :: Mode -> RenameVariablesState -> Ast Name a -> (Ast Var a, RenameVariablesState)
-runRenameM m st = flip runState st . flip runReaderT m . unRenameVariablesM . renameVariables
+runRenameM :: Mode -> (Type -> Type) -> RenameVariablesState -> Ast Name a -> (Ast Var a, RenameVariablesState)
+runRenameM m f st = flip runState st . flip runReaderT (m,f) . unRenameVariablesM . renameVariables
 
-runRenameM' m = runRenameM m defaultRenameVariableState
+runRenameM' m f = runRenameM m f defaultRenameVariableState
 
-evalRenameM :: Mode -> RenameVariablesState -> Ast Name a -> RenameVariablesState
-evalRenameM m st a = snd (runRenameM m st a)
+evalRenameM :: Mode -> (Type -> Type) -> RenameVariablesState -> Ast Name a -> RenameVariablesState
+evalRenameM m f st a = snd (runRenameM m f st a)
 
-evalRenameM' m = evalRenameM m defaultRenameVariableState
+evalRenameM' m f = evalRenameM m f defaultRenameVariableState
 
-execRenameM :: Mode -> RenameVariablesState -> Ast Name a -> Ast Var a
-execRenameM m st a = fst (runRenameM m st a)
+execRenameM :: Mode -> (Type -> Type) -> RenameVariablesState -> Ast Name a -> Ast Var a
+execRenameM m f st a = fst (runRenameM m f st a)
 
-execRenameM' m = execRenameM m defaultRenameVariableState
+execRenameM' m f = execRenameM m f defaultRenameVariableState
 
 
 addLocal :: Name -> Type -> IsArray -> RenameVariablesM Var
 addLocal name ty isArray = do
     v' <- uses globalScope $ Map.lookup name
+    f <- snd <$> ask
     case v' of
         Just v -> return v
         Nothing -> do
             let successor = if isArray then (+32768) else (+1)
             id <- uses localScope (fromIntegral . successor . Map.size)
-            let v = H.Local name ty isArray id
+            let v = H.Local name (f ty) isArray id
             localScope %= (at name ?~ v)
             return v
 
 addGlobal :: Constant -> Name -> Type -> IsArray -> RenameVariablesM Var
 addGlobal c name ty isArray = do
     v' <- uses globalScope $ Map.lookup name
+    f <- snd <$> ask
     case v' of
         Just v -> return v
         Nothing -> do
-            globalCount %= (Map.insertWith (+) (ty, isArray) 1)
-            id <- uses globalCount (Map.findWithDefault (error "xxx") (ty, isArray))
-            let v = H.Global c name ty isArray id
+            globalCount %= (Map.insertWith (+) (f ty, isArray) 1)
+            id <- uses globalCount (Map.findWithDefault (error "xxx") (f ty, isArray))
+            let v = H.Global c name (f ty) isArray id
             globalScope %= (at name ?~ v)
             return v
 
@@ -436,17 +446,17 @@ addFunction name args ret = do
     case v' of
         Just v -> return v
         Nothing -> do
-            mode <- ask
+            (mode, f) <-  ask
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    let v = H.Fn name args ret id
+                    let v = H.Fn name (map f args) (f ret) id
                     fnScope %= (at name ?~ v)
                     return v
                     
                 Compile -> do
                     id <- newFnCount <-= 1
-                    let v = H.Fn name args ret id
+                    let v = H.Fn name (map f args) (f ret) id
                     fnScope %= (at name ?~ v)
                     return v
             

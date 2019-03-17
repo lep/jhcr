@@ -20,8 +20,8 @@ endglobals
 
 #include "alloc.j"
 
-function _destroy takes integer ctx returns nothing
-    call Table#_destroy(_locals[ctx])
-    call Table#_destroy(_bindings[ctx]) 
-    call _free(ctx)
+function _destroy takes integer _ctx returns nothing
+    call Table#_destroy(_locals[_ctx])
+    call Table#_destroy(_bindings[_ctx]) 
+    call _free(_ctx)
 endfunction
