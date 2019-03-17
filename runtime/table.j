@@ -24,6 +24,11 @@ endglobals
 
 #include "alloc.j"
 
+function _destroy takes integer tbl returns nothing
+    call FlushChildHashtable(_ht, tbl)
+    call _free(tbl)
+endfunction
+
 function _get_boolean takes integer this,integer key returns boolean
     return LoadBoolean(_ht, this, key)
 endfunction

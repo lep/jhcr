@@ -17,6 +17,7 @@ function _init takes nothing returns nothing
     call TriggerRegisterPlayerEventEndCinematic( t, Player(0) )
     call TriggerAddAction( t, function _parse )
     
+    call Wrap#_init()
     call Convert#_init()
     call Ins#_init()
     call Interpreter#_init()

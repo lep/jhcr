@@ -127,7 +127,7 @@ stubifyFn e =
       [ "main", "config", "InitCustomPlayerSlots", "SetPlayerSlotAvailable"
       , "InitGenericPlayerSlots", "InitCustomTeams"]
     bind = mkLocal "_Scopes_binding"
-    scope = mkLocal "_Scopes_scope"
+    scope = mkLocal "_Wrap_args"
     
     rename :: Var -> Ast Var x -> Ast Var x
     rename v x =

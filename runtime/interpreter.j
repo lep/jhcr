@@ -145,31 +145,33 @@ function _step takes integer ctx returns integer
         endif
         
     elseif t == Ins#_Ret then
-        //call ctx.tbl.clean()
-        //call ctx.destroy()
-        if Ins#_type[Context#_pc[Context#_parent[ctx]]] == Types#_integer then
-            call Table#_set_integer(Context#_locals[Context#_parent[ctx]], Ins#_a1[Context#_pc[Context#_parent[ctx]]], Table#_get_integer(Context#_locals[ctx], 0))
+        #define macro(ty) Table@_set_##ty(Context@_locals[Context@_parent[ctx]], Ins@_a1[Context@_pc[Context@_parent[ctx]]], Table@_get_##ty(Context@_locals[ctx], 0))
 
-        // etc.
-        endif
-        return Ins#_next[Context#_parent[ctx]]
+        #define ty Ins#_type[op]
+        #include "g-type-bin.j"
+        #undef ty
+        #undef macro
         
+        set tmp = ctx
+        set ctx = Context#_parent[ctx]
+        call Context#_destroy(tmp)
     elseif t == Ins#_Call then
-        set tmp = Ins#_a2[op]
-        if tmp < 0 or Modified#_modified(tmp) then
+        set fn = Ins#_a2[op]
+        if fn < 0 or Modified#_modified(fn) then
             // user-defined or reloaded function
-            set fn = tmp
-            set Context#_parent[_fresh] = ctx
-            set Context#_pc[_fresh] = Parser#_fn_entry[fn + 100]
-            set Context#_labels[_fresh] = Table#_get_integer(Parser#_fn_labels, fn)
-            set Context#_locals[_fresh] = Context#_bindings[ctx]
             
-            set tmp = _fresh
-            set _fresh = Context#_alloc()
+            set tmp = Context#_alloc()
+            
+            set Context#_parent[tmp]   = ctx
+            set Context#_pc[tmp]       = Parser#_fn_entry[fn + 100]
+            set Context#_labels[tmp]   = Table#_get_integer(Parser#_fn_labels, fn)
+            set Context#_locals[tmp]   = Context#_bindings[ctx]
+            set Context#_bindings[tmp] = Table#_alloc()
+            
             return tmp
-        elseif tmp > 0 then
+        elseif fn > 0 then
             // auto generated call for pre-defined functions
-            call Auto#_call_predefined(Ins#_a1[op], tmp, ctx)
+            call Auto#_call_predefined(Ins#_a1[op], fn, ctx)
             
         endif
 
@@ -234,24 +236,23 @@ function _step takes integer ctx returns integer
 endfunction
 
 
-function _start_interpreter takes integer fn returns nothing
-    local integer ctx = Context#_alloc()
-    set Context#_pc[ctx]     = Parser#_fn_entry[fn + 100]
-    set Context#_parent[ctx] = 0
-    set Context#_labels[ctx] = Table#_get_integer(Parser#_fn_labels, fn)
-    set Context#_locals[ctx] = _fresh
-    set _fresh = Context#_alloc()
-    
-    loop
-    exitwhen ctx == 0
-        set ctx = _step(ctx)
-    endloop
-endfunction
+//function _start_interpreter takes integer fn returns nothing
+//    local integer ctx = Context#_alloc()
+//    set Context#_pc[ctx]     = Parser#_fn_entry[fn + 100]
+//    set Context#_parent[ctx] = 0
+//    set Context#_labels[ctx] = Table#_get_integer(Parser#_fn_labels, fn)
+//    set Context#_locals[ctx] = _fresh
+//    set _fresh = Context#_alloc()
+//    
+//    loop
+//    exitwhen ctx == 0
+//        set ctx = _step(ctx)
+//    endloop
+//endfunction
 
 function _start_interpreter_wrap takes nothing returns boolean
     local integer ctx = Context#_alloc()
     local integer parent = Context#_alloc()
-    local integer fuel = 10
     
     set Context#_pc[ctx]       = Parser#_fn_entry[Wrap#_p + 100]
     set Context#_parent[ctx]   = parent
@@ -261,22 +262,19 @@ function _start_interpreter_wrap takes nothing returns boolean
     
     set Context#_pc[parent] = 0
     set Context#_labels[parent] = 0
-    set Context#_locals[parent] = Context#_locals[ctx]
+    set Context#_locals[parent] = Wrap#_args
     set Context#_parent[parent] = 0
+
     
     loop
     exitwhen ctx == parent
-    //exitwhen fuel <= 0
         set ctx = _step(ctx)
-        set fuel = fuel -1
     endloop
-    
-    call Context#_free(ctx)
+
     call Context#_free(parent)
     return true
 endfunction
 
 function _init takes nothing returns nothing
-    set _fresh = Context#_alloc()
     call TriggerAddCondition(Wrap#_t, Condition(function _start_interpreter_wrap))
 endfunction
