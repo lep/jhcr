@@ -219,7 +219,7 @@ main = do
                             hmap = mkHashMap ast
                         
                         hPutStrLn stderr "Writing state file"
-                        BL.writeFile "jhcr.state" $ encode (st, hmap)
+                        BL.writeFile "jhcr.state" $ encode (st', hmap)
 
                         hPutStrLn stderr "Writing map script"
                         jh <- openBinaryFile "jhcr.j" WriteMode

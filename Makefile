@@ -19,8 +19,7 @@ HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 process: $(PROCESSED)
 
 run: tmp.w3x
-	cp tmp.w3x /cygdrive/c/Users/lep/Documents/Warcraft\ III/Maps/jhcr/tmp.w3x
-	/cygdrive/e/Battle.Net/Warcraft\ III.exe -nativefullscr -loadfile 'C:\Users\lep\Documents\Warcraft III\Maps\jhcr\tmp.w3x'
+	/cygdrive/e/Battle.Net/Warcraft\ III.exe -nativefullscr -loadfile 'C:\Users\lep\jass-hot-code-reload\tmp.w3x'
 
 war3map.j: test.w3x
 	cp test.w3x tmp.w3x
