@@ -1,5 +1,7 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE TemplateHaskell #-}
 
+import Data.FileEmbed
 
 
 import Control.Applicative
@@ -17,6 +19,9 @@ import System.Environment
 import System.Exit
 
 import System.FilePath ((</>))
+
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as S8
 
 import qualified Data.ByteString.Lazy as BL
 import Data.ByteString.Builder
@@ -58,14 +63,18 @@ exceptT = ExceptT . return
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
 
-runtime1paths =
-  [ "out/types.j", "out/table.j", "out/convert.j"
-  , "out/wrap-around.j", "out/modified.j"
+runtime1 :: [String]
+runtime1 = map S8.unpack
+  [ $(embedFile "out/types.j"), $(embedFile "out/table.j")
+  , $(embedFile "out/convert.j"), $(embedFile "out/wrap-around.j")
+  , $(embedFile "out/modified.j")
   ]
 
-runtime2paths =
-  [ "out/context.j", "out/instruction.j", "out/instruction-parser.j"
-  , "out/interpreter.j", "out/init.j"
+runtime2 :: [String]
+runtime2 = map S8.unpack
+  [ $(embedFile "out/context.j"), $(embedFile "out/instruction.j")
+  , $(embedFile "out/instruction-parser.j"), $(embedFile "out/interpreter.j")
+  , $(embedFile "out/init.j")
   ]
 
 mkHashMap :: J.Ast J.Name x -> Map J.Name Int
@@ -229,15 +238,13 @@ initX o = do
             src <- liftIO $ readFile j
             J.Programm ast <- exceptT $ parse J.programm j src
             return ast)
-            
-        rt1 <- J.Programm . mconcat <$> forM runtime1paths (\j -> do
-            src <- liftIO $ readFile j
-            J.Programm ast <- exceptT $ parse J.programm j src
+
+        rt1 <- J.Programm . mconcat <$> forM runtime1 (\src -> do
+            J.Programm ast <- exceptT $ parse J.programm "rt1" src
             return ast)
         
-        rt2 <- J.Programm . mconcat <$> forM runtime2paths (\j -> do
-            src <- liftIO $ readFile j
-            J.Programm ast <- exceptT $ parse J.programm j src
+        rt2 <- J.Programm . mconcat <$> forM runtime2 (\src -> do
+            J.Programm ast <- exceptT $ parse J.programm "rt2" src
             return ast)
             
         return (prelude, rt1, rt2)

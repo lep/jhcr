@@ -39,7 +39,7 @@ convert: convert.hs
 runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
 	./convert
 
-Main: $(SRC)
+Main: $(SRC) $(PROCESSED)
 	cabal exec -- ghc Main
 
 out/%.j: runtime/%.j
