@@ -34,6 +34,7 @@ import Data.DList (DList)
 import qualified Data.DList as DList
 
 import Data.Int
+import Text.Printf (printf)
 
 import Data.Maybe 
 
@@ -166,7 +167,7 @@ serializeAsm = unlines . map s
     serializeLit l =
       case l of
         Hot.Int i -> int32Dec i
-        Hot.Real r -> floatDec r
+        Hot.Real r -> stringUtf8 $ printf "%f" r
         Hot.String s -> stringUtf8 s
         Hot.Bool s -> stringUtf8 $ show s
         Hot.Null -> stringUtf8 "null"
