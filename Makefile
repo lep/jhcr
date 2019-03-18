@@ -26,12 +26,12 @@ war3map.j: test.w3x
 	./MPQEditor /extract tmp.w3x war3map.j
 	rm tmp.w3x
 
-jhcr.j: war3map.j Main $(PROCESSED)
+jhcr_war3map.j: war3map.j Main $(PROCESSED)
 	./Main init common.j Blizzard.j war3map.j
 
-tmp.w3x: jhcr.j test.w3x
+tmp.w3x: jhcr_war3map.j test.w3x
 	cp test.w3x tmp.w3x
-	./MPQEditor /add tmp.w3x jhcr.j war3map.j
+	./MPQEditor /add tmp.w3x jhcr_war3map.j war3map.j
 
 convert: convert.hs
 	cabal exec -- ghc convert
@@ -53,4 +53,4 @@ check: $(GEN) $(PROCESSED)
 
 clean:
 	rm -f $(PROCESSED) $(HS_O) $(HS_HI) runtime/convert.j runtime/types.j 
-	rm -f Hot/Types.hs Main convert tmp.w3x jhcr.j war3map.j jhcr.state jhcr.txt
+	rm -f Hot/Types.hs Main convert tmp.w3x jhcr_war3map.j war3map.j jhcr.bin

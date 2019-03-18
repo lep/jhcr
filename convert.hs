@@ -139,21 +139,21 @@ gTypeBin ts = bin (concatMap allChildren ts) ty fst (mkCall . snd)
     ty = Var $ SVar "ty"
 
 convert :: [Tree Name] -> Ast Name Toplevel
-convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toReg"), ("integer", "fromType"), ("integer", "fromReg"), ("integer", "ctx")] "nothing" [
-        Set (SVar "toType") $ Var $ AVar "_toTypeOffset" $ Var $ SVar "toType",
+convert ts = Function Normal "_convert" [("integer", "_toType"), ("integer", "_toReg"), ("integer", "_fromType"), ("integer", "_fromReg"), ("integer", "_ctx")] "nothing" [
+        Set (SVar "_toType") $ Var $ AVar "_toTypeOffset" $ Var $ SVar "_toType",
         bin (filter isBranch $ concatMap allChildren' ts) toType ((offsetMap Map.!) . getId) convTo
     ]
   where
 
 
-    toReg = Var $ SVar "toReg"
-    fromReg = Var $ SVar "fromReg"
-    fromType = Var $ SVar "fromType"
-    toType = Var $ SVar "toType"
+    toReg = Var $ SVar "_toReg"
+    fromReg = Var $ SVar "_fromReg"
+    fromType = Var $ SVar "_fromType"
+    toType = Var $ SVar "_toType"
 
     toType' = Var $ AVar "_toTypeOffset" toType
 
-    scope = Var $ SVar "Context#_locals[ctx]"
+    scope = Var $ SVar "Context#_locals[_ctx]"
 
     convTo :: Tree Name -> Ast Name Stmt
     convTo t =
@@ -161,7 +161,7 @@ convert ts = Function Normal "_convert" [("integer", "toType"), ("integer", "toR
         in bin children fromType getId (convFrom t)
 
     convFrom :: Tree Name -> Tree Name -> Ast Name Stmt
-    convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Context#_locals[ctx]", fromReg]]
+    convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Context#_locals[_ctx]", fromReg]]
     
     offsetMap = Map.fromList $ zip (offsets ts) [1..]
     
