@@ -46,6 +46,7 @@ import qualified Hot.Var as H
 import qualified Hot.Instruction as H
 import qualified Hot.Instruction.Compiler as H
 import qualified Hot.HandleCode as HandleCode
+import qualified Hot.JassHelper as JH
 
 import Data.Composeable
 import Data.Hashable
@@ -112,8 +113,8 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
       -- <> "asm" (info asmOptions ( progDesc "Prints out human readable asm code"))
       )
     initOptions =
-        Init <$> argument str (help "Path to common.j" <> metavar "common.j") 
-             <*> argument str (help "Path to Blizzard.j" <> metavar "Blizzard.j") 
+        Init <$> argument str (help "Path to common.j" <> metavar "common.j")
+             <*> argument str (help "Path to Blizzard.j" <> metavar "Blizzard.j")
              <*> pWar3Map
              <*> pJasshelper
              <*> pState
@@ -142,6 +143,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
     pPrefix = strOption
         (  long "prefix"
         <> value "JHCR"
+        <> help "Prefix for the runtime jass functions"
         <> showDefault
         )
     pState = strOption  
@@ -164,6 +166,7 @@ main = do
         Init{} -> initX options
 
 updateX o = do
+    let jhc = if processJasshelper o then JH.compile else id
     (st, hmap) <- decodeFile (statePath o)
 
     p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
@@ -172,8 +175,10 @@ updateX o = do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
             
-        Right prog@(J.Programm ast) -> do
-            let hmap' = mkHashMap prog
+        Right prog -> do
+            let prog' = jhc prog
+                J.Programm ast = prog'
+                hmap' = mkHashMap prog'
                 astU = filter (isUpdated hmap hmap') ast
                 nameU = map getFnName $ filter isFunction astU
                 progU = J.Programm astU
@@ -233,6 +238,7 @@ updateX o = do
 
 
 initX o = do
+    let jhc = if processJasshelper o then JH.compile else id
     x <- runExceptT $ do
         prelude <- J.Programm . mconcat <$> forM [commonjPath o, blizzardjPath o] (\j -> do
             src <- liftIO $ readFile j
@@ -268,7 +274,9 @@ initX o = do
                     exitFailure
                 Right ast -> do
                     let ast' :: J.Ast H.Var H.Programm
-                        (ast', st') = first HandleCode.compile $ H.runRenameM H.Init conv st ast
+                        (ast', st') = first HandleCode.compile .
+                                      H.runRenameM H.Init conv st $
+                                      jhc ast
                         
                         conv x = if x == "code" then "_replace_code" else x
                         

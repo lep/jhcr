@@ -6,6 +6,7 @@ RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
 SRC := Jass/Parser.hs Jass/Ast.hs Jass/Printer.hs
 SRC += Hot/Ast.hs Hot/Instruction.hs Hot/Interpreter.hs Hot/Types.hs Hot/Var.hs
 SRC += Hot/Jass/Init.hs Hot/Instruction/Compiler.hs Hot/HandleCode.hs
+SRC += Hot/JassHelper.hs
 SRC += Data/Composeable.hs
 SRC += Main.hs
 
@@ -15,7 +16,7 @@ HS_O := $(patsubst %.hs, %.o, $(SRC))
 HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 
 
-.PHONY: clean
+.PHONY: clean process
 
 jhcr: HSFLAGS=-O
 jhcr: Main
@@ -30,6 +31,8 @@ runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
 
 Main: $(SRC) $(PROCESSED)
 	cabal exec -- ghc $(HSFLAGS) Main
+
+process: $(PROCESSED)
 
 out/%.j: runtime/%.j
 	bash process.sh $^ $@ JHCR_
