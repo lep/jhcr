@@ -10,8 +10,7 @@ function _step takes integer ctx returns integer
     local integer t = Ins#_op[op]
     local integer tmp
     local integer fn
-    //call BJDebugMsg("Interpreting: ")
-    call Ins#_print(op)
+    
     if t == Ins#_Set then
     
         #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))

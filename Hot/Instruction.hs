@@ -157,22 +157,22 @@ intlog10 = fromIntegral . log10 . fromIntegral
     log10 0 = 1
     log10 x = fst . head . filter ( (x <) . snd ) $ zip [0..] (iterate (*10) 1)
 
+
+serializeLit :: Hot.Ast Var Expr -> Builder
+serializeLit l =
+  case l of
+    Hot.Int i -> int32Dec i
+    Hot.Real r -> stringUtf8 $ printf "%f" r
+    Hot.String s -> stringUtf8 s
+    Hot.Bool s -> stringUtf8 $ show s
+    Hot.Null -> stringUtf8 "null"
+
+
 serializeAsm :: [Instruction] -> Builder
 serializeAsm = unlines . map s
   where
     unlines = mconcat . intersperse (charUtf8 '\n')
     unwords = mconcat . intersperse (charUtf8 ' ')
-
-    serializeLit :: Hot.Ast Var Expr -> Builder
-    serializeLit l =
-      case l of
-        Hot.Int i -> int32Dec i
-        Hot.Real r -> stringUtf8 $ printf "%f" r
-        Hot.String s -> stringUtf8 s
-        Hot.Bool s -> stringUtf8 $ show s
-        Hot.Null -> stringUtf8 "null"
-
-    bla ins args = unwords [ins, unwords args]
 
     typeToId x = stringUtf8 x
 
@@ -192,7 +192,7 @@ serializeAsm = unlines . map s
         Div t s a b -> unwords [ ins2id "div", typeToId t, reg' s, reg' a, reg' b]
         Mod t s a b -> unwords [ ins2id "mod", typeToId t, reg' s, reg' a, reg' b]
 
-        Negate t s a -> bla (ins2id "neg") [typeToId t, reg' s, reg' a]
+        Negate t s a -> unwords[ins2id "neg", typeToId t, reg' s, reg' a]
 
         Set t s a -> unwords [ ins2id "set", typeToId t, reg' s, reg' a]
         SetGlobal ty g s -> unwords [ ins2id "sg", typeToId ty, reg' g, reg' s]
@@ -205,9 +205,9 @@ serializeAsm = unlines . map s
         GetGlobalArray ty t ar idx -> unwords[ ins2id "gga", typeToId ty, reg' t, reg' ar, reg' idx]
 
         Call t s f n -> unwords [ins2id "call", typeToId t, reg' s, label' f, stringUtf8 n]
-        Bind t s a -> bla (ins2id "bind") [typeToId t, reg' s, reg' a]
+        Bind t s a -> unwords [ins2id "bind", typeToId t, reg' s, reg' a]
 
-        Not s a -> bla (ins2id "not") [reg' s, reg' a]
+        Not s a -> unwords [ins2id "not", reg' s, reg' a]
 
         Function f n -> unwords [ins2id "fun", label' f, stringUtf8 n]
 
@@ -284,14 +284,6 @@ serialize' ins =
       , ("jmpt", 27), ("not", 28), ("ret", 29)
       ]
     
-    serializeLit :: Hot.Ast Var Expr -> Builder
-    serializeLit l =
-      case l of
-        Hot.Int i -> int32Dec i
-        Hot.Real r -> floatDec r
-        Hot.String s -> stringUtf8 s
-        Hot.Bool s -> stringUtf8 $ show s
-        Hot.Null -> stringUtf8 "null"
 
 serialize :: [Instruction] -> Builder
 serialize = unlines . map serialize'
