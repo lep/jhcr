@@ -2,6 +2,7 @@
 
 globals
     integer _m = 0
+    integer _globals = 0
 endglobals
 
 function _modified takes integer _uid returns boolean
@@ -14,4 +15,5 @@ endfunction
 
 function _init takes nothing returns nothing
     set _m = Table#_alloc()
+    set _globals = Table#_alloc()
 endfunction

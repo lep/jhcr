@@ -11,7 +11,7 @@ function _step takes integer ctx returns integer
     local integer tmp
     local integer fn
     //call BJDebugMsg("Interpreting: ")
-    //call Ins#_print(op)
+    call Ins#_print(op)
     if t == Ins#_Set then
     
         #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
@@ -21,6 +21,7 @@ function _step takes integer ctx returns integer
         #undef macro
         
     elseif t == Ins#_SetLocalArray then
+    // TODO like global
         #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op] + Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
@@ -185,31 +186,63 @@ function _step takes integer ctx returns integer
         #undef macro
  
     elseif t == Ins#_SetGlobal then
-        #define macro(ty) Auto@_set_global_##ty(Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
-        #define ty Ins#_type[op]
-        #include "g-type-bin.j"
-        #undef ty
-        #undef macro
+        if Ins#_a1[op] > 0 then
+            #define macro(ty) Auto@_set_global_##ty(Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        else
+            #define macro(ty) Table@_set_##ty(Modified@_globals, Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        endif
 
     elseif t == Ins#_GetGlobal then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_get_global_##ty(Ins@_a2[op]))
-        #define ty Ins#_type[op]
-        #include "g-type-bin.j"
-        #undef macro
+        if Ins#_a2[op] > 0 then
+            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_get_global_##ty(Ins@_a2[op]))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef macro
+        else
+            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Modified@_globals, Ins@_a2[op]))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        endif
 
     elseif t == Ins#_SetGlobalArray then
-        #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
-        #define ty Ins#_type[op]
-        #include "g-type-bin.j"
-        #undef ty
-        #undef macro
+        if Ins#_a1[op] > 0 then
+            #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        else
+            #define macro(ty) Table@_set_##ty(Modified@_globals, Ins@_a1[op] - Table@_get_integer(Context@_locals[ctx], Ins@_a2[op]), Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        endif
 
     elseif t == Ins#_GetGlobalArray then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_array_get_global_##ty(Ins@_a2[op], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
-        #define ty Ins#_type[op]
-        #include "g-type-bin.j"
-        #undef ty
-        #undef macro
+        if Ins#_a2[op] > 0 then
+            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_array_get_global_##ty(Ins@_a2[op], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        else
+            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Modified@_globals, Ins@_a2[op] - Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
+            #define ty Ins#_type[op]
+            #include "g-type-bin.j"
+            #undef ty
+            #undef macro
+        endif
 
     elseif t == Ins#_Lit then
         if Ins#_type[op] == Types#_integer then
