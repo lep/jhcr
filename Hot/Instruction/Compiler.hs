@@ -154,9 +154,10 @@ compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
     r <- newRegister
     let vname = nameOf n
     let v = getId n
-    forM_ (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
+    binds <- forM (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
-        emit $ Bind typ pos r
+        return $ Bind typ pos r
+    mapM_ emit binds
     emit $ Call (typeOfVar n) r v vname
     typedGet (typeOfVar n) r
 
@@ -273,7 +274,7 @@ compileExpr e =
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
-        emit $ op (typeOfExpr a) r a' b' 
+        emit $ op t r a' b' 
         return r
         --typedGet t r
 

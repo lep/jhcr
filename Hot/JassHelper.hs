@@ -12,7 +12,7 @@ import Control.Monad.IO.Class
 
 
 import Jass.Parser
-import Jass.Ast
+import Jass.Ast hiding (fmap, traverse)
 import Jass.Printer
 
 import Data.Composeable
@@ -34,12 +34,17 @@ cleanName x =
   else x'
 
 
+-- TODO: Maybe operate on Hot.Ast to only rename globals
 compile :: Ast Name x -> Ast Name x
 compile x =
   case x of
     Code f -> Code $ cleanName f
     Call "ExecuteFunc" [String f] -> Call "ExecuteFunc" [String $ cleanName f]
     Call f args -> Call (cleanName f) $ map compile args
+    ADef n ty -> ADef (cleanName n) ty
+    SDef c n ty init -> SDef c (cleanName n) ty $ fmap compile init
+    SVar n -> SVar $ cleanName n
+    AVar n idx -> AVar (cleanName n) $ compile idx
     Function c name args ret body ->
         Function c (cleanName name) args ret $ map compile body
    

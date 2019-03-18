@@ -101,8 +101,10 @@ function _step takes integer ctx returns integer
     elseif t == Ins#_Add then
         if Ins#_type[op] == Types#_integer then
             call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) + Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+        elseif Ins#_type[op] == Types#_real then
+            call Table#_set_real   (Context#_locals[ctx], Ins#_a1[op], Table#_get_real   (Context#_locals[ctx], Ins#_a2[op]) + Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) + Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_string (Context#_locals[ctx], Ins#_a1[op], Table#_get_string (Context#_locals[ctx], Ins#_a2[op]) + Table#_get_string (Context#_locals[ctx], Ins#_a3[op]))
         endif
         
     elseif t == Ins#_Sub then
@@ -114,9 +116,9 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Mul then
         if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) * Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer  (Context#_locals[ctx], Ins#_a2[op]) * Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) * Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real     (Context#_locals[ctx], Ins#_a2[op]) * Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
         endif
         
     elseif t == Ins#_Div then
@@ -196,14 +198,14 @@ function _step takes integer ctx returns integer
         #undef macro
 
     elseif t == Ins#_SetGlobalArray then
-        #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
+        #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
 
     elseif t == Ins#_GetGlobalArray then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_array_get_global_##ty(Ins@_a2[op], Ins@_a3[op]))
+        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_array_get_global_##ty(Ins@_a2[op], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
         #undef ty

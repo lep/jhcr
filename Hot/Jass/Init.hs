@@ -379,7 +379,7 @@ isOp x = x `elem` (["+", "-", "*", "/", "==", "!=", "<", "<=", ">", ">=", "and",
 
 type IsArray = Bool
 
-data Mode = Init | Compile
+data Mode = Init | Compile deriving (Eq)
 
 data RenameVariablesState = RenameVariablesState
     { _globalScope :: Map Name Var
@@ -430,12 +430,15 @@ addLocal name ty isArray = do
 addGlobal :: Constant -> Name -> Type -> IsArray -> RenameVariablesM Var
 addGlobal c name ty isArray = do
     v' <- uses globalScope $ Map.lookup name
-    f <- snd <$> ask
+    (m, f) <- ask
+    let idf = if m == Init then id else (idf' . negate)
+        idf' = if isArray then (*32768) else id
+    --f <- snd <$> ask
     case v' of
         Just v -> return v
         Nothing -> do
             globalCount %= (Map.insertWith (+) (f ty, isArray) 1)
-            id <- uses globalCount (Map.findWithDefault (error "xxx") (f ty, isArray))
+            id <- idf <$> uses globalCount (Map.findWithDefault (error "xxx") (f ty, isArray))
             let v = H.Global c name (f ty) isArray id
             globalScope %= (at name ?~ v)
             return v

@@ -273,10 +273,10 @@ initX o = do
                     hPutStrLn stderr $ errorBundlePretty err
                     exitFailure
                 Right ast -> do
+                    let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
-                        (ast', st') = first HandleCode.compile .
-                                      H.runRenameM H.Init conv st $
-                                      jhc ast
+                        (ast', st') = first HandleCode.compile $
+                                      H.runRenameM H.Init conv st jhast
                         
                         conv x = if x == "code" then "_replace_code" else x
                         
@@ -293,7 +293,7 @@ initX o = do
                         
                         outj = concatPrograms (concatPrograms rt1' generated'') rt2'
                         
-                        hmap = mkHashMap ast
+                        hmap = mkHashMap jhast
                     
                     hPutStrLn stderr "Writing state file"
                     encodeFile (statePath o) (st', hmap)

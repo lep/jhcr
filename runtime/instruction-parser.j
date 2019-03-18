@@ -27,7 +27,7 @@ function _parse__ins takes string _s returns integer
     
     set Ins#_op[_new] = _ins
     
-    if _ins <= Ins#_GetLocalArray then
+    if _ins <= Ins#_GetGlobalArray then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
         set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+16))
         set Ins#_a2[_new]   = S2I(SubString(_s, _S+16, _S+27))
