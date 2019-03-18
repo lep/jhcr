@@ -98,6 +98,7 @@ data Options =
            , preloadPath :: FilePath
            , processJasshelper :: Bool
            , statePath :: FilePath
+           , showAsm :: Bool
            }
   deriving (Show)
 
@@ -125,6 +126,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
                <*> pPreload
                <*> pJasshelper
                <*> pState
+               <*> pAsm
     pJasshelper = switch
       (  long "jasshelper" 
       <> help "Treats the input script as if it was produced by jasshelper"
@@ -158,6 +160,10 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
         <> metavar "PATH"
         <> help "Path to your CustomMapData folder"
         )
+    pAsm = switch
+      (  long "asm"
+      <> help "Shows human readable assembler code"
+      )
 
 main = do
     options <- parseOptions
@@ -190,8 +196,11 @@ updateX o = do
                 hPutStrLn stderr $ unwords ["Updating function", n]
 
             hPutStrLn stderr "Writing bytecode"
+        
+            let compiled = H.compile ast''
+            hPutBuilder stdout $ H.serializeAsm compiled
             
-            let asms = H.serializeChunked 500 $ H.compile ast''
+            let asms = H.serializeChunked 500 compiled
                 preload = mkPreload asms
 
             cfd <- openBinaryFile (preloadPath o </> "JHCR.txt") WriteMode
