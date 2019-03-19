@@ -293,7 +293,7 @@ function _start_interpreter_wrap takes nothing returns boolean
     set Context#_locals[ctx]   = Table#_alloc()
     set Context#_bindings[ctx] = Table#_alloc()
     
-    set Context#_pc[parent] = 0
+    set Context#_pc[parent]     = 0
     set Context#_labels[parent] = 0
     set Context#_locals[parent] = Wrap#_args
     set Context#_parent[parent] = 0

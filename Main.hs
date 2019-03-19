@@ -56,6 +56,7 @@ import Text.Megaparsec (errorBundlePretty, parse, ParseErrorBundle)
 import qualified Data.Text.IO as Text
 
 import Options.Applicative
+import Development.GitRev (gitHash)
 
 exceptT :: Either e a -> ExceptT e IO a
 exceptT = ExceptT . return
@@ -100,18 +101,16 @@ data Options =
            , statePath :: FilePath
            , showAsm :: Bool
            }
-  deriving (Show)
 
 parseOptions = customExecParser (prefs showHelpOnEmpty) opts
   where
     opts = info (pCommand <**> helper)
       (  fullDesc
-      <> header "jhcr - A compiler to allow hot code reload in jass"
+      <> header ("jhcr - A compiler to allow hot code reload in jass (v. git-" <> take 6 $(gitHash) <> ")")
       )
-    pCommand = subparser
+    pCommand = hsubparser
       (  command "init" (info initOptions ( progDesc "Compiles the mapscript to allow hot code reload"))
       <> command "update" (info updateOptions ( progDesc "Compiles updates  to be reloaded in the map"))
-      -- <> "asm" (info asmOptions ( progDesc "Prints out human readable asm code"))
       )
     initOptions =
         Init <$> argument str (help "Path to common.j" <> metavar "common.j")

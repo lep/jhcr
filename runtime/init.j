@@ -9,8 +9,6 @@ function _parse takes nothing returns nothing
     local integer _cnt = _max
     local string array _tmp
     
-    call BJDebugMsg("esc")
-    
     loop
     exitwhen _cnt == 0
         set _tmp[_cnt] = BlzGetAbilityTooltip(_ids[_cnt], 1)
@@ -33,10 +31,7 @@ endfunction
 
 
 function _init takes nothing returns nothing
-    local trigger _t = CreateTrigger()
-    call TriggerRegisterPlayerEventEndCinematic( _t, Player(0) )
-    call TriggerAddAction( _t, function _parse )
-    
+
     // "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls", "Adis", "Acmg", "Amdf", "Adts"
     set _ids[1] = 'Agyv'
     set _ids[2] = 'Aflk'
