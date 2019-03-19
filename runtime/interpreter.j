@@ -153,7 +153,8 @@ function _step takes integer ctx returns integer
         
         set tmp = ctx
         set ctx = Context#_parent[ctx]
-        call Context#_destroy(tmp)
+        call Table#_destroy(Context#_bindings[tmp])
+        call Context#_free(tmp)
     elseif t == Ins#_Call then
         set fn = Ins#_a2[op]
         if fn < 0 or Modified#_modified(fn) then
