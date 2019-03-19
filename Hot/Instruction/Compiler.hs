@@ -133,7 +133,7 @@ compileToplevel (H.Function n args r body) = do
     registerId .= 0
 
     typed r $ compileStmt body
-    emit Ret
+    emit $ Ret r
 
 typed t = local (const t)
 
@@ -164,12 +164,12 @@ compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
 compileStmt :: Ast Var Stmt -> CompileMonad ()
 compileStmt e =
   case e of
-    Return Nothing -> emit Ret
+    Return Nothing -> emit . Ret =<< ask
     Return (Just e) -> do
         r <- compileExpr e
         wanted <- ask
         emit $ Set wanted 0 r
-        emit Ret
+        emit $ Ret wanted
 
     H.Call{} -> void $ compileCall e
 

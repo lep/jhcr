@@ -95,23 +95,32 @@ stubifyFn e =
                                       , Var $ SVar var])
                                 args
                                 [1..]
-
-                                
-            ret :: Ast Var Stmt
-            ret = if retty == "code"
-                  then Return . Just $ Call (mkFn "_Auto_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]]
-                  else if retty /= "nothing"
-                  then Return . Just $ Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]
-                  else Return Nothing
-
             call :: Ast Var Stmt
             call = Call (mkFn "_Wrap_call_anything_around") [Int $ getId' n]
+            
+            ldef = if retty == "nothing"
+                   then Nothing
+                   else Just . Local $ SDef Normal (mkLocal "_ret") retty Nothing
 
-            body' = binds ++ [call, ret]
+            mkRetVar = if retty == "code"
+                       then Call (mkFn "_Auto_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]]
+                       else Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]
+
+            set = if retty == "nothing"
+                  then Nothing
+                  else Just $ Set (SVar $ mkLocal "_ret") mkRetVar
+              
+            flush = Call (mkFn "_Table_flush") [Var $ SVar scope]
+                  
+            ret = if retty == "nothing"
+                  then Return Nothing
+                  else Return . Just . Var . SVar $ mkLocal "_ret"
+
+            body' =  binds <> [call] <> maybeToList set <> [flush, ret]
 
 
         in [ Function c ("_" ## n) args retty  $ map (rename n) body
-        , Function c n args retty [
+        , Function c n args retty $ maybeToList ldef <> [
             If (Call (mkFn "_Modified_modified") [Int $ getId' n])
                   body'
                 [] (Just [

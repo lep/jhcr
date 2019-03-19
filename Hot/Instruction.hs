@@ -115,7 +115,7 @@ data Instruction
     | Not Register Register
 
     
-    | Ret
+    | Ret Type
     deriving (Show)
 
 pad5Dec :: Int8 -> Builder
@@ -217,7 +217,7 @@ serializeAsm = unlines . map s
 
         Convert t s t' s' -> unwords [ ins2id "conv", typeToId t, reg' s, typeToId t', reg' s']
 
-        Ret -> ins2id "ret"
+        Ret ty -> unwords [ ins2id "ret", typeToId ty ] :: Builder
 
         Literal t s l ->
             let litRendered = serializeLit l
@@ -265,7 +265,7 @@ serialize' ins =
 
     Convert t s t' s' -> mconcat [ ins2id "conv", typeToId t, reg s, typeToId t', reg s']
 
-    Ret -> ins2id "ret"
+    Ret ty -> mconcat [ ins2id "ret", typeToId ty ]
 
     Literal t s l ->
         let litRendered = serializeLit l

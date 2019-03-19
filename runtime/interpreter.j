@@ -12,7 +12,6 @@ function _step takes integer ctx returns integer
     local integer fn
     
     if t == Ins#_Set then
-    
         #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
@@ -147,8 +146,7 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Ret then
         #define macro(ty) Table@_set_##ty(Context@_locals[Context@_parent[ctx]], Ins@_a1[Context@_pc[Context@_parent[ctx]]], Table@_get_##ty(Context@_locals[ctx], 0))
-
-        #define ty Ins#_type[op]
+        #define ty Ins@_type[op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
@@ -286,7 +284,7 @@ endfunction
 function _start_interpreter_wrap takes nothing returns boolean
     local integer ctx = Context#_alloc()
     local integer parent = Context#_alloc()
-    
+
     set Context#_pc[ctx]       = Parser#_fn_entry[Wrap#_p + 100]
     set Context#_parent[ctx]   = parent
     set Context#_labels[ctx]   = Parser#_fn_labels[Wrap#_p + 100]

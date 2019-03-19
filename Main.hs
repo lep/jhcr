@@ -67,7 +67,8 @@ concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
 
 runtime1 :: [String]
 runtime1 = map S8.unpack
-  [ $(embedFile "out/types.j"), $(embedFile "out/table.j")
+  [ $(embedFile "out/print.j"), $(embedFile "out/types.j")
+  , $(embedFile "out/list.j"), $(embedFile "out/table.j")
   , $(embedFile "out/convert.j"), $(embedFile "out/wrap-around.j")
   , $(embedFile "out/modified.j")
   ]

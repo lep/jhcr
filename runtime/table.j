@@ -5,6 +5,9 @@ globals
     
     hashtable _ht = InitHashtable()
 
+    
+    
+    integer array _list
     agent array _agent
     buff array _buff
     camerasetup array _camerasetup
@@ -16,15 +19,20 @@ globals
     handle array _handle
     terraindeformation array _terraindeformation
     weathereffect array _weathereffect
-    
-    integer array _aux
-    integer array _next
 
 endglobals
 
 #include "alloc.j"
 
+function _flush takes integer _tbl returns nothing
+    call List#_destroy(_list[_tbl])
+    set _list[_tbl] = 0
+    call FlushChildHashtable(_ht, _tbl)
+endfunction
+
 function _destroy takes integer _tbl returns nothing
+    call List#_destroy(_list[_tbl])
+    set _list[_tbl] = 0
     call FlushChildHashtable(_ht, _tbl)
     call _free(_tbl)
 endfunction
@@ -738,11 +746,9 @@ function _get_agent takes integer _this,integer _key returns agent
     return _agent[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_agent takes integer _this,integer _key,agent _value returns nothing
-    local integer n= _alloc()
-    set _agent[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _agent[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -750,11 +756,9 @@ function _get_buff takes integer _this,integer _key returns buff
     return _buff[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_buff takes integer _this,integer _key,buff _value returns nothing
-    local integer n= _alloc()
-    set _buff[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _buff[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -762,11 +766,9 @@ function _get_camerasetup takes integer _this,integer _key returns camerasetup
     return _camerasetup[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_camerasetup takes integer _this,integer _key,camerasetup _value returns nothing
-    local integer n= _alloc()
-    set _camerasetup[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _camerasetup[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -774,11 +776,9 @@ function _get_conditionfunc takes integer _this,integer _key returns conditionfu
     return _conditionfunc[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_conditionfunc takes integer _this,integer _key,conditionfunc _value returns nothing
-    local integer n= _alloc()
-    set _conditionfunc[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _conditionfunc[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -786,11 +786,9 @@ function _get_eventid takes integer _this,integer _key returns eventid
     return _eventid[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_eventid takes integer _this,integer _key,eventid _value returns nothing
-    local integer n= _alloc()
-    set _eventid[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _eventid[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -798,11 +796,9 @@ function _get_filterfunc takes integer _this,integer _key returns filterfunc
     return _filterfunc[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_filterfunc takes integer _this,integer _key,filterfunc _value returns nothing
-    local integer n= _alloc()
-    set _filterfunc[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _filterfunc[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -810,11 +806,9 @@ function _get_gamecache takes integer _this,integer _key returns gamecache
     return _gamecache[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_gamecache takes integer _this,integer _key,gamecache _value returns nothing
-    local integer n= _alloc()
-    set _gamecache[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _gamecache[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -822,11 +816,9 @@ function _get_gamestate takes integer _this,integer _key returns gamestate
     return _gamestate[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_gamestate takes integer _this,integer _key,gamestate _value returns nothing
-    local integer n= _alloc()
-    set _gamestate[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _gamestate[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -834,11 +826,9 @@ function _get_handle takes integer _this,integer _key returns handle
     return _handle[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_handle takes integer _this,integer _key,handle _value returns nothing
-    local integer n= _alloc()
-    set _handle[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _handle[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -846,11 +836,9 @@ function _get_terraindeformation takes integer _this,integer _key returns terrai
     return _terraindeformation[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_terraindeformation takes integer _this,integer _key,terraindeformation _value returns nothing
-    local integer n= _alloc()
-    set _terraindeformation[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _terraindeformation[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
 
@@ -858,9 +846,7 @@ function _get_weathereffect takes integer _this,integer _key returns weathereffe
     return _weathereffect[(LoadInteger(_ht, _this, _key))]
 endfunction
 function _set_weathereffect takes integer _this,integer _key,weathereffect _value returns nothing
-    local integer n= _alloc()
-    set _weathereffect[n]=_value
-    set _next[n]=_aux[_this]
-    set _aux[_this]=n
-    call SaveInteger(_ht, _this, _key, n)
+    set _list[_this] = List#_cons(_list[_this])
+    set _weathereffect[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction

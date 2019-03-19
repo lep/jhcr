@@ -5,6 +5,8 @@ globals
     trigger _t1 = CreateTrigger()
     trigger _t2 = CreateTrigger()
     code _ret = null
+    
+    // _args :: Table
     integer _args = 0
 endglobals
 

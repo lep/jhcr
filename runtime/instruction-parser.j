@@ -81,7 +81,8 @@ function _parse__ins takes string _s returns integer
         set Ins#_a2[_new] = S2I(SubString(_s, _S+13, _S+24))
         set _S = _S + 24
     elseif _ins == Ins#_Ret then
-        set _S = _S + 2
+        set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
+        set _S = _S + 5
     endif
     return _new
 endfunction

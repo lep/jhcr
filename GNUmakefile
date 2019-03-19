@@ -1,5 +1,5 @@
-RUNTIME := runtime/table.j runtime/instruction-parser.j
-RUNTIME += runtime/modified.j runtime/wrap-around.j
+RUNTIME := runtime/table.j runtime/instruction-parser.j runtime/list.j
+RUNTIME += runtime/modified.j runtime/wrap-around.j runtime/print.j
 RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
 
@@ -34,8 +34,8 @@ Main: $(SRC) $(PROCESSED)
 
 process: $(PROCESSED)
 
-out/%.j: runtime/%.j
-	bash process.sh $^ $@ JHCR_
+out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
+	bash process.sh $< $@ JHCR_
 
 clean:
 	rm -f $(PROCESSED) $(HS_O) $(HS_HI) runtime/convert.j runtime/types.j 
