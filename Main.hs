@@ -185,6 +185,7 @@ updateX o = do
             let prog' = jhc prog
                 J.Programm ast = prog'
                 hmap' = mkHashMap prog'
+                -- TODO: handle globals and set their correct value
                 astU = filter (isUpdated hmap hmap') ast
                 nameU = map getFnName $ filter isFunction astU
                 progU = J.Programm astU

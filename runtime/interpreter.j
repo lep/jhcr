@@ -20,7 +20,6 @@ function _step takes integer ctx returns integer
         #undef macro
         
     elseif t == Ins#_SetLocalArray then
-    // TODO like global
         #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op] + Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
