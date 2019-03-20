@@ -51,7 +51,8 @@ import qualified Hot.JassHelper as JH
 import Data.Composeable
 import Data.Hashable
 
-import Text.Megaparsec (errorBundlePretty, parse, ParseErrorBundle)
+import Text.Megaparsec (errorBundlePretty, ParseErrorBundle)
+import qualified Text.Megaparsec as Mega
 
 import qualified Data.Text.IO as Text
 
@@ -61,6 +62,7 @@ import Development.GitRev (gitHash)
 exceptT :: Either e a -> ExceptT e IO a
 exceptT = ExceptT . return
 
+parse fp p src = Mega.parse fp p $ src <> "\n"
 
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b

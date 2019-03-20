@@ -1,10 +1,6 @@
 // scope Interpreter
 
-globals
-    integer _fresh = 0
-endglobals
-
-// interp :: Context -> IO Context
+// _step :: Context -> IO Context
 function _step takes integer ctx returns integer
     local integer op = Context#_pc[ctx]
     local integer t = Ins#_op[op]
@@ -158,7 +154,7 @@ function _step takes integer ctx returns integer
     elseif t == Ins#_Call then
         set fn = Ins#_a2[op]
         if fn < 0 or Modified#_modified(fn) then
-            // user-defined or reloaded function
+            // newly defined or reloaded function
             
             set tmp = Context#_alloc()
             
@@ -267,20 +263,6 @@ function _step takes integer ctx returns integer
     return ctx
 endfunction
 
-
-//function _start_interpreter takes integer fn returns nothing
-//    local integer ctx = Context#_alloc()
-//    set Context#_pc[ctx]     = Parser#_fn_entry[fn + 100]
-//    set Context#_parent[ctx] = 0
-//    set Context#_labels[ctx] = Table#_get_integer(Parser#_fn_labels, fn)
-//    set Context#_locals[ctx] = _fresh
-//    set _fresh = Context#_alloc()
-//    
-//    loop
-//    exitwhen ctx == 0
-//        set ctx = _step(ctx)
-//    endloop
-//endfunction
 
 function _start_interpreter_wrap takes nothing returns boolean
     local integer ctx = Context#_alloc()
