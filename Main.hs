@@ -76,7 +76,7 @@ runtime1 = map S8.unpack
 runtime2 :: [String]
 runtime2 = map S8.unpack
   [ $(embedFile "out/context.j"), $(embedFile "out/instruction.j")
-  , $(embedFile "out/instruction-parser.j"), $(embedFile "out/interpreter.j")
+  , $(embedFile "out/parser.j"), $(embedFile "out/interpreter.j")
   , $(embedFile "out/init.j")
   ]
 

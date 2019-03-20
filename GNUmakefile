@@ -1,4 +1,4 @@
-RUNTIME := runtime/table.j runtime/instruction-parser.j runtime/list.j
+RUNTIME := runtime/table.j runtime/parser.j runtime/list.j
 RUNTIME += runtime/modified.j runtime/wrap-around.j runtime/print.j
 RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
@@ -15,6 +15,8 @@ PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 HS_O := $(patsubst %.hs, %.o, $(SRC))
 HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 
+UPX := ./upx
+UPXFLAGS ?= --best
 
 .PHONY: clean process
 
@@ -22,6 +24,7 @@ jhcr: HSFLAGS=-O
 jhcr: Main
 	cp Main jhcr
 	strip jhcr
+	$(UPX) $(UPXFLAGS) jhcr.exe
 
 convert: convert.hs
 	cabal exec -- ghc $(HSFLAGS) convert

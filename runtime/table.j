@@ -5,9 +5,8 @@ globals
     
     hashtable _ht = InitHashtable()
 
-    
-    
     integer array _list
+    
     agent array _agent
     buff array _buff
     camerasetup array _camerasetup

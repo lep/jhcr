@@ -13,7 +13,6 @@ globals
     integer array _bindings
     integer array _labels
     integer array _parent
-
     integer array _pc
     
 endglobals
