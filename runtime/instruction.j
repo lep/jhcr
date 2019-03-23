@@ -88,44 +88,44 @@ endfunction
 
 function _print takes integer _ins returns nothing
 
-    call BJDebugMsg(I2S(_op[_ins]) +" "+ I2S(_type[_ins]) +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
+    call Print#_print(I2S(_op[_ins]) +" "+ I2S(_type[_ins]) +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
 
 
     if _op[_ins] <= Ins#_GetLocalArray then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
+        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
     elseif _op[_ins] <= Ins#_Bind then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Lit then
         if Ins#_type[_ins] == Types#_string then
-            call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ (_string[_ins]) )
+            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ (_string[_ins]) )
         elseif Ins#_type[_ins] == Types#_integer then
-            call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_integer[_ins]) )
+            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_integer[_ins]) )
         elseif Ins#_type[_ins] == Types#_real then
-            call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]]  +" "+ R2S(_real[_ins]) )
+            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]]  +" "+ R2S(_real[_ins]) )
         elseif Ins#_type[_ins] == Types#_boolean then
-            call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ _B2S(_boolean[_ins]) )
+            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ _B2S(_boolean[_ins]) )
         endif
     elseif _op[_ins] == Ins#_Call then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Convert then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
+        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
     elseif _op[_ins] == Ins#_Label then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_Jmp then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_Fun then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_JmpT then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Not then
-        call BJDebugMsg(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Ret then
-        call BJDebugMsg(_OpNames[_op[_ins]] )
+        call Print#_print(_OpNames[_op[_ins]] )
     else
-        call BJDebugMsg("unknown op " +I2S(Ins#_op[_ins]))
+        call Print#_print("unknown op " +I2S(Ins#_op[_ins]))
     endif
 
-    call BJDebugMsg("------------")
+    call Print#_print("------------")
     
 endfunction
 

@@ -127,6 +127,13 @@ function _step takes integer ctx returns integer
     elseif t == Ins#_Not then
         call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], not Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]))
         
+    elseif t == Ins#_Negate then
+        if Ins#_type[op] == Types#_integer then
+            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], -Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]))
+        else
+            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], -Table#_get_real(Context#_locals[ctx], Ins#_a2[op]))
+        endif
+        
     elseif t == Ins#_Label then
         // do nothing
         
