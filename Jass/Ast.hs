@@ -315,9 +315,8 @@ s2r = go
     go s = read $ "0" <> s <> "0"
 
 rawcode2int :: Lit -> Int32
-rawcode2int = foldl (\acc word -> acc*256 + fromIntegral (ord word)) 0 . ex
-  where
-    ex = drop 1 . reverse . drop 1 . reverse
+rawcode2int = foldl (\acc word -> acc*256 + fromIntegral (ord word)) 0
+
 
 eliminateElseIfs :: Ast v Stmt -> Ast v Stmt
 eliminateElseIfs (If cond tb eis eb) =
