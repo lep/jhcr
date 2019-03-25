@@ -158,7 +158,7 @@ compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
         r <- compileExpr arg
         return $ Bind typ pos r
     mapM_ emit binds
-    emit $ Call (typeOfVar n) r v vname
+    emit $ Call r v vname
     typedGet (typeOfVar n) r
 
 compileStmt :: Ast Var Stmt -> CompileMonad ()

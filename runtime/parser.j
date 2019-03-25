@@ -5,7 +5,7 @@ globals
     
     constant integer _OpWidth = 2
     constant integer _TypeWidth = 3
-    constant integer _RegWidth = 11
+    constant integer _RegWidth = 9
     constant integer _LabelWidth = 6
     
     integer _S = 0
@@ -29,40 +29,39 @@ function _parse__ins takes string _s returns integer
     
     if _ins <= Ins#_GetGlobalArray then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
-        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+16))
-        set Ins#_a2[_new]   = S2I(SubString(_s, _S+16, _S+27))
-        set Ins#_a3[_new]   = S2I(SubString(_s, _S+27, _S+38))
-        set _S = _S + 38
+        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
+        set Ins#_a2[_new]   = S2I(SubString(_s, _S+14, _S+23))
+        set Ins#_a3[_new]   = S2I(SubString(_s, _S+23, _S+32))
+        set _S = _S + 32
     elseif _ins <= Ins#_Bind then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
-        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+16))
-        set Ins#_a2[_new]   = S2I(SubString(_s, _S+16, _S+27))
-        set _S = _S + 27
+        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
+        set Ins#_a2[_new]   = S2I(SubString(_s, _S+14, _S+23))
+        set _S = _S + 23
     elseif _ins == Ins#_Lit then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
-        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+16))
-        set _b              = S2I(SubString(_s, _S+16, _S+22))
+        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
+        set _b              = S2I(SubString(_s, _S+14, _S+20))
         if Ins#_type[_new] == Types#_string then
-            set Ins#_string[_new] = SubString(_s, _S+22, _S+22+_b)
+            set Ins#_string[_new] = SubString(_s, _S+20, _S+20+_b)
         elseif Ins#_type[_new] == Types#_integer then
-            set Ins#_integer[_new] = S2I(SubString(_s, _S+22, _S+22+_b))
+            set Ins#_integer[_new] = S2I(SubString(_s, _S+20, _S+20+_b))
         elseif Ins#_type[_new] == Types#_real then
-            set Ins#_real[_new] = S2R(SubString(_s, _S+22, _S+22+_b))
+            set Ins#_real[_new] = S2R(SubString(_s, _S+20, _S+20+_b))
         elseif Ins#_type[_new] == Types#_boolean then
-            set Ins#_boolean[_new] = SubString(_s, _S+22, _S+22+_b)=="True"
+            set Ins#_boolean[_new] = SubString(_s, _S+20, _S+20+_b)=="True"
         endif
-        set _S = _S + 22 + _b
+        set _S = _S + 20 + _b
     elseif _ins == Ins#_Call then
-        set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
-        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+16))
-        set Ins#_a2[_new]   = S2I(SubString(_s, _S+16, _S+22))
-        set _S = _S + 22
+        set Ins#_a1[_new]   = S2I(SubString(_s, _S+2,  _S+11))
+        set Ins#_a2[_new]   = S2I(SubString(_s, _S+11, _S+17))
+        set _S = _S + 17
     elseif _ins == Ins#_Convert then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
-        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+16))
-        set Ins#_a2[_new]   = S2I(SubString(_s, _S+16, _S+19))
-        set Ins#_a3[_new]   = S2I(SubString(_s, _S+19, _S+30))
-        set _S = _S + 30
+        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
+        set Ins#_a2[_new]   = S2I(SubString(_s, _S+14, _S+17))
+        set Ins#_a3[_new]   = S2I(SubString(_s, _S+17, _S+26))
+        set _S = _S + 26
     elseif _ins == Ins#_Label then
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2, _S+8))
         set _S = _S + 8
@@ -73,13 +72,13 @@ function _parse__ins takes string _s returns integer
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2, _S+8))
         set _S = _S + 8
     elseif _ins == Ins#_JmpT then
-        set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+13))
-        set Ins#_a2[_new] = S2I(SubString(_s, _S+13, _S+19))
-        set _S = _S + 19
+        set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+11))
+        set Ins#_a2[_new] = S2I(SubString(_s, _S+11, _S+17))
+        set _S = _S + 17
     elseif _ins == Ins#_Not then
-        set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+13))
-        set Ins#_a2[_new] = S2I(SubString(_s, _S+13, _S+24))
-        set _S = _S + 24
+        set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+11))
+        set Ins#_a2[_new] = S2I(SubString(_s, _S+11, _S+20))
+        set _S = _S + 20
     elseif _ins == Ins#_Ret then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
         set _S = _S + 5
