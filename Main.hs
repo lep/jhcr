@@ -103,7 +103,7 @@ data Options =
            , processJasshelper :: Bool
            , statePath :: FilePath
            , showAsm :: Bool
-           }
+           } deriving (Show)
 
 parseOptions = customExecParser (prefs showHelpOnEmpty) opts
   where
@@ -201,7 +201,8 @@ updateX o = do
             hPutStrLn stderr "Writing bytecode"
         
             let compiled = H.compile ast''
-            hPutBuilder stdout $ H.serializeAsm compiled
+            when (showAsm o) $ do
+                hPutBuilder stdout $ H.serializeAsm compiled
             
             let asms = H.serializeChunked 500 compiled
                 preload = mkPreload asms
