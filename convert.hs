@@ -246,7 +246,7 @@ mkJassTypes ty = Programm $ map mkGlobal $ concatMap allChildren ty
     mkGlobal (id, name) = Global $ SDef Const ("_" <> name) "integer" $ Just (Int $ show id)
 
 main = do
-    x <- parse programm "common.j" <$> readFile "common.j"
+    x <- parse programm "common.j" . (<>"\n") <$> readFile "common.j"
     case x of
         Left err -> putStrLn $ errorBundlePretty err
         Right j -> do

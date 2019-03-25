@@ -72,8 +72,8 @@ function _parse__ins takes string _s returns integer
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2, _S+8))
         set _S = _S + 8
     elseif _ins == Ins#_JmpT then
-        set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+11))
-        set Ins#_a2[_new] = S2I(SubString(_s, _S+11, _S+17))
+        set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+8))
+        set Ins#_a2[_new] = S2I(SubString(_s, _S+8, _S+17))
         set _S = _S + 17
     elseif _ins == Ins#_Not then
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+11))

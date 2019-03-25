@@ -142,8 +142,8 @@ function _step takes integer ctx returns integer
         return ctx
         
     elseif t == Ins#_JmpT then
-        if Table#_get_boolean(Context#_locals[ctx], Ins#_a1[op]) then
-            set Context#_pc[ctx] = Table#_get_integer(Context#_labels[ctx], Ins#_a2[op])
+        if Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]) then
+            set Context#_pc[ctx] = Table#_get_integer(Context#_labels[ctx], Ins#_a1[op])
             return ctx
         endif
         

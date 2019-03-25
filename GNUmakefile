@@ -12,9 +12,6 @@ SRC += Main.hs
 
 PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
-HS_O := $(patsubst %.hs, %.o, $(SRC))
-HS_HI := $(patsubst %.hs, %.hi, $(SRC))
-
 UPX := ./upx
 UPXFLAGS ?= --best
 
@@ -32,7 +29,7 @@ release: $(SRC) $(PROCESSED)
 convert: convert.hs
 	cabal exec -- ghc $(HSFLAGS) convert
 
-runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
+runtime/convert.j Hot/Types.hs runtime/types.j runtime/g-type-bin.j: convert common.j
 	./convert
 
 jhcr: $(SRC) $(PROCESSED)
@@ -44,5 +41,5 @@ out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
 	bash process.sh $< $@ JHCR_
 
 clean:
-	rm -f $(PROCESSED) $(HS_O) $(HS_HI) runtime/convert.j runtime/types.j 
-	rm -f Hot/Types.hs Main convert tmp.w3x jhcr_war3map.j war3map.j jhcr.bin
+	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
+	rm -f jhcr convert 

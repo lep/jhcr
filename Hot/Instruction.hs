@@ -110,7 +110,7 @@ data Instruction
     | Jmp Label
     | Function Label Name
     
-    | JmpT Label Register --encoded as: jmpt reg label
+    | JmpT Label Register
     
     | Not Register Register
 
@@ -213,7 +213,7 @@ serializeAsm = unlines . map s
 
         Label l -> unwords [ ins2id "label", label' l]
         Jmp l -> unwords [ ins2id "jmp", label' l]
-        JmpT l a -> unwords [ ins2id "jmpt", reg' a, label' l]
+        JmpT l a -> unwords [ ins2id "jmpt", label' l, reg' a]
 
         Convert t s t' s' -> unwords [ ins2id "conv", typeToId t, reg' s, typeToId t', reg' s']
 
@@ -261,7 +261,7 @@ serialize' ins =
 
     Label l -> mconcat [ ins2id "label", label l]
     Jmp l -> mconcat [ ins2id "jmp", label l]
-    JmpT l a -> mconcat [ ins2id "jmpt", reg a, label l]
+    JmpT l a -> mconcat [ ins2id "jmpt", label l, reg a]
 
     Convert t s t' s' -> mconcat [ ins2id "conv", typeToId t, reg s, typeToId t', reg s']
 
