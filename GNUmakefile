@@ -18,11 +18,14 @@ HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 UPX := ./upx
 UPXFLAGS ?= --best
 
-.PHONY: clean process
+.PHONY: clean process release all
 
-jhcr: HSFLAGS=-O
-jhcr: Main
-	cp Main jhcr
+all: jhcr
+
+
+release: HSFLAGS=-O -osuf .oo -hisuf .hio
+release: $(SRC) $(PROCESSED)
+	cabal exec -- ghc $(HSFLAGS) Main.hs -o jhcr
 	strip jhcr
 	$(UPX) $(UPXFLAGS) jhcr.exe
 
@@ -32,8 +35,8 @@ convert: convert.hs
 runtime/convert.j Hot/Types.hs runtime/types.j: convert common.j
 	./convert
 
-Main: $(SRC) $(PROCESSED)
-	cabal exec -- ghc $(HSFLAGS) Main
+jhcr: $(SRC) $(PROCESSED)
+	cabal exec -- ghc $(HSFLAGS) Main.hs -o jhcr
 
 process: $(PROCESSED)
 
