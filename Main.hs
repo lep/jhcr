@@ -204,7 +204,7 @@ updateX o = do
             when (showAsm o) $ do
                 hPutBuilder stdout $ H.serializeAsm compiled
             
-            let asms = H.serializeChunked 500 compiled
+            let asms = H.serializeChunked 700 compiled
                 preload = mkPreload asms
 
             cfd <- openBinaryFile (preloadPath o </> "JHCR.txt") WriteMode
@@ -240,7 +240,11 @@ updateX o = do
     
     mkF :: [String] -> J.Ast J.Name J.Toplevel
     mkF asms =
-        let availableIds = map J.Rawcode ["Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls", "Adis", "Acmg", "Amdf", "Adts"]
+        let availableIds = map J.Rawcode
+                [ "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls"
+                , "Adis", "Acmg", "Amdf", "Adts", "Aast", "Aetf", "Absk", "Alsh"
+                , "Aens", "Adcn", "Aliq", "Aspl", "Aven", "Ablo", "Acpf", "Awar"
+                ] ++ repeat (error "You've reached the limit of reloadable bytecode")
             cnt = length asms
             mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
 

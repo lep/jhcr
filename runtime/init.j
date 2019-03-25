@@ -2,7 +2,7 @@
 
 globals
     integer array _ids
-    constant integer _max = 6
+    constant integer _max = 24
 endglobals
 
 function _parse takes nothing returns nothing
@@ -39,12 +39,25 @@ function _init takes nothing returns nothing
     set _ids[4] = 'Ahea'
     set _ids[5] = 'Ainf'
     set _ids[6] = 'Aslo'
-    set _ids[6] = 'Afla'
-    set _ids[6] = 'Amls'
-    set _ids[6] = 'Adis'
-    set _ids[6] = 'Acmg'
-    set _ids[6] = 'Amdf'
-    set _ids[6] = 'Adts'
+    set _ids[7] = 'Afla'
+    set _ids[8] = 'Amls'
+    set _ids[9] = 'Adis'
+    set _ids[10] = 'Acmg'
+    set _ids[11] = 'Amdf'
+    set _ids[12] = 'Adts'
+    set _ids[13] = 'Aast'
+    set _ids[14] = 'Aetf'
+    set _ids[15] = 'Absk'
+    set _ids[16] = 'Alsh'
+    set _ids[17] = 'Aens'
+    set _ids[18] = 'Adcn'
+    set _ids[19] = 'Aliq'
+    set _ids[20] = 'Aspl'
+    set _ids[21] = 'Aven'
+    set _ids[22] = 'Ablo'
+    set _ids[23] = 'Acpf'
+    set _ids[24] = 'Awar'
+    
     
     call TriggerAddCondition(Wrap#_t2, Condition(function _i2code))
 
