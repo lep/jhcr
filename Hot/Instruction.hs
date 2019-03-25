@@ -102,7 +102,7 @@ data Instruction
 
     -- special
     | Literal Type Register (Hot.Ast Var Expr) -- encoded as: lit ty reg len string
-    | Call Type Register Label Name
+    | Call Register Label Name
     | Convert Type Register Type Register
 
     -- one label
@@ -146,7 +146,7 @@ pad16Dec x =
 pad32Dec :: Int32 -> Builder
 pad32Dec x =
   let l = intlog10 $ abs x
-      w = 11 - if x < 0 then 1 else 0
+      w = 9 - if x < 0 then 1 else 0
   in int32Dec x <> stringUtf8 (replicate (w-l) '.')
 
 
@@ -204,7 +204,7 @@ serializeAsm = unlines . map s
         SetGlobalArray t ar idx v -> unwords [ ins2id "sga", typeToId t, reg' ar, reg' idx, reg' v]
         GetGlobalArray ty t ar idx -> unwords[ ins2id "gga", typeToId ty, reg' t, reg' ar, reg' idx]
 
-        Call t s f n -> unwords [ ins2id "call", typeToId t, reg' s, label' f, stringUtf8 n]
+        Call s f n -> unwords [ ins2id "call", reg' s, label' f, stringUtf8 n]
         Bind t s a -> unwords [ ins2id "bind", typeToId t, reg' s, reg' a]
 
         Not s a -> unwords [ ins2id "not", reg' s, reg' a]
@@ -252,7 +252,7 @@ serialize' ins =
     SetGlobalArray t ar idx v -> mconcat [ ins2id "sga", typeToId t, reg ar, reg idx, reg v]
     GetGlobalArray ty t ar idx -> mconcat[ ins2id "gga", typeToId ty, reg t, reg ar, reg idx]
 
-    Call t s f _ -> mconcat [ ins2id "call", typeToId t, reg s, label f]
+    Call s f _ -> mconcat [ ins2id "call", reg s, label f]
     Bind t s a -> mconcat [ ins2id "bind", typeToId t, reg s, reg a]
 
     Not s a -> mconcat [ ins2id "not", reg s, reg a]

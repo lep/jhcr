@@ -162,7 +162,8 @@ compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
     typedGet (typeOfVar n) r
 
 compileStmt :: Ast Var Stmt -> CompileMonad ()
-compileStmt e =
+compileStmt e = do
+  --registerId .= 0
   case e of
     Return Nothing -> emit . Ret =<< ask
     Return (Just e) -> do

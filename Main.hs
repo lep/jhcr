@@ -205,16 +205,21 @@ updateX o = do
                 hPutBuilder stdout $ H.serializeAsm compiled
             
             let asms = H.serializeChunked 700 compiled
-                preload = mkPreload asms
+                preload' = mkPreload asms
+            
+            case preload' of
+                Nothing -> do
+                    hPutStrLn stderr "Too many changes. Did not write bytecode to file"
+                    exitFailure
+                Just preload -> do
+                    cfd <- openBinaryFile (preloadPath o </> "JHCR.txt") WriteMode
+                    hPutBuilder cfd $ J.pretty preload
+                    hFlush cfd
+                    hClose cfd
 
-            cfd <- openBinaryFile (preloadPath o </> "JHCR.txt") WriteMode
-            hPutBuilder cfd $ J.pretty preload
-            hFlush cfd
-            hClose cfd
-
-            hPutStrLn stderr "Writing state file"
-            encodeFile (statePath o) (st', hmap' <> hmap)
-            hPutStrLn stderr "Ok."
+                    hPutStrLn stderr "Writing state file"
+                    encodeFile (statePath o) (st', hmap' <> hmap)
+                    hPutStrLn stderr "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
     isUpdated old new x =
@@ -235,23 +240,22 @@ updateX o = do
     getFnName :: J.Ast J.Name J.Toplevel -> J.Name
     getFnName (J.Function _ name _ _ _) = name
     
-    mkPreload :: [String] -> J.Ast J.Name J.Programm
-    mkPreload = J.Programm . pure . mkF
+    mkPreload :: [String] -> Maybe (J.Ast J.Name J.Programm)
+    mkPreload x = J.Programm . pure <$> mkF x
     
-    mkF :: [String] -> J.Ast J.Name J.Toplevel
-    mkF asms =
-        let availableIds = map J.Rawcode
+    mkF :: [String] -> Maybe (J.Ast J.Name J.Toplevel)
+    mkF asms = do
+        let availableIds = map (Just . J.Rawcode)
                 [ "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls"
                 , "Adis", "Acmg", "Amdf", "Adts", "Aast", "Aetf", "Absk", "Alsh"
                 , "Aens", "Adcn", "Aliq", "Aspl", "Aven", "Ablo", "Acpf", "Awar"
-                ] ++ repeat (error "You've reached the limit of reloadable bytecode")
+                ] ++ repeat Nothing
             cnt = length asms
-            mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
-
             setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int "1", J.Int $ show cnt ]
-            setCodes = zipWith mkC availableIds asms
+            mkC id' asm = id' >>= \id -> return $ J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
             
-        in J.Function J.Normal "PreloadFiles" [] "nothing" $ setCnt:setCodes
+        setCodes <- sequence $ zipWith mkC availableIds asms
+        return $ J.Function J.Normal "PreloadFiles" [] "nothing" $ setCnt:setCodes
 
 
 initX o = do
