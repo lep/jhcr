@@ -257,7 +257,10 @@ serialize' ins =
 
     Not s a -> mconcat [ ins2id "not", reg s, reg a]
 
-    Function f _ -> mconcat [ ins2id "fun", label f]
+    Function f n ->
+        if f < 0
+        then mconcat [ ins2id "fun", label f, pad16Dec (length n), stringUtf8 n]
+        else mconcat [ ins2id "fun", label f]
 
     Label l -> mconcat [ ins2id "label", label l]
     Jmp l -> mconcat [ ins2id "jmp", label l]
