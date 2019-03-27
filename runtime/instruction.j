@@ -114,7 +114,11 @@ function _print takes integer _ins returns nothing
     elseif _op[_ins] == Ins#_Jmp then
         call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_Fun then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        if _a1[_ins] < 0 then
+            call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ _string[_ins])
+        else
+            call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        endif
     elseif _op[_ins] == Ins#_JmpT then
         call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Not then

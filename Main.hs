@@ -71,8 +71,8 @@ runtime1 :: [String]
 runtime1 = map S8.unpack
   [ $(embedFile "out/print.j"), $(embedFile "out/types.j")
   , $(embedFile "out/list.j"), $(embedFile "out/table.j")
-  , $(embedFile "out/convert.j"), $(embedFile "out/wrap-around.j")
-  , $(embedFile "out/modified.j")
+  , $(embedFile "out/stringtable.j"), $(embedFile "out/convert.j")
+  , $(embedFile "out/wrap-around.j"), $(embedFile "out/modified.j")
   ]
 
 runtime2 :: [String]
@@ -310,7 +310,7 @@ initX o = do
                         generated' :: J.Ast H.Var H.Programm
                         generated' = foldr1 concatPrograms $ stubs:generated
                         
-                        generated'' = J.fmap H.nameOf $ addPrefix (prefix o) generated'
+                        generated'' = replaceExecuteFunc . J.fmap H.nameOf $ addPrefix (prefix o) generated'
                         
                         outj = concatPrograms (concatPrograms rt1' generated'') rt2'
                         
@@ -326,6 +326,14 @@ initX o = do
                     hClose jh
 
                     hPutStrLn stderr "Ok."
+  where
+    replaceExecuteFunc :: J.Ast J.Name x -> J.Ast J.Name x
+    replaceExecuteFunc x =
+      case x of
+        J.Call "ExecuteFunc" args -> J.Call (prefix o <> "_Wrap_ExecuteFunc")
+             -- dont think valid jass would allow nested execute funcs but whatev
+            $ map replaceExecuteFunc args
+        _ -> composeOp replaceExecuteFunc x
 
 addPrefix' :: J.Name -> J.Ast J.Name a -> J.Ast J.Name a
 addPrefix' p x =

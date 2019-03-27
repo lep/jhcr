@@ -70,7 +70,15 @@ function _parse__ins takes string _s returns integer
         set _S = _S + 8
     elseif _ins == Ins#_Fun then
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2, _S+8))
-        set _S = _S + 8
+        
+        // new function
+        if Ins#_a1[_new] < 0 then
+            set _b = S2I(SubString(_s, _S+8, _S+14))
+            set Ins#_string[_new] = SubString(_s, _S+14, _S+14 +_b)
+            set _S = _S + 14 + _b
+        else
+            set _S = _S + 8
+        endif
     elseif _ins == Ins#_JmpT then
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+8))
         set Ins#_a2[_new] = S2I(SubString(_s, _S+8, _S+17))
@@ -111,6 +119,9 @@ function _parse_and_init takes string _instruction returns nothing
             set _fn_entry[_current_fn + 100] = _ins
             if _fn_labels[_current_fn + 100] == 0 then
                 set _fn_labels[_current_fn + 100] = Table#_alloc()
+            endif
+            if _current_fn < 0 then
+                call StringTable#_set(Wrap#_name2id, Ins#_string[_ins], _current_fn)
             endif
             call Modified#_set_modified(_current_fn)
             set _prev_ins = 0
