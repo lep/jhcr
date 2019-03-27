@@ -1,4 +1,4 @@
-RUNTIME := runtime/table.j runtime/parser.j runtime/list.j
+RUNTIME := runtime/table.j runtime/parser.j runtime/list.j runtime/stringtable.j
 RUNTIME += runtime/modified.j runtime/wrap-around.j runtime/print.j
 RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j

@@ -23,7 +23,7 @@ import Data.Composeable
 
 import Control.Arrow (second)
 
-import Data.List (intersperse, foldl')
+import Data.List (intersperse, foldl', genericLength)
 
 import Data.Monoid
 
@@ -257,7 +257,10 @@ serialize' ins =
 
     Not s a -> mconcat [ ins2id "not", reg s, reg a]
 
-    Function f _ -> mconcat [ ins2id "fun", label f]
+    Function f n ->
+        if f < 0
+        then mconcat [ ins2id "fun", label f, pad16Dec (genericLength n), stringUtf8 n]
+        else mconcat [ ins2id "fun", label f]
 
     Label l -> mconcat [ ins2id "label", label l]
     Jmp l -> mconcat [ ins2id "jmp", label l]

@@ -106,7 +106,7 @@ function _print takes integer _ins returns nothing
             call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ _B2S(_boolean[_ins]) )
         endif
     elseif _op[_ins] == Ins#_Call then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Convert then
         call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
     elseif _op[_ins] == Ins#_Label then
@@ -114,13 +114,17 @@ function _print takes integer _ins returns nothing
     elseif _op[_ins] == Ins#_Jmp then
         call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_Fun then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        if _a1[_ins] < 0 then
+            call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ _string[_ins])
+        else
+            call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        endif
     elseif _op[_ins] == Ins#_JmpT then
         call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Not then
         call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Ret then
-        call Print#_print(_OpNames[_op[_ins]] )
+        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] )
     else
         call Print#_print("unknown op " +I2S(Ins#_op[_ins]))
     endif

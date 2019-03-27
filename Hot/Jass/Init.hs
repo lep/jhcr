@@ -241,6 +241,7 @@ generate pr =
     defaultReturnValue "integer" = Int "0"
     defaultReturnValue "string" = String ""
     defaultReturnValue "code" = Code (mkFn "DoNothing")
+    defaultReturnValue "boolean" = Bool False
     defaultReturnValue _ = Null
   
     generateEmptyArrayGetters ty =
