@@ -55,10 +55,13 @@ instance Monoid Type where
 compileReplace :: J.Ast H.Var x -> J.Ast H.Var x
 compileReplace x =
   case x of
-    J.Code (H.Fn _ _ _ id) -> J.Int (show id)
+    J.Set lvar (J.Code (H.Fn _ _ _ id)) ->
+        J.Set lvar $ J.Int (show id)
+    J.SDef c var "code" (Just (J.Code (H.Fn _ _ _ id))) ->
+        J.SDef c var "code" . Just . J.Int $ show id
     J.Call fn@(H.Fn _ types _ _) args ->
         let want = map conv types
-            args' = zipWith ($) want $ map compileReplace args
+            args' =zipWith ($) want $ map compileReplace args
         in J.Call fn args'
     _ -> composeOp compileReplace x
 
@@ -120,7 +123,7 @@ code2custom from to x =
   case x of
     J.SVar lvar -> J.SVar $ goVar lvar
     J.SDef c var ty init -> 
-        J.SDef c (goVar var) (goType ty) $ fmap (code2custom from to) init
+        J.SDef c (goVar var) (goType ty) init
     J.Function c v args ret body ->
         J.Function c (goVar v) (map (goType *** goVar) args) (goType ret) $ map (code2custom from to) body
     _ -> composeOp (code2custom from to) x
