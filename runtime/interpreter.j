@@ -278,7 +278,7 @@ function _start_interpreter_wrap takes nothing returns boolean
     set Context#_pc[ctx]       = Parser#_fn_entry[Wrap#_p + 100]
     set Context#_parent[ctx]   = parent
     set Context#_labels[ctx]   = Parser#_fn_labels[Wrap#_p + 100]
-    set Context#_locals[ctx]   = Table#_alloc()
+    set Context#_locals[ctx]   = Wrap#_args
     set Context#_bindings[ctx] = Table#_alloc()
     
     set Context#_pc[parent]     = 0
