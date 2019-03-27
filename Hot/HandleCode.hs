@@ -57,8 +57,8 @@ compileReplace x =
   case x of
     J.Set lvar (J.Code (H.Fn _ _ _ id)) ->
         J.Set lvar $ J.Int (show id)
-    J.SDef c var "code" (Just (J.Code (H.Fn _ _ _ id))) ->
-        J.SDef c var "code" . Just . J.Int $ show id
+    J.SDef c var "_replace_code" (Just (J.Code (H.Fn _ _ _ id))) ->
+        J.SDef c var "_replace_code" . Just . J.Int $ show id
     J.Call fn@(H.Fn _ types _ _) args ->
         let want = map conv types
             args' =zipWith ($) want $ map compileReplace args
@@ -70,6 +70,7 @@ compileReplace x =
       case x of
         J.Code{} -> x
         _ -> J.Call (H.Fn "_Wrap_i2code" [] "" 0) [x]
+    conv "_replace_code" (J.Code (H.Fn _ _ _ id)) = J.Int (show id)
     conv _ x = x
 
 compileNull :: H.Type -> J.Ast H.Var x -> J.Ast H.Var x

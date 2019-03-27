@@ -26,7 +26,6 @@ endfunction
 
 function _ExecuteFunc takes string _s returns nothing
     local integer _id = StringTable#_get(_name2id, _s)
-    call Print#_print("Calling ExecuteFunc with: "+ _s + " and got id "+ I2S(_id))
     if _id < 0 then
         call ExecuteFunc("Auto#_dummyFunction_" + I2S(-_id))
     else
