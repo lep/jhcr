@@ -90,7 +90,7 @@ typeOfVar x =
   case x of
     H.Local _ ty _ _ -> ty
     H.Global _ _ ty _ _ -> ty
-    H.Op _ -> (error "B")
+    H.Op _ -> error "B"
     H.Fn _ _ ret _ -> ret
 
 

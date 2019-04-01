@@ -191,7 +191,7 @@ updateX o = do
             let (ast', st') = Rename.compile Rename.Update id st progU
                 ast'' = H.jass2hot ast'
             
-            void $ forM_ nameU $ \n ->
+            forM_ nameU $ \n ->
                 hPutStrLn stderr $ unwords ["Updating function", n]
 
             hPutStrLn stderr "Writing bytecode"
@@ -250,7 +250,7 @@ updateX o = do
             setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int "1", J.Int $ show cnt ]
             mkC id' asm = id' >>= \id -> return $ J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
             
-        setCodes <- sequence $ zipWith mkC availableIds asms
+        setCodes <- zipWithM mkC availableIds asms
         return $ J.Function J.Normal "PreloadFiles" [] "nothing" $ setCnt:setCodes
 
 

@@ -59,7 +59,7 @@ defaultRenameVariableState :: RenameVariablesState
 defaultRenameVariableState = RenameVariablesState mempty mempty mempty mempty 0
 
 
-newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, (Type -> Type)) (State RenameVariablesState) a }
+newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, Type -> Type) (State RenameVariablesState) a }
     deriving (Functor, Applicative, Monad, MonadState RenameVariablesState, MonadReader (Mode, Type -> Type))
 
 compile :: Mode -> (Type -> Type) -> RenameVariablesState -> Ast Name a -> (Ast Var a, RenameVariablesState)
@@ -72,7 +72,7 @@ compile' m f = compile m f defaultRenameVariableState
 addLocal :: Name -> Type -> IsArray -> RenameVariablesM Var
 addLocal name ty isArray = do
     v' <- uses globalScope $ Map.lookup name
-    f <- snd <$> ask
+    f <- asks snd
     case v' of
         Just v -> return v
         Nothing -> do
@@ -86,12 +86,12 @@ addGlobal :: Constant -> Name -> Type -> IsArray -> RenameVariablesM Var
 addGlobal c name ty isArray = do
     v' <- uses globalScope $ Map.lookup name
     (m, f) <- ask
-    let idf = if m == Init then id else (idf' . negate)
+    let idf = if m == Init then id else idf' . negate
         idf' = if isArray then (*32768) else id
     case v' of
         Just v -> return v
         Nothing -> do
-            globalCount %= (Map.insertWith (+) (f ty, isArray) 1)
+            globalCount %= Map.insertWith (+) (f ty, isArray) 1
             id <- idf <$> uses globalCount (Map.findWithDefault (error "xxx") (f ty, isArray))
             let v = H.Global c name (f ty) isArray id
             globalScope %= (at name ?~ v)

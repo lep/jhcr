@@ -51,7 +51,7 @@ rawcode = lexeme $ char '\'' *> (escaped <|> anyCC)
     anyCC = manyTill anySingle (char '\'')
 
 intlit :: Parser String
-intlit = show <$> (lexeme (try hexlit <|> try octlit <|> L.decimal))
+intlit = show <$> lexeme (try hexlit <|> try octlit <|> L.decimal)
 
 hexlit = char '0' *> (char 'X' <|> char 'x') *> L.hexadecimal
 octlit = char '0' *> L.octal
@@ -118,25 +118,24 @@ toplevel = globals
     horizontalSpace
     return [Typedef new base]
 
-
-native const = do
-    reserved "native"
+pSignature = do
+    
     name <- identifier
     reserved "takes"
-    args <- (reserved "nothing" *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` (symbol ",")
+    args <- (reserved "nothing" *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` symbol ","
     reserved "returns"
     ret <- (reserved "nothing" *> pure "nothing") <|> identifier
     horizontalSpace
+    return (name, args, ret)
+
+native const = do
+    reserved "native"
+    (name, args, ret) <- pSignature
     return [Native const name args ret]
 
 function const = do
     reserved "function"
-    name <- identifier
-    reserved "takes"
-    args <- (reserved "nothing" *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` (symbol ",")
-    reserved "returns"
-    ret <- (reserved "nothing" *> pure "nothing") <|> identifier
-    horizontalSpace
+    (name, args, ret) <- pSignature
     body <- many statement
     reserved "endfunction"
     horizontalSpace
@@ -170,7 +169,7 @@ statement = returnStmt
         exitwhen = Exitwhen <$> (reserved "exitwhen" *> expression <* horizontalSpace)
 
         if_ = If <$> (reserved "if" *> expression <* reserved "then" <* horizontalSpace)
-                 <*> (many statement)
+                 <*> many statement
                  <*> many elseif
                  <*> optional else_
                  <*  reserved "endif" <* horizontalSpace
@@ -212,8 +211,8 @@ expression = makeExprParser term table
 
 term = parens expression
     <|> reserved "not"   *> (((\e -> Call "not" [e])) <$> expression)
-    <|> symbol "-" *> (((\e -> Call "-" [e])) <$> term)
-    <|> symbol "+"  *> (((\e -> Call "+" [e])) <$> term)
+    <|> symbol "-" *> ((\e -> Call "-" [e]) <$> term)
+    <|> symbol "+"  *> ((\e -> Call "+" [e]) <$> term)
     <|> literal
     <|> varOrCall
     <?> "term"

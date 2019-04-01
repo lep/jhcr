@@ -83,4 +83,4 @@ stubifyFn e =
         Code n -> Code $ r n
         _ -> composeOp (rename v) x
       where
-        r n = if n == v then ("_" ## n) else n
+        r n = if n == v then "_" ## n else n

@@ -14,13 +14,13 @@ pretty :: Ast Name Programm -> Builder
 pretty = printProgram
 
 isGlobal :: Ast Name Toplevel -> Bool
-isGlobal (Global _) = True
+isGlobal Global{} = True
 isGlobal _ = False
 
 isGlobalOrNative :: Ast Name Toplevel -> Bool
-isGlobalOrNative (Global{}) = True
-isGlobalOrNative (Native{}) = True
-isGlobalOrNative _          = False
+isGlobalOrNative Global{} = True
+isGlobalOrNative Native{} = True
+isGlobalOrNative _        = False
 
 printProgram :: Ast Name Programm -> Builder
 printProgram (Programm toplevel) =

@@ -1,10 +1,7 @@
-
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE StandaloneDeriving #-}
+
 
 module Hot.Instruction
     ( Instruction (..)
@@ -25,8 +22,7 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.ByteString.Builder
 
-import Hot.Ast (Expr, Name, Type)
-import Hot.Ast ( Var(..) )
+import Hot.Ast (Expr, Name, Type, Var(..))
 import qualified Hot.Ast as Hot
 import qualified Hot.Types as Hot
 
@@ -245,7 +241,7 @@ serialize' ins =
         in mconcat [ ins2id "lit", typeToId t, reg s, pad16Dec litLen, litRendered]
 
   where
-    typeToId x = pad7Dec (Map.findWithDefault (error $  x) x Hot.types)
+    typeToId x = pad7Dec (Map.findWithDefault (error x) x Hot.types)
     ins2id n = pad5Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
     instable =
       [ ("lt", 1), ("le", 2), ("gt", 3), ("ge", 4), ("eq", 5), ("neq", 6)
