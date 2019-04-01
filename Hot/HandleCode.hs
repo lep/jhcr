@@ -5,15 +5,9 @@ module Hot.HandleCode (compile) where
 import Control.Arrow
 
 import qualified Jass.Ast as J
-
-
 import qualified Hot.Ast as H
 
-
-
 import Data.Composeable
-
-
 
 import Unsafe.Coerce
 

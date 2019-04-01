@@ -4,7 +4,7 @@
 module Hot.Var
     ( Var(..)
     , mkLocal, mkGlobal, mkOp, mkFn
-    , nameOf, getId, getId', isConst
+    , nameOf, getId, getId'
     , (##)
     ) where
 
@@ -63,7 +63,3 @@ getId v =
 
 getId' :: Var -> Lit
 getId' =  show . getId
-
-isConst :: Var -> Bool
-isConst (Global Const _ _ _ _) = True
-isConst _ = False

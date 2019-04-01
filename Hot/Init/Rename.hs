@@ -5,8 +5,8 @@
 
 module Hot.Init.Rename
     ( Mode(..)
-    , runRenameM
-    , runRenameM'
+    , compile
+    , compile'
     ) where
 
 
@@ -62,11 +62,11 @@ defaultRenameVariableState = RenameVariablesState mempty mempty mempty mempty 0
 newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, (Type -> Type)) (State RenameVariablesState) a }
     deriving (Functor, Applicative, Monad, MonadState RenameVariablesState, MonadReader (Mode, Type -> Type))
 
-runRenameM :: Mode -> (Type -> Type) -> RenameVariablesState -> Ast Name a -> (Ast Var a, RenameVariablesState)
-runRenameM m f st = flip runState st . flip runReaderT (m,f) . unRenameVariablesM . renameVariables
+compile :: Mode -> (Type -> Type) -> RenameVariablesState -> Ast Name a -> (Ast Var a, RenameVariablesState)
+compile m f st = flip runState st . flip runReaderT (m,f) . unRenameVariablesM . renameVariables
 
-runRenameM' :: Mode -> (Type -> Type) -> Ast Name a -> (Ast Var a, RenameVariablesState)
-runRenameM' m f = runRenameM m f defaultRenameVariableState
+compile' :: Mode -> (Type -> Type) -> Ast Name a -> (Ast Var a, RenameVariablesState)
+compile' m f = compile m f defaultRenameVariableState
 
 
 addLocal :: Name -> Type -> IsArray -> RenameVariablesM Var

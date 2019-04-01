@@ -71,7 +71,6 @@ jass2hot (Jass.Programm p) = Programm $ mapMaybe go p
         Jass.Return e -> Just $ Return $ fmap convert e
         Jass.Call fn args -> Just $ Call fn $ fmap convert args
         Jass.Local (Jass.SDef _ n _ (Just e)) -> convertStmt $ Jass.Set (Jass.SVar n) e
-        --Jass.Local (ADef
 
         _ -> Nothing
 
@@ -95,6 +94,3 @@ jass2hot (Jass.Programm p) = Programm $ mapMaybe go p
         If (convert cond)
            (Block $ mapMaybe convertStmt body)
            (Block $ mapMaybe convertStmt $ concat elseB)
-
-
-

@@ -188,7 +188,7 @@ updateX o = do
                 nameU = map getFnName $ filter isFunction astU
                 progU = J.Programm astU
             
-            let (ast', st') = Rename.runRenameM Rename.Update id st progU
+            let (ast', st') = Rename.compile Rename.Update id st progU
                 ast'' = H.jass2hot ast'
             
             void $ forM_ nameU $ \n ->
@@ -282,7 +282,7 @@ initX o = do
             let rt1' = addPrefix' (prefix o) rt1
                 rt2' = addPrefix' (prefix o) rt2
 
-            let (prelude', st) = Rename.runRenameM' Rename.Init id prelude
+            let (prelude', st) = Rename.compile' Rename.Init id prelude
             
             p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
             case p of
@@ -293,7 +293,7 @@ initX o = do
                     let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
                         (ast', st') = first HandleCode.compile $
-                                      Rename.runRenameM Rename.Init conv st jhast
+                                      Rename.compile Rename.Init conv st jhast
                         
                         conv x = if x == "code" then "_replace_code" else x
                         
