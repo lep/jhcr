@@ -20,7 +20,7 @@ endglobals
 
 #include "alloc.j"
 
-function _parse__ins takes string _s returns integer
+function _parse_ins takes string _s returns integer
     local integer _ins = S2I(SubString(_s, _S, _S+2))
     local integer _new = _alloc()
     local integer _b
@@ -100,7 +100,7 @@ function _parse_and_print takes string _instruction returns nothing
     set _S = 0
     loop
     exitwhen _S >= _len
-        set _ins = _parse__ins(_instruction)
+        set _ins = _parse_ins(_instruction)
         call Ins#_print(_ins)
     endloop
 endfunction
@@ -111,7 +111,7 @@ function _parse_and_init takes string _instruction returns nothing
     set _S = 0
     loop
     exitwhen _S >= _len
-        set _ins = _parse__ins(_instruction)
+        set _ins = _parse_ins(_instruction)
         //call Ins#_print(_ins)
         
         if Ins#_op[_ins] == Ins#_Fun then

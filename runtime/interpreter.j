@@ -57,40 +57,18 @@ function _step takes integer ctx returns integer
         endif
         
     elseif t == Ins#_Eq then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) == Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
-            
-        elseif Ins#_type[op] == Types#_real then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) == Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
-        
-        elseif Ins#_type[op] == Types#_string then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_string(Context#_locals[ctx], Ins#_a2[op]) == Table#_get_string(Context#_locals[ctx], Ins#_a3[op]))
-            
-        elseif Ins#_type[op] == Types#_boolean then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]) == Table#_get_boolean(Context#_locals[ctx], Ins#_a3[op]))
-
-        else
-            // handle derived type (except the other few types)
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_fogstate(Context#_locals[ctx], Ins#_a2[op]) == Table#_get_fogstate(Context#_locals[ctx], Ins#_a3[op]))
-        endif
+        #define macro(ty) Table@_set_boolean(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]) == Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
+        #define ty Ins@_type[op]
+        #include "g-type-bin.j"
+        #undef ty
+        #undef macro
         
     elseif t == Ins#_Neq then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) != Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
-            
-        elseif Ins#_type[op] == Types#_real then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) != Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
-        
-        elseif Ins#_type[op] == Types#_string then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_string(Context#_locals[ctx], Ins#_a2[op]) != Table#_get_string(Context#_locals[ctx], Ins#_a3[op]))
-            
-        elseif Ins#_type[op] == Types#_boolean then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]) != Table#_get_boolean(Context#_locals[ctx], Ins#_a3[op]))
-
-        else
-            // handle derived type (except the other few types)
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_fogstate(Context#_locals[ctx], Ins#_a2[op]) != Table#_get_fogstate(Context#_locals[ctx], Ins#_a3[op]))
-        endif
+        #define macro(ty) Table@_set_boolean(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]) != Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
+        #define ty Ins@_type[op]
+        #include "g-type-bin.j"
+        #undef ty
+        #undef macro
         
     elseif t == Ins#_Add then
         if Ins#_type[op] == Types#_integer then
@@ -103,9 +81,9 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Sub then
         if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
         endif
         
     elseif t == Ins#_Mul then
@@ -117,9 +95,9 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Div then
         if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
         endif
     elseif t == Ins#_Mod then
         call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], ModuloInteger(Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) , Table#_get_integer(Context#_locals[ctx], Ins#_a3[op])))

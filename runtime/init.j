@@ -19,7 +19,7 @@ function _parse takes nothing returns nothing
     set _cnt = GetPlayerTechMaxAllowed(Player(0), 1) 
     loop
     exitwhen _cnt == 0
-        call JHCR_Parser_parse_and_init(BlzGetAbilityTooltip(_ids[_cnt], 1))
+        call Parser#_parse_and_init(BlzGetAbilityTooltip(_ids[_cnt], 1))
         call BlzSetAbilityTooltip(_ids[_cnt], _tmp[_cnt], 1)
         set _cnt = _cnt -1
     endloop
