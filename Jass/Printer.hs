@@ -18,10 +18,16 @@ isGlobal :: Ast Name Toplevel -> Bool
 isGlobal (Global _) = True
 isGlobal _ = False
 
+isGlobalOrNative :: Ast Name Toplevel -> Bool
+isGlobalOrNative (Global{}) = True
+isGlobalOrNative (Native{}) = True
+isGlobalOrNative _          = False
+
 printProgram :: Ast Name Programm -> Builder
 printProgram (Programm toplevel) =
-    let (globals, fns) = partition isGlobal toplevel
-    in unlines [printGlobals globals, printFns fns]
+    let (globalsOrNative, fns) = partition isGlobalOrNative toplevel
+        (globals, natives) = partition isGlobal globalsOrNative
+    in unlines [printGlobals globals, printFns natives, printFns fns]
 
 printGlobals :: [Ast Name Toplevel] -> Builder
 printGlobals globals = unlines
@@ -113,6 +119,7 @@ printExpr e =
     String s -> "\"" <> stringUtf8 ( concatMap escape s) <> "\""
     Var lvar -> printLVar lvar
   where
+    escape '"' = "\\\""
     escape '\\' = "\\\\"
     escape x = [x]
 
