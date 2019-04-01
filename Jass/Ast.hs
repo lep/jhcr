@@ -243,39 +243,39 @@ instance Foldable (FAst r) where
 
 instance Traversable (FAst r) where
     traverse :: Applicative f => (a -> f b) -> FAst r a -> f (FAst r b)
-    traverse f x = liftA FAst $
+    traverse f x = F.fmap FAst $
       case getAst x of
-        Programm prog -> Programm <$> T.traverse (liftA getAst . T.traverse f . FAst) prog
+        Programm prog -> Programm <$> T.traverse (F.fmap getAst . T.traverse f . FAst) prog
         Native c name args ret ->
           Native c <$> f name <*> T.traverse (fTypeAndName f) args <*> pure ret
         Function c name args ret body ->
-          Function c <$> f name <*> T.traverse (fTypeAndName f) args <*> pure ret <*> T.traverse (liftA getAst . T.traverse f . FAst) body
-        Global vdef -> Global <$> (liftA getAst . T.traverse f . FAst) vdef
-        Set lvar expr -> Set <$> (liftA getAst . T.traverse f . FAst) lvar <*> (liftA getAst . T.traverse f . FAst) expr
-        Local vdef -> Local <$> (liftA getAst . T.traverse f . FAst) vdef
+          Function c <$> f name <*> T.traverse (fTypeAndName f) args <*> pure ret <*> T.traverse (F.fmap getAst . T.traverse f . FAst) body
+        Global vdef -> Global <$> (F.fmap getAst . T.traverse f . FAst) vdef
+        Set lvar expr -> Set <$> (F.fmap getAst . T.traverse f . FAst) lvar <*> (F.fmap getAst . T.traverse f . FAst) expr
+        Local vdef -> Local <$> (F.fmap getAst . T.traverse f . FAst) vdef
         If e ib ei eb ->
-          If <$> (liftA getAst . T.traverse f . FAst) e
-            <*> T.traverse (liftA getAst . T.traverse f . FAst) ib
-            <*> T.traverse (\(c, b) -> (,) <$> (liftA getAst . T.traverse f . FAst) c <*> T.traverse (liftA getAst . T.traverse f . FAst) b) ei
-            <*> T.traverse (T.traverse (liftA getAst . T.traverse f . FAst)) eb
-        Loop body -> Loop <$> T.traverse (liftA getAst . T.traverse f . FAst) body
-        Exitwhen cond -> Exitwhen <$> (liftA getAst . T.traverse f . FAst) cond
-        Return expr -> Return <$>  T.traverse (liftA getAst . T.traverse f . FAst) expr
-        Var lvar -> Var <$> (liftA getAst . T.traverse f . FAst) lvar
+          If <$> (F.fmap getAst . T.traverse f . FAst) e
+            <*> T.traverse (F.fmap getAst . T.traverse f . FAst) ib
+            <*> T.traverse (\(c, b) -> (,) <$> (F.fmap getAst . T.traverse f . FAst) c <*> T.traverse (F.fmap getAst . T.traverse f . FAst) b) ei
+            <*> T.traverse (T.traverse (F.fmap getAst . T.traverse f . FAst)) eb
+        Loop body -> Loop <$> T.traverse (F.fmap getAst . T.traverse f . FAst) body
+        Exitwhen cond -> Exitwhen <$> (F.fmap getAst . T.traverse f . FAst) cond
+        Return expr -> Return <$>  T.traverse (F.fmap getAst . T.traverse f . FAst) expr
+        Var lvar -> Var <$> (F.fmap getAst . T.traverse f . FAst) lvar
 
-        Call name args    -> Call <$> f name <*> T.traverse (liftA getAst . T.traverse f . FAst) args
+        Call name args    -> Call <$> f name <*> T.traverse (F.fmap getAst . T.traverse f . FAst) args
         Code name         -> Code <$> f name
-        AVar v idx        -> AVar <$> f v <*> (liftA getAst . T.traverse f . FAst) idx
+        AVar v idx        -> AVar <$> f v <*> (F.fmap getAst . T.traverse f . FAst) idx
         SVar v            -> SVar <$> f v
         ADef v typ        -> ADef <$> f v <*> pure typ
-        SDef c v typ expr -> SDef c <$> f v <*> pure typ <*> T.traverse (liftA getAst . T.traverse f . FAst) expr
+        SDef c v typ expr -> SDef c <$> f v <*> pure typ <*> T.traverse (F.fmap getAst . T.traverse f . FAst) expr
 
         n -> pure $ unsafeCoerce n
       where
         fTypeAndName f (ty, n) = sequenceA (ty, f n)
     {-
       where
-        f' = (liftA getAst . T.traverse f . FAst)
+        f' = (F.fmap getAst . T.traverse f . FAst)
     -}
 
 fmap :: (a -> b) -> Ast a r -> Ast b r
@@ -285,7 +285,7 @@ foldMap :: Monoid m => (a -> m) -> Ast a r -> m
 foldMap f = F.foldMap f . FAst
 
 traverse :: Applicative f => (a -> f b) -> Ast a r -> f (Ast b r)
-traverse f = liftA getAst . T.traverse f . FAst
+traverse f = F.fmap getAst . T.traverse f . FAst
 
 
 s2i :: Lit -> Int32

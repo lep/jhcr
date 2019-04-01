@@ -31,8 +31,6 @@ endfunction
 
 
 function _init takes nothing returns nothing
-
-    // "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls", "Adis", "Acmg", "Amdf", "Adts"
     set _ids[1] = 'Agyv'
     set _ids[2] = 'Aflk'
     set _ids[3] = 'Agyb'

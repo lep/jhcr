@@ -210,9 +210,9 @@ expression = makeExprParser term table
     binary t op = InfixL (t *> pure (\a b -> Call op [a, b]))
 
 term = parens expression
-    <|> reserved "not"   *> (((\e -> Call "not" [e])) <$> expression)
-    <|> symbol "-" *> ((\e -> Call "-" [e]) <$> term)
-    <|> symbol "+"  *> ((\e -> Call "+" [e]) <$> term)
+    <|> reserved "not"  *> ((\e -> Call "not" [e]) <$> expression)
+    <|> symbol "-"      *> ((\e -> Call "-" [e]) <$> term)
+    <|> symbol "+"      *> ((\e -> Call "+" [e]) <$> term)
     <|> literal
     <|> varOrCall
     <?> "term"

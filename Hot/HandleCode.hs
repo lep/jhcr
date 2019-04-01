@@ -36,7 +36,7 @@ compileReplace x =
         J.SDef c var "_replace_code" . Just . J.Int $ show id
     J.Call fn@(H.Fn _ types _ _) args ->
         let want = map conv types
-            args' =zipWith ($) want $ map compileReplace args
+            args' = zipWith ($) want $ map compileReplace args
         in J.Call fn args'
     _ -> composeOp compileReplace x
 

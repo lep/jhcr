@@ -17,7 +17,7 @@ HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
 UPX := ./upx
-UPXFLAGS ?= --best
+UPXFLAGS := --best
 
 .PHONY: clean process release all
 

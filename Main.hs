@@ -99,7 +99,8 @@ data Options =
            , processJasshelper :: Bool
            , statePath :: FilePath
            , showAsm :: Bool
-           } deriving (Show)
+           }
+    deriving (Show)
 
 parseOptions = customExecParser (prefs showHelpOnEmpty) opts
   where
