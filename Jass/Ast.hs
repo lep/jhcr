@@ -25,23 +25,13 @@ module Jass.Ast
 import Prelude hiding (fmap, foldMap, traverse)
 
 import Data.Composeable
-import Data.Monoid
 
-import Data.Foldable hiding (foldMap)
 import qualified Data.Foldable as F
-
-import Data.Functor hiding (fmap)
 import qualified Data.Functor as F
-
-import Data.Traversable hiding (traverse)
 import qualified Data.Traversable as T
 
 import Control.Applicative
 import Control.Arrow
-
-import Data.ByteString.Lazy.Char8 (ByteString)
-import qualified Data.ByteString.Lazy.Char8 as L8
-import qualified Data.ByteString.Lazy as BL
 
 import Unsafe.Coerce
 
@@ -59,7 +49,6 @@ data Stmt
 data LVar
 data VarDef
 data Toplevel
-data Block
 data Programm
 
 data Constant = Const | Normal

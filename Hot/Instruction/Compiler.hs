@@ -9,25 +9,11 @@
  
 module Hot.Instruction.Compiler (compile) where
 
-
-import Data.Composeable
-
-import Control.Arrow (second)
-
-import Data.List (intersperse)
-
-import Data.Monoid
-
 import Data.DList (DList)
 import qualified Data.DList as DList
 
-import Data.Int
 
 import Data.Maybe 
-
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy as BL
-import Data.ByteString.Builder
 
 import Control.Lens
 import Control.Monad.State
@@ -41,11 +27,6 @@ import qualified Hot.Ast as H
 
 import Hot.Var
 import Hot.Instruction
-
-import Unsafe.Coerce (unsafeCoerce)
-
-import Debug.Trace
-
 
 
 newtype CompileMonad a = CompileMonad { runCompileMonad :: ReaderT Type (StateT CompileState (Writer (DList Instruction))) a }
@@ -85,17 +66,13 @@ newLabel = labelId <+= 1
 newRegister :: CompileMonad Register
 newRegister = registerId <-= 1
 
-isOp :: Var -> Bool
-isOp (Op _) = True
-isOp _ = False
-
 isBooleanOp x = x `elem` (["==", "!=", "<", "<=", ">", ">=", "and", "or"] :: [Name])
 
 typeOfExpr :: Ast Var Expr -> Type
 typeOfExpr e =
   case e of
     H.Call (Op "-") [a] -> typeOfExpr a
-    H.Call (Op "not") [a] -> "boolean"
+    H.Call (Op "not") [_] -> "boolean"
     H.Call (Op o) [a, b]
         | isBooleanOp o -> "boolean"
         | otherwise -> numericType (typeOfExpr a) (typeOfExpr b)
@@ -124,7 +101,7 @@ compileProgram :: Ast Var Programm -> CompileMonad ()
 compileProgram (Programm toplevel) = mapM_ compileToplevel toplevel
 
 compileToplevel :: Ast Var Toplevel -> CompileMonad ()
-compileToplevel (H.Function n args r body) = do
+compileToplevel (H.Function n _ r body) = do
     let fname = nameOf n
     let fn = Function (getId n) fname
     emit fn
@@ -135,9 +112,10 @@ compileToplevel (H.Function n args r body) = do
     typed r $ compileStmt body
     emit $ Ret r
 
+typed :: MonadReader b m => b -> m a -> m a
 typed t = local (const t)
 
-
+typedGet :: Type -> Register -> CompileMonad Register
 typedGet sourcetype source = do
     wanted <- ask
     if wanted /= sourcetype && wanted /= "nothing"
@@ -150,7 +128,7 @@ typedGet sourcetype source = do
 
 
 compileCall :: Ast Var a -> CompileMonad Register
-compileCall (H.Call n@(Fn _ aTypes rType _) args) = do
+compileCall (H.Call n@(Fn _ aTypes _ _) args) = do
     r <- newRegister
     let vname = nameOf n
     let v = getId n
@@ -277,7 +255,6 @@ compileExpr e =
         b' <- typed t $ compileExpr b
         emit $ op t r a' b' 
         return r
-        --typedGet t r
 
     
     H.Call{} -> compileCall e

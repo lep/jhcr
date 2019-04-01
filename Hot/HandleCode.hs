@@ -3,43 +3,24 @@
 module Hot.HandleCode (compile) where
 
 import Control.Arrow
-import Control.Applicative
-import Control.Monad
 
-import Control.Monad.Trans.Except
-import Control.Monad.IO.Class
-
-
-import qualified Jass.Parser as J
 import qualified Jass.Ast as J
-import qualified Jass.Printer as J
 
 
-import qualified Hot.Jass.Init as H
 import qualified Hot.Ast as H
-import qualified Hot.Var as H
-import qualified Hot.Instruction as H
-import qualified Hot.Instruction.Compiler as H
+
+
 
 import Data.Composeable
 
-import System.IO
-import System.Environment
-import System.Exit
 
-import Data.ByteString.Builder
-
-import Text.Megaparsec (errorBundlePretty, parse, ParseErrorBundle)
 
 import Unsafe.Coerce
-
-exceptT :: Either e a -> ExceptT e IO a
-exceptT = ExceptT . return
 
 data Type = Replace | Orig
 
 toType "_replace_code" = Replace
-toType x = Orig
+toType _ = Orig
 
 fromType Replace = "_replace_code"
 fromType Orig = "_whatever"

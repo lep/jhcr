@@ -12,48 +12,24 @@ module Hot.Instruction
     , serialize, serializeAsm, serializeChunked
     ) where
 
-import qualified Hot.Ast as Hot
-import qualified Hot.Types as Hot
-import Hot.Ast (Programm, Toplevel, LVar, Stmt, Expr, Name, Type)
-import Hot.Ast ( Var(..) )
-
-
-
-import Data.Composeable
-
-import Control.Arrow (second)
-
 import Data.List (intersperse, foldl', genericLength)
-
 import Data.Monoid
+import Data.Int
+import Data.Maybe
 
-import Data.Map (Map)
 import qualified Data.Map as Map
 
-import Data.DList (DList)
-import qualified Data.DList as DList
-
-import Data.Int
 import Text.Printf (printf)
 
-import Data.Maybe 
-
-import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.ByteString.Builder
 
-import Control.Lens
-import Control.Monad.State
-import Control.Monad.Writer
-import Control.Monad.Reader
+import Hot.Ast (Expr, Name, Type)
+import Hot.Ast ( Var(..) )
+import qualified Hot.Ast as Hot
+import qualified Hot.Types as Hot
 
-import Unsafe.Coerce (unsafeCoerce)
-
-import Debug.Trace
-
---type Register = Int32
---type Label = Int32
 
 newtype Register = Register Int32
     deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
@@ -114,7 +90,6 @@ data Instruction
     
     | Not Register Register
 
-    
     | Ret Type
     deriving (Show)
 
@@ -128,12 +103,6 @@ pad7Dec :: Int8 -> Builder
 pad7Dec x =
   let l = intlog10 $ abs x
       w = 3 - if x < 0 then 1 else 0
-  in int8Dec x <> stringUtf8 (replicate (w-l) '.')
-
-pad8Dec :: Int8 -> Builder
-pad8Dec x =
-  let l = intlog10 $ abs x
-      w = 4 - if x < 0 then 1 else 0
   in int8Dec x <> stringUtf8 (replicate (w-l) '.')
 
 

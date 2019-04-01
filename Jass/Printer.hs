@@ -6,7 +6,6 @@ module Jass.Printer (pretty, printStmt) where
 import Prelude hiding (unwords, unlines)
 
 import Data.ByteString.Builder
-import Data.Monoid
 import Data.List (intersperse, partition)
 
 import Jass.Ast

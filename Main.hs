@@ -12,18 +12,12 @@ import Control.Monad.IO.Class
 
 import Control.Arrow (first, second)
 
-import Data.Monoid
-
 import System.IO
-import System.Environment
 import System.Exit
 
 import System.FilePath ((</>))
 
-import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as S8
-
-import qualified Data.ByteString.Lazy as BL
 import Data.ByteString.Builder
 
 import Data.List (isPrefixOf)
@@ -39,22 +33,24 @@ import qualified Jass.Parser as J
 import qualified Jass.Ast as J
 import qualified Jass.Printer as J
 
-
-import qualified Hot.Jass.Init as H
 import qualified Hot.Ast as H
 import qualified Hot.Var as H
-import qualified Hot.Instruction as H
-import qualified Hot.Instruction.Compiler as H
+
+import qualified Hot.Instruction as Ins
+import qualified Hot.Instruction.Compiler as Ins
+
+import qualified Hot.Init.Rename as Rename
+import qualified Hot.Init.Stubs as Stubs
+import qualified Hot.Init.Auto as Auto
+
 import qualified Hot.HandleCode as HandleCode
 import qualified Hot.JassHelper as JH
 
 import Data.Composeable
 import Data.Hashable
 
-import Text.Megaparsec (errorBundlePretty, ParseErrorBundle)
+import Text.Megaparsec (errorBundlePretty)
 import qualified Text.Megaparsec as Mega
-
-import qualified Data.Text.IO as Text
 
 import Options.Applicative
 import Development.GitRev (gitHash)
@@ -192,7 +188,7 @@ updateX o = do
                 nameU = map getFnName $ filter isFunction astU
                 progU = J.Programm astU
             
-            let (ast', st') = H.runRenameM H.Compile id st progU
+            let (ast', st') = Rename.runRenameM Rename.Update id st progU
                 ast'' = H.jass2hot ast'
             
             void $ forM_ nameU $ \n ->
@@ -200,11 +196,11 @@ updateX o = do
 
             hPutStrLn stderr "Writing bytecode"
         
-            let compiled = H.compile ast''
+            let compiled = Ins.compile ast''
             when (showAsm o) $ do
-                hPutBuilder stdout $ H.serializeAsm compiled
+                hPutBuilder stdout $ Ins.serializeAsm compiled
             
-            let asms = H.serializeChunked 700 compiled
+            let asms = Ins.serializeChunked 700 compiled
                 preload' = mkPreload asms
             
             case preload' of
@@ -286,7 +282,7 @@ initX o = do
             let rt1' = addPrefix' (prefix o) rt1
                 rt2' = addPrefix' (prefix o) rt2
 
-            let (prelude', st) = H.runRenameM' H.Init id prelude
+            let (prelude', st) = Rename.runRenameM' Rename.Init id prelude
             
             p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
             case p of
@@ -297,15 +293,15 @@ initX o = do
                     let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
                         (ast', st') = first HandleCode.compile $
-                                      H.runRenameM H.Init conv st jhast
+                                      Rename.runRenameM Rename.Init conv st jhast
                         
                         conv x = if x == "code" then "_replace_code" else x
                         
                         generated :: [J.Ast H.Var H.Programm]
-                        generated = H.generate $ concatPrograms prelude' ast'
+                        generated = Auto.compile $ concatPrograms prelude' ast'
                         
                         stubs :: J.Ast H.Var H.Programm
-                        stubs = H.stubify ast'
+                        stubs = Stubs.compile ast'
                         
                         generated' :: J.Ast H.Var H.Programm
                         generated' = foldr1 concatPrograms $ stubs:generated

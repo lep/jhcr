@@ -3,30 +3,14 @@
 
 module Hot.JassHelper (compile) where
 
-import Control.Arrow
-import Control.Applicative
-import Control.Monad
+import Data.List
 
-import Control.Monad.Trans.Except
-import Control.Monad.IO.Class
-
-
-import Jass.Parser
 import Jass.Ast hiding (fmap, traverse)
-import Jass.Printer
 
 import Data.Composeable
 
-import Data.List
 
-import System.IO
-import System.Environment
-import System.Exit
-
-import Data.ByteString.Builder
-
-import Text.Megaparsec (errorBundlePretty, parse, ParseErrorBundle)
-
+cleanName :: Name -> Name
 cleanName x =
   let x' = concatMap (\case '_':'_':_ -> "__"; x -> x) $ group x
   in if "jasshelper__init" `isPrefixOf` x

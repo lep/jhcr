@@ -4,11 +4,15 @@ RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
 
 SRC := Jass/Parser.hs Jass/Ast.hs Jass/Printer.hs
-SRC += Hot/Ast.hs Hot/Instruction.hs Hot/Interpreter.hs Hot/Types.hs Hot/Var.hs
-SRC += Hot/Jass/Init.hs Hot/Instruction/Compiler.hs Hot/HandleCode.hs
-SRC += Hot/JassHelper.hs
+SRC += Hot/Ast.hs Hot/Types.hs Hot/Var.hs
+SRC += Hot/Instruction/Compiler.hs Hot/Instruction.hs 
+SRC += Hot/Init/Auto.hs Hot/Init/Stubs.hs Hot/Init/Rename.hs
+SRC += Hot/JassHelper.hs Hot/HandleCode.hs
 SRC += Data/Composeable.hs
 SRC += Main.hs
+
+HS_O := $(patsubst %.hs, %.o, $(SRC))
+HS_HI := $(patsubst %.hs, %.hi, $(SRC))
 
 PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
@@ -42,4 +46,5 @@ out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
 
 clean:
 	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
+	rm -f $(HS_O) $(HS_HI)
 	rm -f jhcr convert 

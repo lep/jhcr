@@ -12,36 +12,11 @@ module Hot.Ast
     , jass2hot
     ) where
 
+import Data.Int
+import Data.Maybe 
 
 import qualified Jass.Ast as Jass
 import Jass.Ast (Programm, Toplevel, LVar, Stmt, Expr, Name, Type)
-
-import Data.Composeable
-
-import Control.Arrow (second)
-
-import Data.Monoid
-
-import Data.Map (Map)
-import qualified Data.Map as Map
-
-import Data.DList (DList)
-import qualified Data.DList as DList
-
-import Data.Int
-
-import Data.List (genericLength)
-
-import Data.Maybe 
-
-import Data.ByteString.Lazy (ByteString)
-
-import Control.Lens
-import Control.Monad.State
-
-import Unsafe.Coerce (unsafeCoerce)
-
-import Debug.Trace
 
 import Hot.Var
 

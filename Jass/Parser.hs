@@ -15,21 +15,8 @@ module Jass.Parser
 import Control.Applicative hiding (many, some)
 import Control.Monad
 
-import qualified Data.ByteString.Lazy as BL
-import Data.Char
 import Data.Maybe
-import Data.Monoid
-
-import Data.Set (Set)
-import qualified Data.Set as Set
-
-import Data.Text (Text)
-import qualified Data.Text as Text
-
-import Data.List.NonEmpty ( NonEmpty(..) )
-
 import Data.Void
-
 
 import Jass.Ast
 
