@@ -1,5 +1,3 @@
-
-
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE GADTs #-}
@@ -12,14 +10,12 @@ module Hot.Instruction.Compiler (compile) where
 import Data.DList (DList)
 import qualified Data.DList as DList
 
-
 import Data.Maybe 
 
 import Control.Lens
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
-
 
 
 import Hot.Ast hiding (Call, Set, Function)
@@ -150,7 +146,7 @@ compileStmt e = do
         emit $ Set wanted 0 r
         emit $ Ret wanted
 
-    H.Call{} -> void $ compileCall e
+    H.Call{} -> void . typed "nothing" $ compileCall e
 
 
     If cond tb eb -> do
@@ -313,7 +309,14 @@ compileExpr e =
     Code v -> return (getId v)
 
 compile :: Ast Var Programm -> [Instruction]
-compile = DList.toList . execWriter . flip evalStateT emptyState . flip runReaderT "" . runCompileMonad . compileProgram
+compile =
+    DList.toList .
+    execWriter .
+    flip evalStateT emptyState .
+    flip runReaderT "" .
+    runCompileMonad .
+    compileProgram
+    
   where
     emptyState = CompileS mempty 0 0
 
