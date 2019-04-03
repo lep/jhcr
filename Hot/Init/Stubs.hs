@@ -39,24 +39,30 @@ stubifyFn e =
                    else Just . Local $ SDef Normal (mkLocal "_ret") retty Nothing
 
             mkRetVar = if retty == "code"
-                       then Call (mkFn "_Auto_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]]
-                       else Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar scope, Int "0"]
+                       then Call (mkFn "_Auto_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar ltbl, Int "0"]]
+                       else Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar ltbl, Int "0"]
 
             set = if retty == "nothing"
                   then Nothing
                   else Just $ Set (SVar $ mkLocal "_ret") mkRetVar
               
-            flush = Call (mkFn "_Table_flush") [Var $ SVar scope]
+            flush = Call (mkFn "_Table_destroy") [Var $ SVar ltbl]
+            
+            localTbl = Local (SDef Normal ltbl "integer" Nothing)
                   
             ret = if retty == "nothing"
                   then Return Nothing
                   else Return . Just . Var . SVar $ mkLocal "_ret"
+                  
+            sets = [ Set (SVar ltbl) (Call (mkFn "_Table_alloc") [])
+                   , Set (SVar scope) (Var $ SVar ltbl) ]
 
-            body' =  binds <> [call] <> maybeToList set <> [flush, ret]
+            body' =  sets <> binds <> [call] <> maybeToList set <> [flush, ret]
 
 
         in [ Function c ("_" ## n) args retty  $ map (rename n) body
         , Function c n args retty $ maybeToList ldef <> [
+            localTbl,
             If (Call (mkFn "_Modified_modified") [Int $ getId' n])
                   body'
                 [] (Just [
@@ -75,6 +81,8 @@ stubifyFn e =
       ]
       
     scope = mkLocal "_Wrap_args"
+    
+    ltbl = mkLocal "_tbl"
     
     rename :: Var -> Ast Var x -> Ast Var x
     rename v x =
