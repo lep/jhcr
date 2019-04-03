@@ -26,23 +26,28 @@ all: jhcr
 
 release: HSFLAGS=-O -osuf .oo -hisuf .hio
 release: $(SRC) $(PROCESSED)
-	cabal exec -- ghc $(HSFLAGS) Main.hs -o jhcr
+	cabal v1-exec -- ghc $(HSFLAGS) Main.hs -o jhcr
 	strip jhcr
 	$(UPX) $(UPXFLAGS) jhcr.exe
 
 convert: convert.hs
-	cabal exec -- ghc $(HSFLAGS) convert
+	cabal v1-exec -- ghc $(HSFLAGS) convert
 
 runtime/convert.j Hot/Types.hs runtime/types.j runtime/g-type-bin.j: convert common.j
 	./convert
 
 jhcr: $(SRC) $(PROCESSED)
-	cabal exec -- ghc $(HSFLAGS) Main.hs -o jhcr
+	cabal v1-exec -- ghc $(HSFLAGS) Main.hs -o jhcr
 
 process: $(PROCESSED)
 
 out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
+	@mkdir -p $(@D)
 	bash process.sh $< $@ JHCR_
+
+init:
+	cabal v1-sandbox init
+	cabal v1-install megaparsec lens optparse-applicative file-embed gitrev hashable dlist
 
 clean:
 	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
