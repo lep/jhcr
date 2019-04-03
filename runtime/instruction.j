@@ -78,90 +78,84 @@ endglobals
 
 #include "alloc.j"
 
-function _B2S takes boolean _b returns string
-    if _b then
-        return "true"
-    else
-        return "false"
-    endif
-endfunction
-
-function _print takes integer _ins returns nothing
-
-    call Print#_print(I2S(_op[_ins]) +" "+ I2S(_type[_ins]) +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
-
-
+function _toString takes integer _ins returns string
     if _op[_ins] <= Ins#_GetLocalArray then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
+        return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
     elseif _op[_ins] <= Ins#_Bind then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Lit then
         if Ins#_type[_ins] == Types#_string then
-            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ (_string[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ (_string[_ins]) )
         elseif Ins#_type[_ins] == Types#_integer then
-            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_integer[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_integer[_ins]) )
         elseif Ins#_type[_ins] == Types#_real then
-            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]]  +" "+ R2S(_real[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]]  +" "+ R2S(_real[_ins]) )
         elseif Ins#_type[_ins] == Types#_boolean then
-            call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ _B2S(_boolean[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ Print#_b2s(_boolean[_ins]) )
+        else
+            return _OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" null"
         endif
     elseif _op[_ins] == Ins#_Call then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Convert then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
+        return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ _TypeNames[_a2[_ins]] +" "+ I2S(_a3[_ins]))
     elseif _op[_ins] == Ins#_Label then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_Jmp then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+        return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
     elseif _op[_ins] == Ins#_Fun then
         if _a1[_ins] < 0 then
-            call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ _string[_ins])
+            return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ _string[_ins])
         else
-            call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) )
         endif
     elseif _op[_ins] == Ins#_JmpT then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Not then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
+        return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == Ins#_Ret then
-        call Print#_print(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] )
+        return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] )
     else
-        call Print#_print("unknown op " +I2S(Ins#_op[_ins]))
+        return("unknown op " +I2S(Ins#_op[_ins]))
     endif
 
-    call Print#_print("------------")
-    
+endfunction
+
+function _print takes integer i returns nothing
+    //call Print#_print(I2S(_op[_ins]) +" "+ I2S(_type[_ins]) +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
+    call Print#_print(_toString(i))
 endfunction
 
 function _init takes nothing returns nothing
-    set _OpNames[_Not]="Not"
-    set _OpNames[_Neq]="Neq"
-    set _OpNames[_JmpT]="JmpT"
-    set _OpNames[_Jmp]="Jmp"
-    set _OpNames[_Lit]="Lit"
-    set _OpNames[_Bind]="Bind"
-    set _OpNames[_Set]="Set"
-    set _OpNames[_Call]="Call"
-    set _OpNames[_Add]="Add"
-    set _OpNames[_Mul]="Mul"
-    set _OpNames[_Div]="Div"
-    set _OpNames[_Sub]="Sub"
-    set _OpNames[_Negate]="Negate"
-    set _OpNames[_SetLocalArray]="SetLocalArray"
-    set _OpNames[_GetLocalArray]="GetLocalArray"
-    set _OpNames[_SetGlobalArray]="SetGlobalArray"
-    set _OpNames[_GetGlobalArray]="GetGlobalArray"
-    set _OpNames[_SetGlobal]="SetGlobal"
-    set _OpNames[_GetGlobal]="GetGlobal"
-    set _OpNames[_Ret]="Ret"
-    set _OpNames[_Label]="Label"
-    set _OpNames[_Eq]="Eq"
-    set _OpNames[_Lt]="Lt"
-    set _OpNames[_Le]="Le"
-    set _OpNames[_Ge]="Ge"
-    set _OpNames[_Gt]="Gt"
-    set _OpNames[_Convert]="Convert"
-    set _OpNames[_Fun]="Fun"
+    set _OpNames[_Not]="not"
+    set _OpNames[_Neq]="neq"
+    set _OpNames[_JmpT]="jmpt"
+    set _OpNames[_Jmp]="jmp"
+    set _OpNames[_Lit]="lit"
+    set _OpNames[_Bind]="bind"
+    set _OpNames[_Set]="set"
+    set _OpNames[_Call]="call"
+    set _OpNames[_Add]="add"
+    set _OpNames[_Mul]="mul"
+    set _OpNames[_Div]="div"
+    set _OpNames[_Sub]="sub"
+    set _OpNames[_Mod]="mod"
+    set _OpNames[_Negate]="neg"
+    set _OpNames[_SetLocalArray]="sla"
+    set _OpNames[_GetLocalArray]="gla"
+    set _OpNames[_SetGlobalArray]="sga"
+    set _OpNames[_GetGlobalArray]="gga"
+    set _OpNames[_SetGlobal]="sg"
+    set _OpNames[_GetGlobal]="gg"
+    set _OpNames[_Ret]="ret"
+    set _OpNames[_Label]="lbl"
+    set _OpNames[_Eq]="eq"
+    set _OpNames[_Lt]="lt"
+    set _OpNames[_Le]="le"
+    set _OpNames[_Ge]="ge"
+    set _OpNames[_Gt]="gt"
+    set _OpNames[_Convert]="conv"
+    set _OpNames[_Fun]="fun"
     
     set _TypeNames[Types#_handle] = "handle"
     set _TypeNames[Types#_agent] = "agent"

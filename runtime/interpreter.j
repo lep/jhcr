@@ -7,6 +7,8 @@ function _step takes integer ctx returns integer
     local integer tmp
     local integer fn
     
+    //call Print#_log(Ins#_toString(op))
+    
     if t == Ins#_Set then
         #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
         #define ty Ins#_type[op]
@@ -46,7 +48,7 @@ function _step takes integer ctx returns integer
         if Ins#_type[op] == Types#_integer then
             call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) > Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) > Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real   (Context#_locals[ctx], Ins#_a2[op]) > Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
         endif
         
     elseif t == Ins#_Ge then
@@ -83,7 +85,7 @@ function _step takes integer ctx returns integer
         if Ins#_type[op] == Types#_integer then
             call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real   (Context#_locals[ctx], Ins#_a2[op]) - Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
         endif
         
     elseif t == Ins#_Mul then
@@ -95,9 +97,9 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Div then
         if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer  (Context#_locals[ctx], Ins#_a2[op]) / Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
         else
-            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) / Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real     (Context#_locals[ctx], Ins#_a2[op]) / Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
         endif
     elseif t == Ins#_Mod then
         call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], ModuloInteger(Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) , Table#_get_integer(Context#_locals[ctx], Ins#_a3[op])))
@@ -107,9 +109,9 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Negate then
         if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], -Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]))
+            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], -Table#_get_integer (Context#_locals[ctx], Ins#_a2[op]))
         else
-            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], -Table#_get_real(Context#_locals[ctx], Ins#_a2[op]))
+            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], -Table#_get_real    (Context#_locals[ctx], Ins#_a2[op]))
         endif
         
     elseif t == Ins#_Label then
@@ -136,9 +138,10 @@ function _step takes integer ctx returns integer
         set ctx = Context#_parent[ctx]
         call Table#_destroy(Context#_bindings[tmp])
         call Context#_free(tmp)
+        
     elseif t == Ins#_Call then
         set fn = Ins#_a2[op]
-        if fn < 0 or Modified#_modified(fn) then
+        if fn < 0 then
             // newly defined or reloaded function
             
             set tmp = Context#_alloc()
@@ -194,7 +197,7 @@ function _step takes integer ctx returns integer
 
     elseif t == Ins#_SetGlobalArray then
         if Ins#_a1[op] > 0 then
-            #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
+            #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Table@_get_integer(Context@_locals[ctx], Ins@_a2[op]), Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
             #define ty Ins#_type[op]
             #include "g-type-bin.j"
             #undef ty
@@ -237,8 +240,12 @@ function _step takes integer ctx returns integer
             
         elseif Ins#_type[op] == Types#_code then
             call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Ins#_integer[op])
-        else // null // TODO?
-            
+        else // null
+            //#define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], null)
+            //#define ty Ins#_type[op]
+            //#include "g-type-bin.j"
+            //#undef ty
+            //#undef macro
         endif
     elseif t == Ins#_Convert then
         call Convert#_convert(Ins#_type[op], Ins#_a1[op], Ins#_a2[op], Ins#_a3[op], ctx)
