@@ -31,7 +31,7 @@ newtype Register = Register Int32
     deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
 
 reg :: Register -> Builder
-reg (Register r) = pad32Dec r
+reg (Register r) = pad9Dec r
 
 reg' :: Register -> Builder
 reg' (Register r) = int32Dec r
@@ -41,7 +41,7 @@ newtype Label = Lbl Int16
     deriving (Eq, Ord, Show, Enum, Real, Integral, Num)
 
 label :: Label -> Builder
-label (Lbl l) = pad16Dec l
+label (Lbl l) = pad6Dec l
 
 label' :: Label -> Builder
 label' (Lbl l) = int16Dec l
@@ -89,27 +89,27 @@ data Instruction
     | Ret Type
     deriving (Show)
 
-pad5Dec :: Int8 -> Builder
-pad5Dec x =
+pad2Dec :: Int8 -> Builder
+pad2Dec x =
   let l = intlog10 $ abs x
       w = 2 - if x < 0 then 1 else 0
   in int8Dec x <> stringUtf8 (replicate (w-l) '.')
 
-pad7Dec :: Int8 -> Builder
-pad7Dec x =
+pad3Dec :: Int8 -> Builder
+pad3Dec x =
   let l = intlog10 $ abs x
       w = 3 - if x < 0 then 1 else 0
   in int8Dec x <> stringUtf8 (replicate (w-l) '.')
 
 
-pad16Dec :: Int16 -> Builder
-pad16Dec x =
+pad6Dec :: Int16 -> Builder
+pad6Dec x =
   let l = intlog10 $ abs x
       w = 6 - if x < 0 then 1 else 0
   in int16Dec x <> stringUtf8 (replicate (w-l) '.')
 
-pad32Dec :: Int32 -> Builder
-pad32Dec x =
+pad9Dec :: Int32 -> Builder
+pad9Dec x =
   let l = intlog10 $ abs x
       w = 9 - if x < 0 then 1 else 0
   in int32Dec x <> stringUtf8 (replicate (w-l) '.')
@@ -224,7 +224,7 @@ serialize' ins =
 
     Function f n ->
         if f < 0
-        then mconcat [ ins2id "fun", label f, pad16Dec (genericLength n), stringUtf8 n]
+        then mconcat [ ins2id "fun", label f, pad6Dec (genericLength n), stringUtf8 n]
         else mconcat [ ins2id "fun", label f]
 
     Label l -> mconcat [ ins2id "label", label l]
@@ -238,11 +238,11 @@ serialize' ins =
     Literal t s l ->
         let litRendered = serializeLit l
             litLen = fromIntegral . BL.length $ toLazyByteString litRendered
-        in mconcat [ ins2id "lit", typeToId t, reg s, pad16Dec litLen, litRendered]
+        in mconcat [ ins2id "lit", typeToId t, reg s, pad6Dec litLen, litRendered]
 
   where
-    typeToId x = pad7Dec (Map.findWithDefault (error x) x Hot.types)
-    ins2id n = pad5Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
+    typeToId x = pad3Dec (Map.findWithDefault (error x) x Hot.types)
+    ins2id n = pad2Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
     instable =
       [ ("lt", 1), ("le", 2), ("gt", 3), ("ge", 4), ("eq", 5), ("neq", 6)
       , ("add", 7), ("sub", 8), ("mul", 9), ("div", 10), ("mod", 11)
