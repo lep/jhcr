@@ -101,7 +101,14 @@ addFunction :: Name -> [Type] -> Type -> RenameVariablesM Var
 addFunction name args ret = do
     v' <- uses fnScope $ Map.lookup name
     case v' of
-        Just v -> return v
+        Just v -> do
+            let sig = H.Fn name args ret (H.getId v)
+            -- potentially update if signature has changed
+            if v == sig
+            then return v
+            else do
+                fnScope %= (at name ?~ sig)
+                return sig
         Nothing -> do
             (mode, f) <-  ask
             case mode of
