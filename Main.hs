@@ -191,7 +191,7 @@ updateX o = do
             
             let (ast', st') = Rename.compile Rename.Update id st progU
                 ast'' = H.jass2hot ast'
-            
+
             forM_ nameU $ \n ->
                 hPutStrLn stderr $ unwords ["Updating function", n]
 
@@ -296,7 +296,8 @@ initX o = do
                         (ast', st') = first HandleCode.compile $
                                       Rename.compile Rename.Init conv st jhast
                         
-                        conv x = if x == "code" then "_replace_code" else x
+                        conv x = if x == "code" then "integer" else x
+                        
                         
                         generated :: [J.Ast H.Var H.Programm]
                         generated = Auto.compile $ concatPrograms prelude' ast'

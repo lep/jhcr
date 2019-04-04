@@ -32,8 +32,8 @@ compileReplace x =
   case x of
     J.Set lvar (J.Code (H.Fn _ _ _ id)) ->
         J.Set lvar $ J.Int (show id)
-    J.SDef c var "_replace_code" (Just (J.Code (H.Fn _ _ _ id))) ->
-        J.SDef c var "_replace_code" . Just . J.Int $ show id
+    J.SDef c var "integer" (Just (J.Code (H.Fn _ _ _ id))) ->
+        J.SDef c var "integer" . Just . J.Int $ show id
     J.Call fn@(H.Fn _ types _ _) args ->
         let want = map conv types
             args' = zipWith ($) want $ map compileReplace args
@@ -45,13 +45,13 @@ compileReplace x =
       case x of
         J.Code{} -> x
         _ -> J.Call (H.Fn "_Wrap_i2code" [] "" 0) [x]
-    conv "_replace_code" (J.Code (H.Fn _ _ _ id)) = J.Int (show id)
+    conv "integer" (J.Code (H.Fn _ _ _ id)) = J.Int (show id)
     conv _ x = x
 
 compileNull :: H.Type -> J.Ast H.Var x -> J.Ast H.Var x
 compileNull ty x =
   case x of
-    J.Null -> if ty == "_replace_code" then J.Int "0" else J.Null
+    J.Null -> if ty == "integer" then J.Int "0" else J.Null
     
     J.Call fn@(H.Op _) args ->
         let want = fromType $ foldMap typeOfExpr args
@@ -125,8 +125,8 @@ cleanup x =
 compile :: J.Ast H.Var x -> J.Ast H.Var x
 compile =
     cleanup .
-    code2custom "_replace_code" "integer" .
+    --code2custom "_replace_code" "integer" .
     compileReplace .
     compileNull "" .
-    code2custom "code" "_replace_code"
+    code2custom "code" "integer"
 
