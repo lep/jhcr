@@ -141,7 +141,7 @@ function _step takes integer ctx returns integer
         
     elseif t == Ins#_Call then
         set fn = Ins#_a2[op]
-        if fn < 0 then
+        if fn < 0 or Modified@_modified(fn) then
             // newly defined or reloaded function
             
             set tmp = Context#_alloc()
