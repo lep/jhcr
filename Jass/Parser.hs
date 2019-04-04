@@ -93,7 +93,7 @@ parens = between (symbol "(") (symbol ")")
 brackets = between (symbol "[") (symbol "]")
 
 
-horizontalSpace = void $ some $ lexeme $ optional (L.skipLineComment "//") *> newline
+horizontalSpace = void $ some $ lexeme $ optional (L.skipLineComment "//") *> eol
 
 toplevel = globals
         <|> typedef
