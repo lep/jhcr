@@ -64,6 +64,9 @@ newRegister = registerId <-= 1
 
 isBooleanOp x = x `elem` (["==", "!=", "<", "<=", ">", ">=", "and", "or"] :: [Name])
 
+code2int "code" = "integer"
+code2int x      = x
+
 typeOfExpr :: Ast Var Expr -> Type
 typeOfExpr e =
   case e of
@@ -77,7 +80,7 @@ typeOfExpr e =
     Var (AVar v _) -> typeOfVar v
 
     -- we might not need this since all code references are now integers...
-    Code{} -> "code" 
+    Code{} -> "integer" 
 
     Int{} -> "integer"
     Real{} -> "real"
@@ -88,9 +91,9 @@ typeOfExpr e =
 typeOfVar :: Var -> Type
 typeOfVar v =
   case v of
-    Local _ t _ _ -> t
-    Global _ _ t _ _ -> t
-    Fn _ _ t _ -> t
+    Local _ t _ _ -> code2int t
+    Global _ _ t _ _ -> code2int t
+    Fn _ _ t _ -> code2int t
     _ -> ""
 
 compileProgram :: Ast Var Programm -> CompileMonad ()
@@ -106,7 +109,9 @@ compileToplevel (H.Function n _ r body) = do
     registerId .= 0
 
     typed r $ compileStmt body
-    emit $ Ret r
+    -- we rely on correct jass everywhere but especially here
+    when ( r == "nothing") $
+        emit $ Ret r
 
 typed :: MonadReader b m => b -> m a -> m a
 typed t = local (const t)
@@ -114,7 +119,9 @@ typed t = local (const t)
 typedGet :: Type -> Register -> CompileMonad Register
 typedGet sourcetype source = do
     wanted <- ask
-    if wanted /= sourcetype && wanted /= "nothing"
+    if wanted /= sourcetype &&
+       wanted /= "nothing" &&
+       not (wanted == "code" && sourcetype == "integer")
     then do
         r <- newRegister
         emit $ Convert wanted r sourcetype source
@@ -130,7 +137,7 @@ compileCall (H.Call n@(Fn _ aTypes _ _) args) = do
     let v = getId n
     binds <- forM (zip3 args aTypes [1, 2..]) $ \(arg, typ, pos) -> typed typ $ do
         r <- compileExpr arg
-        return $ Bind typ pos r
+        return $ Bind (code2int typ) pos r
     mapM_ emit binds
     emit $ Call r v vname
     typedGet (typeOfVar n) r
@@ -303,10 +310,15 @@ compileExpr e =
     Null -> do
         r <- newRegister
         t <- ask
-        emit $ Literal t r e
+        if t == "integer"
+        then emit $ Literal "integer" r $ Int 0
+        else emit $ Literal t r e
         return r
 
-    Code v -> return (getId v)
+    Code v -> do
+        r <- newRegister
+        emit . Literal "integer" r . Int $ getId v
+        return r
 
 compile :: Ast Var Programm -> [Instruction]
 compile =
