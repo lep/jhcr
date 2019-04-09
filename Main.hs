@@ -78,13 +78,6 @@ runtime2 = map S8.unpack
   , $(embedFile "out/init.j")
   ]
 
-mkHashMap :: J.Ast J.Name x -> Map J.Name Int
-mkHashMap x =
-  case x of
-    J.Function _ name _ _ _ -> Map.singleton name $ hash x
-    _ -> composeFold mkHashMap x
-
-
 data Options =
     Init { commonjPath :: FilePath
          , blizzardjPath :: FilePath
@@ -170,6 +163,17 @@ main = do
         Update{} -> updateX options
         Init{} -> initX options
 
+
+mkHashMap :: J.Ast J.Name x -> Map J.Name Int
+mkHashMap x =
+  case x of
+    J.Function _ name _ _ _ -> Map.singleton name $ hash x
+    
+     -- we don't care about the value, just if it's already initialized or not
+    J.Global (J.SDef _ name _ (Just e)) -> Map.singleton name 0
+    _ -> composeFold mkHashMap x
+
+
 updateX o = do
     let jhc = if processJasshelper o then JH.compile else id
     (st, hmap) <- decodeFile (statePath o)
@@ -186,9 +190,9 @@ updateX o = do
                 hmap' = mkHashMap prog'
                 -- TODO: handle globals and set their correct value
                 astU = filter (isUpdated hmap hmap') ast
-                nameU = map getFnName $ filter isFunction astU
+                nameU = map getName $ filter J.isFunction astU
                 progU = J.Programm astU
-            
+
             let (ast', st') = Rename.compile Rename.Update id st progU
                 ast'' = H.jass2hot ast'
 
@@ -197,12 +201,19 @@ updateX o = do
 
             hPutStrLn stderr "Writing bytecode"
         
-            let compiled = Ins.compile ast''
+            let fnsCompiled = Ins.compile ast''
+                gCompiled = Ins.compileGlobals $ H.globals2statements ast'
+                
             when (showAsm o) $ do
-                hPutBuilder stdout $ Ins.serializeAsm compiled
+                putStrLn "; functions"
+                hPutBuilder stdout $ Ins.serializeAsm fnsCompiled
+                putStrLn ""
+                putStrLn "; globals"
+                hPutBuilder stdout $ Ins.serializeAsm gCompiled
             
-            let asms = Ins.serializeChunked 700 compiled
-                preload' = mkPreload asms
+            let fnAsm = Ins.serializeChunked 700 fnsCompiled
+                gAsm = Ins.serializeChunked 700 gCompiled
+                preload' = mkPreload fnAsm gAsm
             
             case preload' of
                 Nothing -> do
@@ -228,32 +239,53 @@ updateX o = do
                 (Nothing, _) -> True
                 (Just h1, Just h2) -> h1 /= h2
                 _ -> True
+        -- only report globals as fresh once
+        J.Global (J.SDef _ v _ (Just _)) ->
+          case Map.lookup v old of
+            Nothing -> True
+            _ -> False
         _ -> True
-
-    isFunction :: J.Ast a J.Toplevel -> Bool
-    isFunction J.Function{} = True
-    isFunction _ = False
     
-    getFnName :: J.Ast J.Name J.Toplevel -> J.Name
-    getFnName (J.Function _ name _ _ _) = name
+    getName :: J.Ast J.Name J.Toplevel -> J.Name
+    getName (J.Function _ name _ _ _) = name
+    getName (J.Global (J.SDef _ name _ _)) = name
+    getName (J.Global (J.ADef name _)) = name
     
-    mkPreload :: [String] -> Maybe (J.Ast J.Name J.Programm)
-    mkPreload x = J.Programm . pure <$> mkF x
+    isSDef :: J.Ast a J.Toplevel -> Bool
+    isSDef (J.Global (J.SDef _ _ _ _)) = True
+    isSDef _ = False
     
-    mkF :: [String] -> Maybe (J.Ast J.Name J.Toplevel)
-    mkF asms = do
-        let availableIds = map (Just . J.Rawcode)
-                [ "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls"
-                , "Adis", "Acmg", "Amdf", "Adts", "Aast", "Aetf", "Absk", "Alsh"
-                , "Aens", "Adcn", "Aliq", "Aspl", "Aven", "Ablo", "Acpf", "Awar"
-                ] ++ repeat Nothing
+    mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
+    mkPreload fns globals = do
+        fns' <- mkF fns fnsIds "1"
+        g' <- mkF globals globalIds "2"
+        return . J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
+            fns' <> g'
+    
+    mkF :: [String] -> [String] -> J.Lit -> Maybe [J.Ast J.Name J.Stmt]
+    mkF asms ids slot = do
+        let availableIds = map J.Rawcode ids
             cnt = length asms
-            setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int "1", J.Int $ show cnt ]
-            mkC id' asm = id' >>= \id -> return $ J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
             
-        setCodes <- zipWithM mkC availableIds asms
-        return $ J.Function J.Normal "PreloadFiles" [] "nothing" $ setCnt:setCodes
+            mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
+            
+        guard (length availableIds >= cnt)
+        
+        let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show cnt ]
+            setCodes = zipWith mkC availableIds asms
 
+        return $ setCnt:setCodes
+
+    fnsIds =
+        [ "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls"
+        , "Adis", "Acmg", "Amdf", "Adts", "Aast", "Aetf", "Absk", "Alsh"
+        , "Aens", "Adcn", "Aliq", "Aspl", "Aven", "Ablo", "Acpf", "Awar"
+        ]
+
+    globalIds =
+        [ "Adec", "Aeat", "Aco3", "Acoh", "Abrf", "Aro2", "Aro1", "Aegr"
+        , "Aren"
+        ]
 
 initX o = do
     let jhc = if processJasshelper o then JH.compile else id

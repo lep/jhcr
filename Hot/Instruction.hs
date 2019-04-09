@@ -261,11 +261,12 @@ serializeChunked chunkSize =
     map L8.unpack .
     map toLazyByteString .
     map fst .
-    foldl' go [mempty] .
+    foldl' go [] .
     map (\x -> (lazyByteString x, Sum $ BL.length x)) .
     map toLazyByteString . 
     map serialize'
   where
+    go [] elem = [elem]
     go (x:xs) elem =
         let x' = x <> elem
         in if getSum (snd x') > chunkSize

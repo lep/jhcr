@@ -20,6 +20,7 @@ module Jass.Ast
     , fmap, foldMap, traverse
     , s2i, s2r, rawcode2int
     , eliminateElseIfs
+    , isGlobal, isFunction
     ) where
 
 import Prelude hiding (fmap, foldMap, traverse)
@@ -311,3 +312,12 @@ eliminateElseIfs :: Ast v Stmt -> Ast v Stmt
 eliminateElseIfs (If cond tb eis eb) =
     If cond tb [] $ foldr (\(cond, body) elem -> Just [If cond body [] elem]) eb eis
 eliminateElseIfs x = x
+
+isGlobal :: Ast a Toplevel -> Bool
+isGlobal Global{} = True
+isGlobal _ = False
+
+
+isFunction :: Ast a Toplevel -> Bool
+isFunction Function{} = True
+isFunction _ = False

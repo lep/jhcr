@@ -1,8 +1,6 @@
 // scope Parser
 
 globals
-    #include "alloc-globals.j"
-    
     constant integer _OpWidth = 2
     constant integer _TypeWidth = 3
     constant integer _RegWidth = 9
@@ -18,14 +16,14 @@ globals
     integer array _fn_entry
 endglobals
 
-#include "alloc.j"
 
 function _parse_ins takes string _s returns integer
     local integer _ins = S2I(SubString(_s, _S, _S+2))
-    local integer _new = _alloc()
+    local integer _new = Ins#_alloc()
     local integer _b
     
     set Ins#_op[_new] = _ins
+    set Ins#_next[_new] = 0
     
     if _ins <= Ins#_GetGlobalArray then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
@@ -112,17 +110,25 @@ function _parse_and_init takes string _instruction returns nothing
     loop
     exitwhen _S >= _len
         set _ins = _parse_ins(_instruction)
-        //call Ins#_print(_ins)
+        //call Print#_print("Parsed instruction ("+ I2S(_ins) +") "+ Ins#_toString(_ins))
         
         if Ins#_op[_ins] == Ins#_Fun then
             set _current_fn = Ins#_a1[_ins]
-            set _fn_entry[_current_fn + 100] = _ins
+            
             if _fn_labels[_current_fn + 100] == 0 then
                 set _fn_labels[_current_fn + 100] = Table#_alloc()
             endif
+            
+            if _fn_entry[_current_fn + 100] != 0 then
+                call Ins#_destroy(_fn_entry[_current_fn + 100])
+            endif
+            
+            set _fn_entry[_current_fn + 100] = _ins
+            
             if _current_fn < 0 then
                 call StringTable#_set(Wrap#_name2id, Ins#_string[_ins], _current_fn)
             endif
+            
             call Modified#_set_modified(_current_fn)
             set _prev_ins = 0
 
@@ -136,4 +142,28 @@ function _parse_and_init takes string _instruction returns nothing
         set _prev_ins = _ins
 
     endloop
+endfunction
+
+function _parse_globals takes string _instruction, integer _entry returns integer
+    local integer _len = StringLength(_instruction)
+    local integer _ins
+    set _S = 0
+    loop
+    exitwhen _S >= _len
+        set _ins = _parse_ins(_instruction)
+        
+        // the very first instruction
+        if _entry == 0 then
+            set _entry = _ins
+        endif
+        
+        // we know we only have code compiled from globals init here
+        // so we don't check a bunch of stuff
+        
+        if _prev_ins != 0 then
+            set Ins#_next[_prev_ins] = _ins
+        endif
+        set _prev_ins = _ins
+    endloop
+    return _entry
 endfunction

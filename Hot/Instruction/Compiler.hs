@@ -5,7 +5,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE StandaloneDeriving #-}
  
-module Hot.Instruction.Compiler (compile) where
+module Hot.Instruction.Compiler (compile, compileGlobals) where
 
 import Data.DList (DList)
 import qualified Data.DList as DList
@@ -43,6 +43,8 @@ data CompileState = CompileS { _loopStack :: [(Label, Label)]
                              , _registerId :: Register
                              }
 makeLenses ''CompileState
+
+emptyState = CompileS mempty 0 0
 
 emit :: Instruction -> CompileMonad ()
 emit = tell . DList.singleton
@@ -328,8 +330,13 @@ compile =
     flip runReaderT "" .
     runCompileMonad .
     compileProgram
-    
-  where
-    emptyState = CompileS mempty 0 0
 
 
+compileGlobals :: [Ast Var Stmt] -> [Instruction]
+compileGlobals =
+    DList.toList .
+    execWriter .
+    flip evalStateT emptyState .
+    flip runReaderT "" .
+    runCompileMonad .
+    mapM_ compileStmt

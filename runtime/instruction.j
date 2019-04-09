@@ -78,6 +78,10 @@ endglobals
 
 #include "alloc.j"
 
+function _repr takes integer _ins returns string
+    return I2S(_op[_ins]) +" "+ I2S(_type[_ins]) +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins])
+endfunction
+
 function _toString takes integer _ins returns string
     if _op[_ins] <= Ins#_GetLocalArray then
         return(_OpNames[_op[_ins]] +" "+ _TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
@@ -119,6 +123,14 @@ function _toString takes integer _ins returns string
         return("unknown op " +I2S(Ins#_op[_ins]))
     endif
 
+endfunction
+
+function _destroy takes integer _ins returns nothing
+    loop
+    exitwhen _ins == 0
+        call _free(_ins)
+        set _ins = _next[_ins]
+    endloop
 endfunction
 
 function _print takes integer i returns nothing

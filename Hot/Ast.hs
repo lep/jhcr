@@ -7,6 +7,7 @@ module Hot.Ast
     , Var (..)
     , Ast (..)
     , jass2hot
+    , globals2statements
     ) where
 
 import Data.Int
@@ -46,6 +47,54 @@ data Ast var a where
 
 deriving instance (Show var) => Show (Ast var a)
 
+convert :: Jass.Ast Var a -> Ast Var a
+convert e =
+  case e of
+    Jass.Call fn args -> Call fn $ fmap convert args
+    Jass.Var v -> Var $ convert v
+    Jass.Int i -> Int $ Jass.s2i i
+    Jass.Rawcode i -> Int $ Jass.rawcode2int i
+    Jass.Real r -> Real $ Jass.s2r r
+    Jass.Bool b -> Bool b
+    Jass.String s -> String s
+    Jass.Code c -> Code c
+    Jass.Null -> Null
+    Jass.AVar n idx -> AVar n $ convert idx
+    Jass.SVar v -> SVar v
+
+convertStmt :: Jass.Ast Var a -> Maybe (Ast Var a)
+convertStmt e =
+  case e of
+    Jass.Set lvar expr -> Just $ Set (convert lvar) (convert expr)
+    Jass.If{} -> Just $ convertIfElse $ Jass.eliminateElseIfs e
+    Jass.Loop body -> Just $ Loop $ Block $ mapMaybe convertStmt body
+    Jass.Exitwhen cond -> Just $ Exitwhen $ convert cond
+    Jass.Return e -> Just $ Return $ fmap convert e
+    Jass.Call fn args -> Just $ Call fn $ fmap convert args
+    Jass.Local (Jass.SDef _ n _ (Just e)) -> convertStmt $ Jass.Set (Jass.SVar n) e
+
+    _ -> Nothing
+
+
+
+
+convertIfElse :: Jass.Ast Var Stmt -> Ast Var Stmt
+convertIfElse (Jass.If cond body [] elseB) =
+    If (convert cond)
+       (Block $ mapMaybe convertStmt body)
+       (Block $ mapMaybe convertStmt $ concat elseB)
+
+
+
+globals2statements :: Jass.Ast Var Programm -> [Ast Var Stmt]
+globals2statements (Jass.Programm p) = mapMaybe go p
+  where
+    go :: Jass.Ast Var a -> Maybe (Ast Var Stmt)
+    go e =
+      case e of
+        Jass.Global x@(Jass.SDef _ name _ (Just _)) -> convertStmt $ Jass.Local x
+        _ -> Nothing
+
 jass2hot:: Jass.Ast Var Programm -> Ast Var Programm
 jass2hot (Jass.Programm p) = Programm $ mapMaybe go p
   where
@@ -58,36 +107,3 @@ jass2hot (Jass.Programm p) = Programm $ mapMaybe go p
 
         Jass.Function _ n args ret body -> Just $ Function n args ret $ Block $ mapMaybe convertStmt body
 
-    convertStmt :: Jass.Ast Var a -> Maybe (Ast Var a)
-    convertStmt e =
-      case e of
-        Jass.Set lvar expr -> Just $ Set (convert lvar) (convert expr)
-        Jass.If{} -> Just $ convertIfElse $ Jass.eliminateElseIfs e
-        Jass.Loop body -> Just $ Loop $ Block $ mapMaybe convertStmt body
-        Jass.Exitwhen cond -> Just $ Exitwhen $ convert cond
-        Jass.Return e -> Just $ Return $ fmap convert e
-        Jass.Call fn args -> Just $ Call fn $ fmap convert args
-        Jass.Local (Jass.SDef _ n _ (Just e)) -> convertStmt $ Jass.Set (Jass.SVar n) e
-
-        _ -> Nothing
-
-    convert :: Jass.Ast Var a -> Ast Var a
-    convert e =
-      case e of
-        Jass.Call fn args -> Call fn $ fmap convert args
-        Jass.Var v -> Var $ convert v
-        Jass.Int i -> Int $ Jass.s2i i
-        Jass.Rawcode i -> Int $ Jass.rawcode2int i
-        Jass.Real r -> Real $ Jass.s2r r
-        Jass.Bool b -> Bool b
-        Jass.String s -> String s
-        Jass.Code c -> Code c
-        Jass.Null -> Null
-        Jass.AVar n idx -> AVar n $ convert idx
-        Jass.SVar v -> SVar v
-
-    convertIfElse :: Jass.Ast Var Stmt -> Ast Var Stmt
-    convertIfElse (Jass.If cond body [] elseB) =
-        If (convert cond)
-           (Block $ mapMaybe convertStmt body)
-           (Block $ mapMaybe convertStmt $ concat elseB)

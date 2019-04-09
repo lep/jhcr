@@ -281,6 +281,21 @@ function _start_interpreter_wrap takes nothing returns boolean
     return true
 endfunction
 
+function _exec_globals takes integer _g returns nothing
+    local integer _ctx = Context#_alloc()
+    set Context#_pc[_ctx]       = _g
+    set Context#_labels[_ctx]   = 0
+    set Context#_locals[_ctx]   = Table#_alloc()
+    set Context#_bindings[_ctx] = Table#_alloc()
+    set Context#_parent[_ctx]   = 0
+    loop
+    exitwhen _ctx == 0
+        set _ctx = _step(_ctx)
+    endloop
+    call Context#_destroy(_ctx)
+    call Ins#_destroy(_g)
+endfunction
+
 function _init takes nothing returns nothing
     call TriggerAddCondition(Wrap#_t1, Condition(function _start_interpreter_wrap))
 endfunction
