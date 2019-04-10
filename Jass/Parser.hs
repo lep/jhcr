@@ -36,8 +36,6 @@ sc = L.space sc' lc empty
 
 lexeme = L.lexeme sc
 
---reallit = lexeme $ some digitChar 
---stringlit = lexeme $ char '"' >* some digitChar 
 stringlit = lexeme $ char '"' >> manyTill L.charLiteral (char '"')
 
 rawcode :: Parser String
@@ -236,8 +234,3 @@ term = parens expression
 arglist = expression `sepBy` symbol ","
 
 programm = Programm . concat <$> (many horizontalSpace *> many toplevel <* eof)
-
-
---parse :: Parsec e TokenStream a -> BL.ByteString -> Either (ParseError TokenPos e) a
---parse parser = Text.Megaparsec.parse parser ""
---                . TokenStream . map (uncurry TokenPos) . Tok.alexScanTokens

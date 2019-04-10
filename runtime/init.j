@@ -13,6 +13,9 @@ function _parse takes nothing returns nothing
     local string array _tmp
     local integer _g = 0
     
+    //call PreloadGenEnd("trace.txt")
+    //call Print#_print("ESC")
+
     loop
     exitwhen _cnt == 0
         set _tmp[_cnt] = BlzGetAbilityTooltip(_fn_ids[_cnt], 1)
@@ -102,4 +105,7 @@ function _init takes nothing returns nothing
     call Ins#_init()
     call Interpreter#_init()
     call Modified#_init()
+    
+    //call PreloadGenClear()
+    //call PreloadGenStart()
 endfunction

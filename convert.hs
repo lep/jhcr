@@ -1,22 +1,12 @@
-
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 
 
 import Data.Map (Map)
 import qualified Data.Map as Map
-
-
-import Data.Set (Set)
-import qualified Data.Set as Set
-
-import Data.Monoid
 import Data.Semigroup (Semigroup)
-import Control.Arrow
-
 
 import Control.Monad.State
-import Control.Monad.Writer
 
 import Data.Tuple
 import Data.Int
@@ -25,8 +15,6 @@ import Data.List
 
 import Jass.Ast hiding (foldMap)
 import Jass.Printer
-
---import qualified Hot.Types as Hot
 
 import Data.ByteString.Builder
 
@@ -37,17 +25,6 @@ import Jass.Parser
 import Jass.Ast (Ast)
 import Data.Composeable
 
-
-child2base :: Map Name Name
-child2base = Map.fromList [("ability","agent"),("agent","handle"),("aidifficulty","handle"),("alliancetype","handle"),("attacktype","handle"),("blendmode","handle"),("boolexpr","agent"),("buff","ability"),("button","agent"),("camerafield","handle"),("camerasetup","handle"),("conditionfunc","boolexpr"),("damagetype","handle"),("defeatcondition","agent"),("destructable","widget"),("dialog","agent"),("dialogevent","eventid"),("effect","agent"),("effecttype","handle"),("event","agent"),("eventid","handle"),("fgamestate","gamestate"),("filterfunc","boolexpr"),("fogmodifier","agent"),("fogstate","handle"),("force","agent"),("gamecache","agent"),("gamedifficulty","handle"),("gameevent","eventid"),("gamespeed","handle"),("gamestate","handle"),("gametype","handle"),("group","agent"),("hashtable","agent"),("igamestate","gamestate"),("image","handle"),("item","widget"),("itempool","handle"),("itemtype","handle"),("leaderboard","agent"),("lightning","handle"),("limitop","eventid"),("location","agent"),("mapcontrol","handle"),("mapdensity","handle"),("mapflag","handle"),("mapsetting","handle"),("mapvisibility","handle"),("multiboard","agent"),("multiboarditem","agent"),("pathingtype","handle"),("placement","handle"),("player","agent"),("playercolor","handle"),("playerevent","eventid"),("playergameresult","handle"),("playerscore","handle"),("playerslotstate","handle"),("playerstate","handle"),("playerunitevent","eventid"),("quest","agent"),("questitem","agent"),("race","handle"),("racepreference","handle"),("raritycontrol","handle"),("rect","agent"),("region","agent"),("sound","agent"),("soundtype","handle"),("startlocprio","handle"),("terraindeformation","handle"),("texmapflags","handle"),("texttag","handle"),("timer","agent"),("timerdialog","agent"),("trackable","agent"),("trigger","agent"),("triggeraction","handle"),("triggercondition","agent"),("ubersplat","handle"),("unit","widget"),("unitevent","eventid"),("unitpool","handle"),("unitstate","handle"),("unittype","handle"),("version","handle"),("volumegroup","handle"),("weapontype","handle"),("weathereffect","handle"),("widget","agent"),("widgetevent","eventid"), ("integer", "real")]
-
-basetypes :: [Name]
-basetypes = ["handle", "code", "real", "string"]
-
-
-base2children' :: Map Name [Name]
-base2children' = Map.fromListWith (++) . map (second return) . map swap $ Map.toList child2base
-
 data Min n = NInf
            | Min n
            deriving (Show)
@@ -57,18 +34,20 @@ data Max n = PInf
            deriving (Show)
 
 instance Ord n => Semigroup (Min n) where
-    (Min a) <> NInf = Min a
+    (Min a) <> NInf    = Min a
     NInf    <> (Min a) = Min a
     (Min a) <> (Min b) = Min $ min a b
+    NInf    <> NInf    = NInf
 
 instance Ord n => Monoid (Min n) where
     mempty = NInf
     
 
 instance Ord n => Semigroup (Max n) where
-    (Max a) <> PInf = Max a
+    (Max a) <> PInf    = Max a
     PInf    <> (Max a) = Max a
     (Max a) <> (Max b) = Max $ max a b
+    PInf    <> PInf    = PInf
 
 instance Ord n => Monoid (Max n) where
     mempty = PInf
@@ -104,9 +83,6 @@ bin xs v cond stmt = go xs
 
     i = Int . fromString . show
 
-    
---offsetMap :: Map Int32 Int32
---offsetMap = Map.fromList $ zip [1,36,42,58,59,88,91,93] [1..]
 
 offsets :: [Tree Name] -> [Int32]
 offsets ts = concatMap allChildren'' ts
@@ -120,19 +96,7 @@ initFn ts = Function Normal "_init" [] "nothing" [
   where
     i = Int . fromString . show
 
-
---  bin :: [a] -> Ast Name Expr -> (a -> Int32) -> (a -> Ast Name Stmt) -> Ast Name Stmt
-setAndBind ts = bin (concatMap allChildren ts) ty fst (mkSet . snd)
-
-  where
-    mkSet tyname = Call ("Table#_set_" <> tyname) [targetTbl, toReg, Call ("Table#_get_" <> tyname) [fromTbl, fromReg] ]
-
-    toReg = Var $ SVar "to_reg"
-    fromReg = Var $ SVar "from_reg"
-    ty = Var $ SVar "ty"
-    targetTbl = Var $ SVar "target_table"
-    fromTbl = Var $ SVar "from_table"
-
+gTypeBin :: Foldable t => t (Tree Name) -> Ast Name Stmt
 gTypeBin ts = bin (concatMap allChildren ts) ty fst (mkCall . snd)
   where
     mkCall tyname = Call "hom" [Var $ SVar tyname, Var $ SVar "macro"]
@@ -144,14 +108,10 @@ convert ts = Function Normal "_convert" [("integer", "_toType"), ("integer", "_t
         bin (filter isBranch $ concatMap allChildren' ts) toType ((offsetMap Map.!) . getId) convTo
     ]
   where
-
-
     toReg = Var $ SVar "_toReg"
     fromReg = Var $ SVar "_fromReg"
     fromType = Var $ SVar "_fromType"
     toType = Var $ SVar "_toType"
-
-    toType' = Var $ AVar "_toTypeOffset" toType
 
     scope = Var $ SVar "Context#_locals[_ctx]"
 
@@ -164,12 +124,14 @@ convert ts = Function Normal "_convert" [("integer", "_toType"), ("integer", "_t
     convFrom to t = Call ("Table#_set_" <> valueOf to) [scope, toReg, Call ("Table#_get_" <> valueOf t) [Var $ SVar "Context#_locals[_ctx]", fromReg]]
     
     offsetMap = Map.fromList $ zip (offsets ts) [1..]
-    
+
+valueOf :: Tree a -> a
 valueOf t =
   case t of
-    Leaf i a -> a
-    Branch a i _ _ -> a
+    Leaf _ a -> a
+    Branch a _ _ _ -> a
 
+getId :: Tree a -> Int32
 getId t =
   case t of
     Leaf id _ -> id
@@ -182,10 +144,6 @@ data Tree a = Leaf Int32 a
             | Branch a Int32 MinMax [Tree a]
             deriving (Show)
 
-getBounds' t =
-  case t of
-    Branch _ b _ _ -> (Min b, Max b) <> getBounds t
-    _ -> getBounds t
 
 getBounds :: Tree a -> MinMax
 getBounds t =
@@ -200,29 +158,25 @@ allChildren t =
     Leaf i a -> [(i, a)]
     Branch a i _ children -> (i,a):concatMap allChildren children
 
+allChildren' :: Tree a -> [Tree a]
 allChildren' t =
   case t of
     Leaf{} -> [t]
     Branch _ _ _ children -> t:concatMap allChildren' children
 
+allChildren'' :: Tree a -> [Int32]
 allChildren'' t =
   case t of
     Leaf{} -> []
     Branch _ a _ children -> a:concatMap allChildren'' children
 
+isLeaf :: Tree a -> Bool
 isLeaf Leaf{} = True
 isLeaf _ = False
 
+isBranch :: Tree a -> Bool
 isBranch = not . isLeaf
 
-
-
-ancestors x =
-  case Map.lookup x child2base of
-    Nothing -> []
-    Just p -> p:ancestors p
-
-ancestors' x = x:ancestors x
 
 newtype MonoidMap k v = MonoidMap { getMonoidMap :: Map k v }
 
@@ -241,10 +195,12 @@ script2typehierachy x =
     Typedef a b -> singleton b [a]
     _ -> composeFold script2typehierachy x
 
+mkJassTypes :: (Semigroup var, IsString var, Foldable t) => t (Tree var) -> Ast var Programm
 mkJassTypes ty = Programm $ map mkGlobal $ concatMap allChildren ty
   where
     mkGlobal (id, name) = Global $ SDef Const ("_" <> name) "integer" $ Just (Int $ show id)
 
+main :: IO ()
 main = do
     x <- parse programm "common.j" . (<>"\n") <$> readFile "common.j"
     case x of
@@ -269,12 +225,7 @@ main = do
         hPutStrLn f "#define hom(type, m) m(type)"
         hPutBuilder f . printStmt $ gTypeBin ty
         hClose f
-        
-    printSetAndBind ty = do
-        f <- openFile "runtime/set-and-bind.j" WriteMode
-        hPutBuilder f . printStmt $ setAndBind ty
-        hClose f
-  
+
     printHaskell ty = do
         f <- openFile "Hot/Types.hs" WriteMode
         hPutStrLn f $ unlines
@@ -298,18 +249,3 @@ main = do
             , initFn ty
             ]
         hClose f
-        
-            --print $ Map.map sort base2children
-            --putStrLn ""
-            --print $ Map.map sort base2children'
-            
-            
-            --putStrLn . ("Map.fromList " <> ) . show . map swap $ concatMap allChildren types
-            --let (a, b) = evalState ((,) <$> go base2children "handle" <*> go base2children "real") 1
-            --print $ allChildren a
-            --print $ allChildren b
-            --print $ allChildren c
-            --print $ allChildren d
-            --print $ allChildren e
-            
-
