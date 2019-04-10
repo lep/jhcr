@@ -170,7 +170,7 @@ mkHashMap x =
     J.Function _ name _ _ _ -> Map.singleton name $ hash x
     
      -- we don't care about the value, just if it's already initialized or not
-    J.Global (J.SDef _ name _ (Just e)) -> Map.singleton name 0
+    J.Global (J.SDef _ name ty (Just e)) -> Map.singleton name $ hash ty
     _ -> composeFold mkHashMap x
 
 
@@ -233,19 +233,26 @@ updateX o = do
     isUpdated old new x =
       case x of
         J.Function _ name _ _ _ ->
-            let o = Map.lookup name old
-                n = Map.lookup name new
-            in case (o, n) of
+            case (o name, n name) of
                 (Nothing, _) -> True
                 (Just h1, Just h2) -> h1 /= h2
                 _ -> True
-        -- only report globals as fresh once
+        -- only report globals as fresh once or if their type has changed
+        -- TODO: need to reload all functions which use that global.
+        -- due to polymorphic number literals a change from integer to real for
+        -- example wouldnt change a functions body like a change to a functions 
+        -- signature would.
         J.Global (J.SDef _ v _ (Just _)) ->
-          case Map.lookup v old of
-            Nothing -> True
-            _ -> False
+            case (o v, n v) of
+                (Nothing, _) -> True
+                (Just t1, Just t2) -> t1 /= t2
+                _ -> False
         _ -> True
-    
+      where
+        o n = Map.lookup n old
+        n n = Map.lookup n new
+        
+        
     getName :: J.Ast J.Name J.Toplevel -> J.Name
     getName (J.Function _ name _ _ _) = name
     getName (J.Global (J.SDef _ name _ _)) = name

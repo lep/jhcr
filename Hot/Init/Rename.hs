@@ -89,7 +89,13 @@ addGlobal c name ty isArray = do
     let idf = if m == Init then id else idf' . negate
         idf' = if isArray then (*32768) else id
     case v' of
-        Just v -> return v
+        Just v -> do
+            let sig = H.Global c name ty isArray (H.getId v)
+            if sig == v
+            then return v
+            else do
+                globalScope %= sans name
+                addGlobal c name ty isArray
         Nothing -> do
             globalCount %= Map.insertWith (+) (f ty, isArray) 1
             id <- idf <$> uses globalCount (Map.findWithDefault (error "xxx") (f ty, isArray))

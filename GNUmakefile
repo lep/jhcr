@@ -19,16 +19,24 @@ PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 UPX := ./upx
 UPXFLAGS := --best
 
+Z := /cygdrive/c/Program\ Files/7-Zip/7z
+
 .PHONY: clean process release all
 
 all: jhcr
 
 
 release: HSFLAGS=-O -osuf .oo -hisuf .hio
-release: $(SRC) $(PROCESSED)
-	cabal v1-exec -- ghc $(HSFLAGS) Main.hs -o jhcr
+release: jhcr.zip
+
+
+jhcr.exe: HSFLAGS=-O -osuf .oo -hisuf .hio
+jhcr.exe: jhcr
 	strip jhcr
 	$(UPX) $(UPXFLAGS) jhcr.exe
+    
+jhcr.zip: jhcr.exe
+	$(Z) u jhcr.zip jhcr.exe
 
 convert: convert.hs
 	cabal v1-exec -- ghc $(HSFLAGS) convert
@@ -52,4 +60,4 @@ init:
 clean:
 	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
 	rm -f $(HS_O) $(HS_HI)
-	rm -f jhcr convert 
+	rm -f jhcr convert jhcr.zip
