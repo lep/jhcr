@@ -36,10 +36,6 @@ import qualified Hot.Var as H
 
 import Unsafe.Coerce
 
-
-isOp :: Name -> Bool
-isOp x = x `elem` (["+", "-", "*", "/", "%", "==", "!=", "<", "<=", ">", ">=", "and", "or", "not"] :: [Name])
-
 type IsArray = Bool
 
 data Mode = Init | Update deriving (Eq)

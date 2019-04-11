@@ -20,7 +20,7 @@ module Jass.Ast
     , fmap, foldMap, traverse
     , s2i, s2r, rawcode2int
     , eliminateElseIfs
-    , isGlobal, isFunction
+    , isGlobal, isFunction, isOp
     ) where
 
 import Prelude hiding (fmap, foldMap, traverse)
@@ -321,3 +321,9 @@ isGlobal _ = False
 isFunction :: Ast a Toplevel -> Bool
 isFunction Function{} = True
 isFunction _ = False
+
+
+isOp x = x `elem` ["and", "or", "not"
+                  , "+", "-", "*", "/", "%"
+                  , "==", "!=", "<=", ">=", "<", ">"
+                  ]

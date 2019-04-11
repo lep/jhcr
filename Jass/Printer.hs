@@ -93,11 +93,6 @@ printStmt a =
         , block b
         ]
 
-isOp x = x `elem` ["and", "or", "not"
-                  , "+", "-", "*", "/", "%"
-                  , "==", "!=", "<=", ">=", "<", ">"
-                  ]
-
 printExpr :: Ast Name Expr -> Builder
 printExpr e =
   case e of

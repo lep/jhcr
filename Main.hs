@@ -21,17 +21,19 @@ import qualified Data.ByteString.Char8 as S8
 import Data.ByteString.Builder
 
 import Data.List (isPrefixOf)
+import Data.Maybe (fromJust)
 
 import Data.Binary (decodeFile, encodeFile)
 
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-
+import qualified Data.Set as Set
 
 import qualified Jass.Parser as J
 import qualified Jass.Ast as J
 import qualified Jass.Printer as J
+import qualified Jass.Opt.Rewrite as Jass.Opt
 
 import qualified Hot.Ast as H
 import qualified Hot.Var as H
@@ -62,6 +64,45 @@ parse fp p src = Mega.parse fp p $ src <> "\n"
 
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
+
+mkRR fv from to =
+  Jass.Opt.Rule
+    (Set.fromList fv)
+    (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) from)
+    (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) to)
+
+-- it might be that not every rule brings a huge advantage in the generated
+-- assembler code, but not rule should hurt the generated code.
+someRules =
+  [ mkRR ["a"] "-(-a)" "a"
+  , mkRR ["a"] "a==true" "a"
+  , mkRR ["a"] "true==a" "a"
+  , mkRR ["a", "b"] "not (a<=b)" "a>b"
+  , mkRR ["a", "b"] "not (a<b)" "a>=b"
+  , mkRR ["a", "b"] "not (a>=b)" "a<b"
+  , mkRR ["a", "b"] "not (a>b)" "a<=b"
+  , mkRR ["a"] "false==a" "not a"
+  , mkRR ["a"] "a==false" "not a"
+  , mkRR ["a"] "false!=a" "a"
+  , mkRR ["a"] "a!=false" "a"
+  , mkRR ["a"] "a!=true" "not a"
+  , mkRR ["a"] "true!=a" "not a"
+  , mkRR ["a"] "not (not a)" "a"
+  , mkRR ["a", "b"] "(not a) or (not b)" "not (a and b)"
+  , mkRR ["a", "b"] "(not a) and (not b)" "not (a or b)"
+  , mkRR ["a"] "false and a" "false"
+  , mkRR ["a"] "true or a" "true"
+  , mkRR ["a"] "true and a" "a"
+  , mkRR ["a"] "a and true" "a"
+  , mkRR ["a"] "false or a" "a"
+  , mkRR ["a"] "a or false" "a"
+  , mkRR ["a", "b"] "IsUnit(a,b)" "a == b"
+  , mkRR ["u", "l"] "SetUnitState(u, UNIT_STATE_LIFE, l)" "SetWidgetLife(u, l)" -- gg, bind vs conv
+  , mkRR ["u"] "GetUnitState(u, UNIT_STATE_LIFE)" "GetWidgetLife(u)" -- gg, bind vs conv
+  , mkRR ["u", "p"] "GetOwningPlayer(u) == p" "IsUnitOwnedByPlayer(u, p)"
+  , mkRR ["i"] "I2R(i)" "(i+0.0)" -- bind, call vs lit, add
+  , mkRR ["a", "b"] "a + (-b)" "a-b"
+  ]
 
 runtime1 :: [String]
 runtime1 = map S8.unpack
@@ -176,6 +217,7 @@ mkHashMap x =
 
 updateX o = do
     let jhc = if processJasshelper o then JH.compile else id
+        opt = Jass.Opt.rewrite someRules
     (st, hmap) <- decodeFile (statePath o)
 
     p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
@@ -191,8 +233,7 @@ updateX o = do
                 -- TODO: handle globals and set their correct value
                 astU = filter (isUpdated hmap hmap') ast
                 nameU = map getName $ filter J.isFunction astU
-                progU = J.Programm astU
-
+                progU = opt $ J.Programm astU
             let (ast', st') = Rename.compile Rename.Update id st progU
                 ast'' = H.jass2hot ast'
 

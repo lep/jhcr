@@ -43,6 +43,5 @@ use `call ExecuteFunc("JHCR_Init_parse")` when appropiate. I use pressing escape
 
 ## Building JHCR
 
-To build you need GHC 8.6, GNUMake, Bash, a common.j file
+To build you need GHC 8.6, GNUMake, Bash, sed, cpp and a common.j file
 
-<https://www.hiveworkshop.com/threads/jass-hot-code-reload.313811/>
