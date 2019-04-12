@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 import Data.FileEmbed
 
@@ -45,6 +46,8 @@ import qualified Hot.Init.Rename as Rename
 import qualified Hot.Init.Stubs as Stubs
 import qualified Hot.Init.Auto as Auto
 
+import qualified Hot.Instruction.Opt.Rewrite as Ins.Opt
+
 import qualified Hot.HandleCode as HandleCode
 import qualified Hot.JassHelper as JH
 
@@ -65,15 +68,9 @@ parse fp p src = Mega.parse fp p $ src <> "\n"
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
 
-mkRR fv from to =
-  Jass.Opt.Rule
-    (Set.fromList fv)
-    (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) from)
-    (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) to)
-
 -- it might be that not every rule brings a huge advantage in the generated
 -- assembler code, but not rule should hurt the generated code.
-someRules =
+someJassRewriteRules =
   [ mkRR ["a"] "-(-a)" "a"
   , mkRR ["a"] "a==true" "a"
   , mkRR ["a"] "true==a" "a"
@@ -103,6 +100,13 @@ someRules =
   , mkRR ["i"] "I2R(i)" "(i+0.0)" -- bind, call vs lit, add
   , mkRR ["a", "b"] "a + (-b)" "a-b"
   ]
+  where
+    mkRR fv from to =
+      Jass.Opt.Rule
+        (Set.fromList fv)
+        (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) from)
+        (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) to)
+
 
 runtime1 :: [String]
 runtime1 = map S8.unpack
@@ -217,7 +221,9 @@ mkHashMap x =
 
 updateX o = do
     let jhc = if processJasshelper o then JH.compile else id
-        opt = Jass.Opt.rewrite someRules
+        jass_opt = Jass.Opt.rewrite someJassRewriteRules
+        ins_opt = (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules)
+        
     (st, hmap) <- decodeFile (statePath o)
 
     p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
@@ -233,7 +239,7 @@ updateX o = do
                 -- TODO: handle globals and set their correct value
                 astU = filter (isUpdated hmap hmap') ast
                 nameU = map getName $ filter J.isFunction astU
-                progU = opt $ J.Programm astU
+                progU = jass_opt $ J.Programm astU
             let (ast', st') = Rename.compile Rename.Update id st progU
                 ast'' = H.jass2hot ast'
 
@@ -242,8 +248,8 @@ updateX o = do
 
             hPutStrLn stderr "Writing bytecode"
         
-            let fnsCompiled = Ins.compile ast''
-                gCompiled = Ins.compileGlobals $ H.globals2statements ast'
+            let fnsCompiled = ins_opt $ Ins.compile ast''
+                gCompiled = ins_opt $ Ins.compileGlobals $ H.globals2statements ast'
                 
             when (showAsm o) $ do
                 putStrLn "; functions"
@@ -428,8 +434,10 @@ addPrefix' p x =
     _ -> composeOp (addPrefix' p) x
 
   where
+    r :: J.Name -> J.Name
     r v 
-        | "JHCR_" `isPrefixOf` v = p <> drop (length "JHCR") v
+        -- 4 == length "JHCR"
+        | "JHCR_" `isPrefixOf` v = p <> drop 4 v
         | otherwise = v
 
 addPrefix :: H.Name -> J.Ast H.Var a -> J.Ast H.Var a

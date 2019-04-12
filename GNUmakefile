@@ -5,7 +5,7 @@ RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
 
 SRC := Jass/Parser.hs Jass/Ast.hs Jass/Printer.hs Jass/Opt/Rewrite.hs
 SRC += Hot/Ast.hs Hot/Types.hs Hot/Var.hs
-SRC += Hot/Instruction/Compiler.hs Hot/Instruction.hs 
+SRC += Hot/Instruction/Compiler.hs Hot/Instruction.hs Hot/Instruction/Opt/Rewrite.hs
 SRC += Hot/Init/Auto.hs Hot/Init/Stubs.hs Hot/Init/Rename.hs
 SRC += Hot/JassHelper.hs Hot/HandleCode.hs
 SRC += Data/Composeable.hs

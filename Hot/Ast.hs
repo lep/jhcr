@@ -46,6 +46,7 @@ data Ast var a where
     SVar :: var -> Ast var LVar
 
 deriving instance (Show var) => Show (Ast var a)
+deriving instance (Eq var) => Eq (Ast var a)
 
 convert :: Jass.Ast Var a -> Ast Var a
 convert e =
