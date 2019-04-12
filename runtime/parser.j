@@ -47,7 +47,7 @@ function _parse_ins takes string _s returns integer
         elseif Ins#_type[_new] == Types#_real then
             set Ins#_real[_new] = S2R(SubString(_s, _S+20, _S+20+_b))
         elseif Ins#_type[_new] == Types#_boolean then
-            set Ins#_boolean[_new] = SubString(_s, _S+20, _S+20+_b)=="True"
+            set Ins#_boolean[_new] = SubString(_s, _S+20, _S+20+_b)=="true"
         endif
         set _S = _S + 20 + _b
     elseif _ins == Ins#_Call then
