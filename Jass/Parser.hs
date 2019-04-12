@@ -59,7 +59,7 @@ reallit = lexeme $ dotReal <|> realDot
 dotReal = do
     char '.'
     a <- some digitChar
-    return $ "0" <> a
+    return $ "0." <> a
 realDot = do
     a <- some digitChar
     char '.'
