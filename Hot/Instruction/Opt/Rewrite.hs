@@ -21,8 +21,6 @@ import qualified Hot.Types as Hot
 import qualified Hot.Ast as Hot
 import qualified Hot.Var as Hot
 
-import Debug.Trace
-
 
 data Tok =
     Any ByteString
@@ -128,6 +126,7 @@ apply m = map go
         Ex y -> y
         Any v -> m Map.! v
         Temp v -> m Map.! v
+        NotZero v -> m Map.! v
 
 
 match :: [ [Value] ] -> [ [Tok] ] -> (Bool, S)
@@ -177,99 +176,116 @@ parse = map p . words
       | otherwise = Any $ L8.pack t
 
 
-mkRR is os = Rule (map parse is) (map parse os)
+(-->) is os = Rule (map parse is) (map parse os)
 
-eliminateTmpThreeArg =
-    [ mkRR
-        [ cmd ++ " type %r a b"
-        , "set type t %r"
-        ]
-        [ cmd ++ " type t a b"]
-        
-    | cmd <- ["add", "sub", "mul", "div", "mod", "lt", "le", "gt", "ge", "neq", "eq", "gla", "gga"]
-    ]
+eliminateTmpComp =
+  [ [ cmd ++ " type %r a b"
+    , "set type t %r"
+    ] -->
+    [ cmd ++ " type t a b"]
+      
+  | cmd <- ["add", "sub", "mul", "div", "mod", "gla", "gga"]
+  ]
+
+eliminateTmpCompBool =
+  [ [ cmd ++ " type %r a b"
+    , "set boolean t %r"
+    ] -->
+    [ cmd ++ " type t a b"]
+  | cmd <- ["lt", "le", "gt", "ge", "neq", "eq"]
+  ]
 
 
 eliminateLocalCompBeforeRet =
-  [ mkRR
-    [ cmd ++ " * * #z *"
+  [ [ cmd ++ " * * #z *"
     , "ret t"
-    ]
+    ] --> 
     [ "ret t" ]
   | cmd <- ["add", "sub", "mul", "div", "mod", "lt", "le", "gt", "ge", "neq", "eq", "gla", "gga"]
   ]
 
 eliminateLocalSetBeforeRet =
-  [ mkRR
-    [ "set * #z *"
+  [ [ "set * #z *"
     , "ret t"
-    ]
+    ] -->
     [ "ret t" ]
-  , mkRR
-    [ "lit * #z *"
+    
+  , [ "lit * #z *"
     , "ret t"
-    ]
+    ] -->
     [ "ret t" ]
-  , mkRR
-    [ "gg * #z *"
+    
+  , [ "gg * #z *"
     , "ret t"
-    ]
+    ] -->
     [ "ret t" ]
-  , mkRR
-    [ "sla * * * *"
+    
+  , [ "sla * * * *"
     , "ret t"
-    ]
+    ] -->
     [ "ret t" ]
+    
+  , [ "call t fn n"
+    , "set * s t "
+    , "ret type"
+    ] -->
+    [ "call s fn n"
+    , "ret type"
+    ]
   ]
 
-eliminateTmpTwoArg =
-  [ mkRR
-    [ "neg type %r a"
+eliminateTmpOther =
+  [ [ "neg type %r a"
     , "set type v %r"
-    ]
+    ] -->
     [ "neg v a" ]
-  , mkRR
-    [ "set type %r a"
+    
+  , [ "set type %r a"
     , "set type b %r"
-    ]
+    ] -->
     [ "set type b a" ]
-  , mkRR
-    [ "gg type %r g"
+    
+  , [ "gg type %r g"
     , "set type l %r"
-    ]
+    ] -->
     [ "gg type l g" ]
-  , mkRR
-    [ "lit type %r v"
+    
+  , [ "lit type %r v"
     , "set type l %r"
-    ]
+    ] -->
     [ "lit type l v"]
+  
+  , [ "conv t1 %r t2 s"
+    , "set t1 t %r"
+    ] -->
+    [ "conv t1 t t2 s" ]
+  
   ]
 
 eliminateUselessJmp =
-  [ mkRR
-    [ "jmp lbl"
+  [ [ "jmp lbl"
     , "label lbl"
-    ]
+    ] -->
     [ "label lbl" ]
-  , mkRR
-    [ "jmpt lbl r"
+    
+  , [ "jmpt lbl r"
     , "label lbl"
-    ]
+    ] -->
     [ "label lbl" ]
   ]
 
 eliminateTmpCall =
-  [ mkRR
-    [ "call %t fn n"
-    , "set type a %t"
-    ]
+  [ [ "call %t fn n"
+    , "set * a %t"
+    ] -->
     [ "call a fn n" ]
   ]
   
 someRules =
     eliminateUselessJmp
-    <> eliminateTmpTwoArg
+    <> eliminateTmpOther
     <> eliminateLocalSetBeforeRet
     <> eliminateLocalCompBeforeRet
-    <> eliminateTmpThreeArg
+    <> eliminateTmpComp
     <> eliminateTmpCall
+    <> eliminateTmpCompBool

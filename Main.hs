@@ -215,7 +215,7 @@ mkHashMap x =
     J.Function _ name _ _ _ -> Map.singleton name $ hash x
     
      -- we don't care about the value, just if it's already initialized or not
-    J.Global (J.SDef _ name ty (Just e)) -> Map.singleton name $ hash ty
+    J.Global (J.SDef _ name ty (Just _)) -> Map.singleton name $ hash ty
     _ -> composeFold mkHashMap x
 
 

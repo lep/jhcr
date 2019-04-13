@@ -5,8 +5,6 @@ module Hot.Init.Stubs (compile) where
 import Data.String
 import Data.Maybe
 
-import qualified Data.Map as Map
-
 import Jass.Ast hiding (fmap, foldMap, traverse)
 
 import Data.Composeable

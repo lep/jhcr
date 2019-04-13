@@ -93,7 +93,7 @@ globals2statements (Jass.Programm p) = mapMaybe go p
     go :: Jass.Ast Var a -> Maybe (Ast Var Stmt)
     go e =
       case e of
-        Jass.Global x@(Jass.SDef _ name _ (Just _)) -> convertStmt $ Jass.Local x
+        Jass.Global x@(Jass.SDef _ _ _ (Just _)) -> convertStmt $ Jass.Local x
         _ -> Nothing
 
 jass2hot:: Jass.Ast Var Programm -> Ast Var Programm
