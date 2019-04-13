@@ -21,12 +21,12 @@ import qualified Hot.Types as Hot
 import qualified Hot.Ast as Hot
 import qualified Hot.Var as Hot
 
-
 data Tok =
     Any ByteString
   | Temp ByteString
   | Ex Value
   | NotZero ByteString
+  | Zero
   deriving (Show)
 
 data Value =
@@ -70,6 +70,10 @@ match' xs ys = and <$> zipWithM go xs ys
             if zero to
             then return False
             else unify from to
+        Zero ->
+            if zero to
+            then return True
+            else return False
         Ex from -> return $ from == to
 
     zero x =
@@ -127,10 +131,16 @@ apply m = map go
         Any v -> m Map.! v
         Temp v -> m Map.! v
         NotZero v -> m Map.! v
+        Zero -> Reg 0
 
 
 match :: [ [Value] ] -> [ [Tok] ] -> (Bool, S)
-match v t = flip runState mempty $ and <$> zipWithM match' t v
+match [] _ = (False, mempty)
+match v t =
+  let v' = take (length t) v
+  in if length v < length t
+  then (False, mempty)
+  else flip runState mempty $ and <$> zipWithM match' t v'
 
 matchRule :: [[Value]] -> Rule -> Maybe (S, Rule)
 matchRule v r = --trace (unwords ["Trying to match", show v, "against rule", show r]) $
@@ -144,7 +154,8 @@ data Rule = Rule
   } deriving (Show)
   
 rewrite :: [Rule] -> [Instruction] -> [Instruction]
-rewrite rules input = go mempty input'
+rewrite _ [] = []
+rewrite rules input = {-trace (unwords ["rewriting", show input]) $-} go mempty input'
   where
     input' :: [[Value]]
     input' = map toList input
@@ -172,7 +183,12 @@ parse = map p . words
       | Just _ <- lookup t Hot.instable = Ex . Cmd $ L8.pack t
       | "%" `isPrefixOf` t = Temp $ L8.pack t
       | "#" `isPrefixOf` t = NotZero $ L8.pack t
-      -- TODO: jass expressions
+      | t == "0" = Zero
+      | t == "null" = Ex . Expr $ Hot.Null
+      | t == "true" = Ex . Expr $ Hot.Bool True
+      | t == "false" = Ex . Expr $ Hot.Bool False
+      | "r'" `isPrefixOf` t = Ex . Expr . Hot.Real . read $ drop 2 t
+      | "i'" `isPrefixOf` t = Ex . Expr . Hot.Int . read $ drop 2 t
       | otherwise = Any $ L8.pack t
 
 
@@ -197,7 +213,7 @@ eliminateTmpCompBool =
 
 
 eliminateLocalCompBeforeRet =
-  [ [ cmd ++ " * * #z *"
+  [ [ cmd ++ " * #z * *"
     , "ret t"
     ] --> 
     [ "ret t" ]
@@ -280,7 +296,165 @@ eliminateTmpCall =
     ] -->
     [ "call a fn n" ]
   ]
+
+compG =
+  [ [ "lt type t a b"
+    , "not t t"
+    ] -->
+    [ "ge type t a b"]
   
+  , [ "le type t a b"
+    , "not t t"
+    ] -->
+    [ "gt type t a b"]
+  
+  , [ "gt type t a b"
+    , "not t t"
+    ] -->
+    [ "le type t a b"]
+  
+  , [ "ge type t a b"
+    , "not t t"
+    ] -->
+    [ "lt type t a b"]
+  ]
+
+-- unfortunately wc3 handles real (==) differently than not (!=)
+compNotReal = eq <> neq
+  where
+    types = filter (`notElem`["real", "nothing"]) $ Map.keys Hot.types
+    eq =
+      [ [ "eq " <> ty <> " t a b"
+        , "not t t"
+        ] -->
+        [ "neq " <> ty <> " t a b"]
+      | ty <- types
+      ]
+    neq =
+      [ [ "neq " <> ty <> " t a b"
+        , "not t t"
+        ] -->
+        [ "eq " <> ty <> " t a b"]
+      | ty <- types
+      ]
+  
+
+algebraic =
+  [
+    -- distributive law for integers
+    -- probably never fires in real code...
+    [ "mul integer %t a b"
+    , "mul integer %s a c"
+    , "add integer d %t %s"
+    ] -->
+    [ "add integer %t b c"
+    , "mul integer d a %t"
+    ]
+    -- mul by zero for both integer and real
+  , [ "lit integer %z i'0"
+    , "mul integer t a %z"
+    ] -->
+    [ "lit integer t i'0"]
+  
+  , [ "lit integer %z i'0"
+    , "mul integer t %z a"
+    ] -->
+    [ "lit integer t i'0"]
+    
+  , [ "lit real %z r'0"
+    , "mul real t a %z"
+    ] -->
+    [ "lit real t r'0"]
+  
+  , [ "lit real %z r'0"
+    , "mul real t %z a"
+    ] -->
+    [ "lit real t r'0"]
+  
+  -- mul by one for both integer and real
+  , [ "lit integer %z i'1"
+    , "mul integer t a %z"
+    ] -->
+    [ "set integer t a"]
+  
+  , [ "lit integer %z i'1"
+    , "mul integer t %z a"
+    ] -->
+    [ "set integer t a"]
+    
+  , [ "lit real %z r'1"
+    , "mul real t a %z"
+    ] -->
+    [ "set real t a"]
+  
+  , [ "lit real %z r'1"
+    , "mul real t %z a"
+    ] -->
+    [ "set real t a"]
+  
+  -- add by zero for both integer and real
+  , [ "lit integer %z i'0"
+    , "add integer t a %z"
+    ] -->
+    [ "set integer t a"]
+    
+  , [ "lit integer %z i'0"
+    , "add integer t %z a"
+    ] -->
+    [ "set integer t a"]
+  
+  , [ "lit real %z r'0"
+    , "add real t a %z"
+    ] -->
+    [ "set real t a"]
+    
+  , [ "lit real %z r'0"
+    , "add real t %z a"
+    ] -->
+    [ "set real t a"]
+  ]
+
+removeComputeToZero =
+  [ [ cmd <> " type t a b"
+    , "set type 0 t"
+    , "ret type"
+    ] -->
+    [ cmd <> " type 0 a b"
+    , "ret type"
+    ]
+  | cmd <- ["add", "sub", "mul", "div", "mod", "gla", "gga"]
+  ]
+
+removeCompareToZero =
+  [ [ cmd <> " type t a b"
+    , "set boolean 0 t"
+    , "ret boolean"
+    ] -->
+    [ cmd <> " type 0 a b"
+    , "ret boolean"
+    ]
+  | cmd <- ["lt", "le", "gt", "ge", "neq", "eq"]
+  ]
+
+
+removeSetToZero =
+  [ [ "set type t a"
+    , "set type 0 t"
+    , "ret type"
+    ] -->
+    [ "set type 0 a"
+    , "ret type"
+    ]
+  ]
+
+removeDoubleRet =
+  [
+    [ "ret type"
+    , "ret type"
+    ] -->
+    [ "ret type"]
+  ]
+
 someRules =
     eliminateUselessJmp
     <> eliminateTmpOther
@@ -289,3 +463,10 @@ someRules =
     <> eliminateTmpComp
     <> eliminateTmpCall
     <> eliminateTmpCompBool
+    <> compNotReal
+    <> compG
+    <> algebraic
+    <> removeComputeToZero
+    <> removeSetToZero
+    <> removeCompareToZero
+    <> removeDoubleRet

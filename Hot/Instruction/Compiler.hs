@@ -111,9 +111,8 @@ compileToplevel (H.Function n _ r body) = do
     registerId .= 0
 
     typed r $ compileStmt body
-    -- we rely on correct jass everywhere but especially here
-    when ( r == "nothing") $
-        emit $ Ret r
+    -- we removed double rets via rewrites
+    emit $ Ret r
 
 typed :: MonadReader b m => b -> m a -> m a
 typed t = local (const t)
