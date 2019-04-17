@@ -97,51 +97,38 @@ data Ast var a where
 deriving instance Show var => Show (Ast var a)
 deriving instance Eq var => Eq (Ast var a)
 
-newtype HashMonoid = HashMonoid { getHash :: Int }
-
-instance Semigroup HashMonoid where
-    HashMonoid a <> HashMonoid b = HashMonoid $ hashWithSalt a b
-
-instance Monoid HashMonoid where
-    mempty = HashMonoid 0
-
-h :: Hashable h => h -> HashMonoid
-h x = HashMonoid $ hash x
 
 instance Hashable var => Hashable (Ast var a) where
     hashWithSalt salt x = hashWithSalt salt $ hash x
-    hash x = getHash $
+    hash x =
       case x of
-        Programm p -> h (-3 :: Int) <> h p
+        Programm p -> hashWithSalt 1 p
         Native c v args ret ->
-            h (-2 :: Int) <> h c <> h v
-            <> h args <> h ret
+            hashWithSalt 2 [hash c, hash v, hash args, hash ret]
         Function c v args ret body ->
-            h (-1 :: Int) <> h c <> h v
-            <> h args <> h ret <> h body
-        Global vdef -> h (0::Int) <> h vdef
-        Typedef a b -> h (1::Int) <> h a <> h b
-        Set lvar expr -> h (2::Int) <> h lvar <> h expr
-        Local vdef -> h (3::Int) <>h vdef
-        If cond tb elseifs eb -> h (4::Int) <> h cond <> h tb <> h elseifs <> h eb
-        Loop body -> h (5::Int) <> h body
-        Exitwhen expr -> h (6::Int) <> h expr
-        Return expr -> h (7::Int) <> h expr
-        Call v args -> h (8::Int) <> h v <> h args
-        Var lvar -> h (9::Int) <> h lvar
-        Int i -> h (10::Int) <> h i
-        Real r -> h (11::Int) <> h r
-        Bool b -> h (12::Int) <> h b
-        Rawcode r -> h (13::Int) <> h r
-        String s -> h (14::Int) <> h s
-        Code c -> h (15::Int) <> h c
-        Null -> h (16::Int)
-        
-        AVar v idx -> h (17::Int) <> h v <> h idx
-        SVar v -> h (18::Int) <> h v
-        
-        ADef v ty -> h (19::Int) <> h v <> h ty
-        SDef c v ty init -> h (20::Int) <> h c <> h v <> h ty <> h init
+            hashWithSalt 3 [hash c, hash v, hash args, hash ret, hash body]
+        Global vdef -> hashWithSalt 4 vdef
+        Typedef a b -> hashWithSalt 5 [hash a, hash b]
+        Set lvar expr -> hashWithSalt 6 [hash lvar, hash expr]
+        Local vdef -> hashWithSalt 7 vdef
+        If cond tb elseifs eb ->
+            hashWithSalt 8 [hash cond, hash tb, hash elseifs, hash eb]
+        Loop body -> hashWithSalt 9 body
+        Exitwhen expr -> hashWithSalt 10 expr
+        Return expr -> hashWithSalt 11 expr
+        Call v args -> hashWithSalt 12 [hash v, hash args]
+        Var lvar -> hashWithSalt 13 lvar
+        Int i -> hashWithSalt 14 i
+        Real r -> hashWithSalt 15 r
+        Bool b -> hashWithSalt 16 b
+        Rawcode r -> hashWithSalt 17 r
+        String s -> hashWithSalt 18 s
+        Code c -> hashWithSalt 19 c
+        Null -> hashWithSalt 20 ()
+        AVar v idx -> hashWithSalt 21 [hash v, hash idx]
+        SVar v -> hashWithSalt 22 v
+        ADef v ty -> hashWithSalt 23 [hash v, hash ty]
+        SDef c v ty init -> hashWithSalt 24 [hash c, hash v, hash ty, hash init]
 
 
 instance Compose (Ast var) where
