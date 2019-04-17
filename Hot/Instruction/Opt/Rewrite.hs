@@ -27,6 +27,7 @@ data Tok =
   | Ex Value
   | NotZero ByteString
   | Zero
+  | Wildcard
   deriving (Show)
 
 data Value =
@@ -60,7 +61,7 @@ match' xs ys = and <$> zipWithM go xs ys
   where
     go from' to =
       case from' of
-        Any "*" -> return True
+        Wildcard -> return True
         Any from -> unify from to
         Temp from ->
             if negative to
@@ -128,9 +129,9 @@ apply m = map go
     go x = 
       case x of
         Ex y -> y
-        Any v -> m Map.! v
-        Temp v -> m Map.! v
-        NotZero v -> m Map.! v
+        Any v -> Map.findWithDefault  (error $ show x) v m --m Map.! v
+        Temp v -> Map.findWithDefault  (error $ show x) v m --m Map.! v
+        NotZero v -> Map.findWithDefault  (error $ show x) v m --m Map.! v
         Zero -> Reg 0
 
 
@@ -183,6 +184,7 @@ parse = map p . words
       | Just _ <- lookup t Hot.instable = Ex . Cmd $ L8.pack t
       | "%" `isPrefixOf` t = Temp $ L8.pack t
       | "#" `isPrefixOf` t = NotZero $ L8.pack t
+      | t == "*" = Wildcard
       | t == "0" = Zero
       | t == "null" = Ex . Expr $ Hot.Null
       | t == "true" = Ex . Expr $ Hot.Bool True
@@ -447,16 +449,55 @@ removeSetToZero =
     ]
   ]
 
-removeDoubleRet =
-  [
-    [ "ret type"
-    , "ret type"
+
+-- everything but label and fun after ret is removed
+removeUnreachableCode =
+     args "ret type" 1 ["jmp", "ret"]
+  <> args "ret type" 2 ["jmpt", "not"]
+  <> args "ret type" 3 ["call", "lit", "neg", "set", "gg", "sg", "bind"]
+  <> args "ret type" 4 ["lt", "le", "gt", "ge", "eq", "neq"]
+  <> args "ret type" 4 ["div", "mul", "mod", "add", "sub"]
+  <> args "ret type" 4 ["sga", "gga", "sla", "gla", "conv"]
+
+removeEmptyJumps =
+  [ [ "jmpt l1 cond"
+    , "jmp l2"
+    , "label l1"
+    , "label l2"
     ] -->
-    [ "ret type"]
+    [ "label l1" -- just keep the labels for good measure
+    , "label l2"
+    ]
+  , [ "lit boolean t true"
+    , "jmpt lbl t"
+    ] -->
+    [ "lit boolean t true"
+    , "jmp lbl"
+    ]
+  , [ "lit boolean t false"
+    , "jmpt lbl t"
+    ] -->
+    [ "lit boolean t false"]
   ]
 
+removeCodeAfterJump =
+     args "jmp lbl" 1 ["jmp", "ret"]
+  <> args "jmp lbl" 2 ["jmpt", "not"]
+  <> args "jmp lbl" 3 ["call", "lit", "neg", "set", "gg", "sg", "bind"]
+  <> args "jmp lbl" 4 ["lt", "le", "gt", "ge", "eq", "neq"]
+  <> args "jmp lbl" 4 ["div", "mul", "mod", "add", "sub"]
+  <> args "jmp lbl" 4 ["sga", "gga", "sla", "gla", "conv"]
+
+-- used by removeCodeAfterJump, removeUnreachableCode
+args b n = map (mkRule n)
+  where
+    mkRule n m =
+        let cmd = unwords $ m:replicate n "*"
+        in [b, cmd] --> [b]
+
+
 someRules =
-    eliminateUselessJmp
+       eliminateUselessJmp
     <> eliminateTmpOther
     <> eliminateLocalSetBeforeRet
     <> eliminateLocalCompBeforeRet
@@ -469,4 +510,6 @@ someRules =
     <> removeComputeToZero
     <> removeSetToZero
     <> removeCompareToZero
-    <> removeDoubleRet
+    <> removeUnreachableCode
+    <> removeEmptyJumps
+    <> removeCodeAfterJump
