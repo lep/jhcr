@@ -138,6 +138,10 @@ data Options =
            , statePath :: FilePath
            , showAsm :: Bool
            }
+   | Compile { inputPaths :: [FilePath]
+             , optJass :: Bool
+             , optAsm :: Bool
+             }
     deriving (Show)
 
 parseOptions = customExecParser (prefs showHelpOnEmpty) opts
@@ -149,6 +153,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
     pCommand = hsubparser
       (  command "init" (info initOptions ( progDesc "Compiles the mapscript to allow hot code reload"))
       <> command "update" (info updateOptions ( progDesc "Compiles updates  to be reloaded in the map"))
+      <> command "compile" (info compileOptions (progDesc "Compiles code to asm. Used for debugging purposes"))
       )
     initOptions =
         Init <$> argument str (help "Path to common.j" <> metavar "common.j")
@@ -164,6 +169,11 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
                <*> pJasshelper
                <*> pState
                <*> pAsm
+    compileOptions =
+        Compile <$> some (argument str mempty)
+                <*> switch (long "opt-jass" <> help "Applies jass optimisations")
+                <*> switch (long "opt-asm" <> help "Applies asm optimisations")
+
     pJasshelper = switch
       (  long "jasshelper" 
       <> help "Treats the input script as if it was produced by jasshelper"
@@ -207,6 +217,7 @@ main = do
     case options of
         Update{} -> updateX options
         Init{} -> initX options
+        Compile{} -> compileX options
 
 
 mkHashMap :: J.Ast J.Name x -> Map J.Name Int
@@ -218,6 +229,24 @@ mkHashMap x =
     J.Global (J.SDef _ name ty (Just _)) -> Map.singleton name $ hash ty
     _ -> composeFold mkHashMap x
 
+compileX o = do
+    let jass_opt = if optJass o then Jass.Opt.rewrite someJassRewriteRules else id
+        ins_opt = if optAsm o then (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules) else id
+    x <- runExceptT $ forM (inputPaths o) $ \j -> do
+        src <- liftIO $ readFile j
+        J.Programm ast <- exceptT $ parse J.programm j src
+        return ast
+    case x of
+        Left err -> do
+            hPutStrLn stderr $ errorBundlePretty err
+            exitFailure
+        Right j' -> do
+            let j = J.Programm $ concat j'
+                prog = jass_opt j
+                prog' = H.jass2hot . fst $ Rename.compile' Rename.Update id prog
+                asm = ins_opt $ Ins.compile prog'
+            hPutBuilder stdout $ Ins.serializeAsm asm
+            
 
 updateX o = do
     let jhc = if processJasshelper o then JH.compile else id
