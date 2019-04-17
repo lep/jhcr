@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -18,6 +17,7 @@ import Jass.Ast (Programm, Toplevel, LVar, Stmt, Expr, Name, Type)
 
 import Hot.Var
 
+import Data.Hashable
 
 data Ast var a where
     Programm :: [Ast var Toplevel] -> Ast var Programm
@@ -47,6 +47,30 @@ data Ast var a where
 
 deriving instance (Show var) => Show (Ast var a)
 deriving instance (Eq var) => Eq (Ast var a)
+
+instance Hashable var => Hashable (Ast var a) where
+    hashWithSalt salt x = hashWithSalt salt $ hash x
+    hash x =
+      case x of
+        Programm p -> hashWithSalt 1 p
+        Function n args ret body ->
+            hashWithSalt 2 [hash n, hash args, hash ret, hash body]
+        Block b -> hashWithSalt 3 b
+        Set lvar expr -> hashWithSalt 4 [hash lvar, hash expr]
+        If cond tb eb -> hashWithSalt 5 [hash cond, hash tb, hash eb]
+        Loop body -> hashWithSalt 6 body
+        Exitwhen expr -> hashWithSalt 7 expr
+        Return expr -> hashWithSalt 8 expr
+        Call n args -> hashWithSalt 9 [hash n, hash args]
+        Var lvar -> hashWithSalt 10 lvar
+        Int i -> hashWithSalt 11 i
+        Real r -> hashWithSalt 12 r
+        Bool b -> hashWithSalt 13 b
+        String s -> hashWithSalt 14 s
+        Code c -> hashWithSalt 15 c
+        Null -> hashWithSalt 16 ()
+        AVar v idx -> hashWithSalt 17 [hash v, hash idx]
+        SVar v -> hashWithSalt 18 v
 
 convert :: Jass.Ast Var a -> Ast Var a
 convert e =
