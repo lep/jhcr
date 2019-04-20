@@ -49,13 +49,19 @@ rawcode = lexeme $ char '\'' *> (escaped <|> anyCC)
     anyCC = manyTill anySingle (char '\'')
 
 intlit :: Parser String
-intlit = show <$> lexeme (try hexlit <|> try octlit <|> L.decimal)
+intlit = try $ do
+    n <- option "" $ string "-"
+    int <- show <$> lexeme (try hexlit <|> try octlit <|> L.decimal)
+    return $ n <> int
 
 hexlit = char '0' *> (char 'X' <|> char 'x') *> L.hexadecimal
 octlit = char '0' *> L.octal
 
 
-reallit = lexeme $ dotReal <|> realDot
+reallit = try $ do
+    n <- option "" $ string "-"
+    r <- lexeme $ dotReal <|> realDot
+    return $ n <> r
 dotReal = do
     char '.'
     a <- some digitChar
@@ -208,11 +214,11 @@ expression = makeExprParser term table
     binary t op = InfixL (t *> pure (\a b -> Call op [a, b]))
 
 term = parens expression
-    <|> reserved "not"  *> ((\e -> Call "not" [e]) <$> expression)
-    <|> symbol "-"      *> ((\e -> Call "-" [e]) <$> term)
-    <|> symbol "+"      *> ((\e -> Call "+" [e]) <$> term)
     <|> literal
     <|> varOrCall
+    <|> symbol "+"      *> ((\e -> Call "+" [e]) <$> term)
+    <|> symbol "-"      *> ((\e -> Call "-" [e]) <$> term)
+    <|> reserved "not"  *> ((\e -> Call "not" [e]) <$> expression)
     <?> "term"
   where
     literal = String <$> stringlit
