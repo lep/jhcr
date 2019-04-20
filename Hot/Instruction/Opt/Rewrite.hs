@@ -256,7 +256,7 @@ eliminateTmpOther =
   [ [ "neg type %r a"
     , "set type v %r"
     ] -->
-    [ "neg v a" ]
+    [ "neg type v a" ]
     
   , [ "set type %r a"
     , "set type b %r"

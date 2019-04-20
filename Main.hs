@@ -69,7 +69,7 @@ concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
 
 -- it might be that not every rule brings a huge advantage in the generated
--- assembler code, but not rule should hurt the generated code.
+-- assembler code, but no rule should hurt the generated code.
 someJassRewriteRules =
   [ mkRR ["a"] "-(-a)" "a"
   , mkRR ["a"] "a==true" "a"
