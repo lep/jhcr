@@ -97,8 +97,33 @@ someJassRewriteRules =
   , mkRR ["u", "l"] "SetUnitState(u, UNIT_STATE_LIFE, l)" "SetWidgetLife(u, l)" -- gg, bind vs conv
   , mkRR ["u"] "GetUnitState(u, UNIT_STATE_LIFE)" "GetWidgetLife(u)" -- gg, bind vs conv
   , mkRR ["u", "p"] "GetOwningPlayer(u) == p" "IsUnitOwnedByPlayer(u, p)"
-  , mkRR ["i"] "I2R(i)" "(i+0.0)" -- bind, call vs lit, add
+  
+  -- this one seems rather nice: bind, call vs conv, lit, add but
+  -- the asm rewrite engine can reduce it to just conv
+  , mkRR ["i"] "I2R(i)" "(i+0.0)"
+  
   , mkRR ["a", "b"] "a + (-b)" "a-b"
+  
+  -- note the lacking decimal point, as otherwise we could lose promotion
+  -- from int to real but we use the knowledge that our parser parses these as
+  -- integer literals. these rules are jass safe.
+  -- look below for normally non-safe rewrite rules.
+  , mkRR ["a"] "-1*a" "-a"
+  , mkRR ["a"] "a*-1" "-a"
+  , mkRR ["a"] "a+0" "a"
+  , mkRR ["a"] "0+a" "a"
+  , mkRR ["a"] "1*a" "a"
+  , mkRR ["a"] "a*1" "a"
+  
+  -- 1.0*a can be used in jass to promote an integer to a real, so normally
+  -- this would not be a valid rewrite rule, but the instruction compiler
+  -- inserts the correct conv instructions which allows these rules
+  , mkRR ["a"] "-1.0*a" "-a"
+  , mkRR ["a"] "a*-1.0" "-a"
+  , mkRR ["a"] "a+0.0" "a"
+  , mkRR ["a"] "0.0+a" "a"
+  , mkRR ["a"] "1.0*a" "a"
+  , mkRR ["a"] "a*1.0" "a"
   ]
   where
     mkRR fv from to =

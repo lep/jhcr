@@ -244,7 +244,7 @@ eliminateLocalSetBeforeRet =
     [ "ret t" ]
     
   , [ "call t fn n"
-    , "set * s t "
+    , "set * s t"
     , "ret type"
     ] -->
     [ "call s fn n"
@@ -414,6 +414,12 @@ algebraic =
     , "add real t %z a"
     ] -->
     [ "set real t a"]
+    
+    -- (-a)+b = b-a
+  , [ "neg type %t a"
+    , "add type r %t b"
+    ] -->
+    [ "sub type r b a"]
   ]
 
 removeComputeToZero =
