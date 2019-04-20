@@ -221,11 +221,12 @@ compileExpr e =
         t <- compileExpr a
         emit $ Not r t
         return r
+        
     H.Call (Op "-") [a] -> do
         r <- newRegister
         t <- compileExpr a
         emit $ Negate (typeOfExpr a) r t
-        return r
+        typedGet (typeOfExpr a) r
 
     H.Call (Op "or") [a, b] -> do
         r <- newRegister
@@ -253,12 +254,11 @@ compileExpr e =
     H.Call (Op n) [a, b] -> do
         let op = name2op n
         let t = numericType (typeOfExpr a) (typeOfExpr b)
-
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
         emit $ op t r a' b' 
-        return r
+        typedGet t r
 
     
     H.Call{} -> compileCall e
