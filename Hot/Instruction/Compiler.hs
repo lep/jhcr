@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -10,13 +8,18 @@ module Hot.Instruction.Compiler (compile, compileGlobals) where
 import Data.DList (DList)
 import qualified Data.DList as DList
 
-import Data.Maybe 
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import Data.Maybe
 
 import Control.Lens
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
+import Control.Arrow (first)
 
+import qualified Jass.LCA as Jass
 
 import Hot.Ast hiding (Call, Set, Function)
 import qualified Hot.Ast as H
@@ -25,8 +28,8 @@ import Hot.Var
 import Hot.Instruction
 
 
-newtype CompileMonad a = CompileMonad { runCompileMonad :: ReaderT Type (StateT CompileState (Writer (DList Instruction))) a }
-  deriving (Functor, Applicative, Monad, MonadWriter (DList Instruction), MonadState CompileState, MonadReader Type )
+newtype CompileMonad a = CompileMonad { runCompileMonad :: ReaderT (Type, Map Type Type) (StateT CompileState (Writer (DList Instruction))) a }
+  deriving (Functor, Applicative, Monad, MonadWriter (DList Instruction), MonadState CompileState, MonadReader (Type, Map Type Type) )
 
 
 
@@ -98,6 +101,12 @@ typeOfVar v =
     Fn _ _ t _ -> code2int t
     _ -> ""
 
+lca :: Type -> Type -> CompileMonad Type
+lca a b = do
+    hierachy <- asks snd
+    let t = fromMaybe (error "lca error") $ Jass.lca hierachy a b
+    return t
+
 compileProgram :: Ast Var Programm -> CompileMonad ()
 compileProgram (Programm toplevel) = mapM_ compileToplevel toplevel
 
@@ -114,12 +123,12 @@ compileToplevel (H.Function n _ r body) = do
     -- we removed double rets via rewrites
     emit $ Ret r
 
-typed :: MonadReader b m => b -> m a -> m a
-typed t = local (const t)
+typed :: Type -> CompileMonad a -> CompileMonad a
+typed t = local (first (const t))
 
 typedGet :: Type -> Register -> CompileMonad Register
 typedGet sourcetype source = do
-    wanted <- ask
+    wanted <- asks fst
     if wanted /= sourcetype &&
        wanted /= "nothing" &&
        not (wanted == "code" && sourcetype == "integer")
@@ -147,10 +156,10 @@ compileStmt :: Ast Var Stmt -> CompileMonad ()
 compileStmt e = do
   --registerId .= 0
   case e of
-    Return Nothing -> emit . Ret =<< ask
+    Return Nothing -> emit . Ret =<< asks fst
     Return (Just e) -> do
         r <- compileExpr e
-        wanted <- ask
+        wanted <- asks fst
         emit $ Set wanted 0 r
         emit $ Ret wanted
 
@@ -250,8 +259,26 @@ compileExpr e =
         emit $ Set "boolean" r b'
         emit $ Label cont
         return r
+    
+    H.Call (Op n) [a, b] | n `elem` ["<", "<=", ">", ">="] -> do
+        let op = name2op n
+        let t = numericType (typeOfExpr a) (typeOfExpr b)
+        r <- newRegister
+        a' <- typed t $ compileExpr a
+        b' <- typed t $ compileExpr b
+        emit $ op t r a' b'
+        return r
+    
+    H.Call (Op n) [a, b] | n `elem` ["==", "!="] -> do
+        let op = name2op n
+        t <- lca (typeOfExpr a) (typeOfExpr b)
+        r <- newRegister
+        a' <- typed t $ compileExpr a
+        b' <- typed t $ compileExpr b
+        emit $ op t r a' b'
+        return r
 
-    H.Call (Op n) [a, b] -> do
+    H.Call (Op n) [a, b] | n `elem` ["+", "-", "*", "/", "%"] -> do
         let op = name2op n
         let t = numericType (typeOfExpr a) (typeOfExpr b)
         r <- newRegister
@@ -289,7 +316,7 @@ compileExpr e =
 
     Int _ -> do
         r <- newRegister
-        t <- ask
+        t <- asks fst
         emit $ Literal t r e
         return r
 
@@ -310,7 +337,7 @@ compileExpr e =
 
     Null -> do
         r <- newRegister
-        t <- ask
+        t <- asks fst
         if t == "integer"
         then emit $ Literal "integer" r $ Int 0
         else emit $ Literal t r e
@@ -321,21 +348,21 @@ compileExpr e =
         emit . Literal "integer" r . Int $ getId v
         return r
 
-compile :: Ast Var Programm -> [Instruction]
-compile =
+compile :: Map Type Type -> Ast Var Programm -> [Instruction]
+compile m =
     DList.toList .
     execWriter .
     flip evalStateT emptyState .
-    flip runReaderT "" .
+    flip runReaderT ("", m) .
     runCompileMonad .
     compileProgram
 
 
-compileGlobals :: [Ast Var Stmt] -> [Instruction]
-compileGlobals =
+compileGlobals :: Map Type Type -> [Ast Var Stmt] -> [Instruction]
+compileGlobals m =
     DList.toList .
     execWriter .
     flip evalStateT emptyState .
-    flip runReaderT "" .
+    flip runReaderT ("", m) .
     runCompileMonad .
     mapM_ compileStmt

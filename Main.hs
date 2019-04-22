@@ -35,6 +35,7 @@ import qualified Jass.Parser as J
 import qualified Jass.Ast as J
 import qualified Jass.Printer as J
 import qualified Jass.Opt.Rewrite as Jass.Opt
+import qualified Jass.LCA as LCA
 
 import qualified Hot.Ast as H
 import qualified Hot.Var as H
@@ -163,7 +164,8 @@ data Options =
            , statePath :: FilePath
            , showAsm :: Bool
            }
-   | Compile { inputPaths :: [FilePath]
+   | Compile { commonjPath :: FilePath
+             , inputPaths :: [FilePath]
              , optJass :: Bool
              , optAsm :: Bool
              }
@@ -195,7 +197,8 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
                <*> pState
                <*> pAsm
     compileOptions =
-        Compile <$> some (argument str mempty)
+        Compile <$> argument str (help "Path to common.j" <> metavar "common.j")
+                <*> some (argument str mempty)
                 <*> switch (long "opt-jass" <> help "Applies jass optimisations")
                 <*> switch (long "opt-asm" <> help "Applies asm optimisations")
 
@@ -257,19 +260,25 @@ mkHashMap x =
 compileX o = do
     let jass_opt = if optJass o then Jass.Opt.rewrite someJassRewriteRules else id
         ins_opt = if optAsm o then (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules) else id
-    x <- runExceptT $ forM (inputPaths o) $ \j -> do
-        src <- liftIO $ readFile j
-        J.Programm ast <- exceptT $ parse J.programm j src
-        return ast
+    x <- runExceptT $ do
+        src <- liftIO $ readFile (commonjPath o)
+        commonj <- exceptT $ parse J.programm (commonjPath o) src
+        
+        toCompile <- forM (inputPaths o) $ \j -> do
+            src <- liftIO $ readFile j
+            J.Programm ast <- exceptT $ parse J.programm j src
+            return ast
+        return (commonj, J.Programm $ concat toCompile)
     case x of
         Left err -> do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
-        Right j' -> do
-            let j = J.Programm $ concat j'
+        Right (commonj, j) -> do
+            let typeHierachy = LCA.child2parent commonj
+            let (_, st) = Rename.compile' Rename.Init id commonj
                 prog = jass_opt j
-                prog' = H.jass2hot . fst $ Rename.compile' Rename.Update id prog
-                asm = ins_opt $ Ins.compile prog'
+                prog' = H.jass2hot . fst $ Rename.compile Rename.Init id st prog
+                asm = ins_opt $ Ins.compile typeHierachy prog'
             hPutBuilder stdout $ Ins.serializeAsm asm
             
 
@@ -278,7 +287,7 @@ updateX o = do
         jass_opt = Jass.Opt.rewrite someJassRewriteRules
         ins_opt = (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules)
         
-    (st, hmap) <- decodeFile (statePath o)
+    (st, hmap, typeHierachy) <- decodeFile (statePath o)
 
     p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
     case p of
@@ -302,8 +311,8 @@ updateX o = do
 
             hPutStrLn stderr "Writing bytecode"
         
-            let fnsCompiled = ins_opt $ Ins.compile ast''
-                gCompiled = ins_opt $ Ins.compileGlobals $ H.globals2statements ast'
+            let fnsCompiled = ins_opt $ Ins.compile typeHierachy ast''
+                gCompiled = ins_opt $ Ins.compileGlobals typeHierachy $ H.globals2statements ast'
                 
             when (showAsm o) $ do
                 putStrLn "; functions"
@@ -424,6 +433,7 @@ initX o = do
                 rt2' = addPrefix' (prefix o) rt2
 
             let (prelude', st) = Rename.compile' Rename.Init id prelude
+                typeHierachy = LCA.child2parent prelude
             
             p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
             case p of
@@ -455,7 +465,7 @@ initX o = do
                         hmap = mkHashMap jhast
                     
                     hPutStrLn stderr "Writing state file"
-                    encodeFile (statePath o) (st', hmap)
+                    encodeFile (statePath o) (st', hmap, typeHierachy)
 
                     hPutStrLn stderr "Writing map script"
                     jh <- openBinaryFile (outjPath o) WriteMode

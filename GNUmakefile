@@ -4,6 +4,7 @@ RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
 
 SRC := Jass/Parser.hs Jass/Ast.hs Jass/Printer.hs Jass/Opt/Rewrite.hs
+SRC += Jass/LCA.hs
 SRC += Hot/Ast.hs Hot/Types.hs Hot/Var.hs Hot/Instruction.hs
 SRC += Hot/Instruction/Compiler.hs Hot/Instruction/Opt/Rewrite.hs
 SRC += Hot/Init/Auto.hs Hot/Init/Stubs.hs Hot/Init/Rename.hs
@@ -55,7 +56,8 @@ out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
 
 init:
 	cabal v1-sandbox init
-	cabal v1-install megaparsec lens optparse-applicative file-embed gitrev hashable dlist
+	cabal v1-install megaparsec lens optparse-applicative file-embed gitrev \
+                     lca hashable dlist
 
 clean:
 	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
