@@ -277,6 +277,11 @@ eliminateTmpOther =
     , "set t1 t %r"
     ] -->
     [ "conv t1 t t2 s" ]
+    
+  , [ "not %t a"
+    , "set boolean b %t"
+    ] -->
+    [ "not b a"]
   
   ]
 
