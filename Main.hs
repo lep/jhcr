@@ -369,7 +369,7 @@ updateX o = do
     getName (J.Global (J.ADef name _)) = name
     
     isSDef :: J.Ast a J.Toplevel -> Bool
-    isSDef (J.Global (J.SDef _ _ _ _)) = True
+    isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
     
     mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)

@@ -46,7 +46,7 @@ type M = State S
 
 unify :: ByteString -> Value -> M Bool
 unify from to = do
-    e <- Map.lookup from <$> get
+    e <- gets $ Map.lookup from
     case e of
         Nothing -> do
             modify $ Map.insert from to

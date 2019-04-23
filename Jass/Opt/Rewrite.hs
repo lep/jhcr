@@ -32,7 +32,7 @@ type S = Map Name (Ast Name Expr)
 
 unify :: Name -> Ast Name Expr -> State S Bool
 unify name expr = do
-    e <- Map.lookup name <$> get
+    e <- gets $ Map.lookup name
     case e of
         Nothing -> do
             modify $ Map.insert name expr
@@ -67,9 +67,7 @@ matches' rr@Rule{..} expr =
       then and <$> zipWithM (\a b -> matches' rr{ fromExpr = a} b) a1 a2
       else return False
     (Var (SVar x), y)
-      | x `Set.member` freeVars -> do
-        same <- unify x y
-        return same
+      | x `Set.member` freeVars -> unify x y
 
     (Var (SVar x), Var (SVar y)) -> return $ x == y
 
@@ -85,7 +83,7 @@ matches' rr@Rule{..} expr =
 
 
 apply :: RewriteRule -> Ast Name Expr -> Ast Name Expr
-apply rule expr = fromMaybe expr $ rewrite' rule <$> matches rule expr
+apply rule expr = maybe expr (rewrite' rule) (matches rule expr)
 
 
 rewrite :: [RewriteRule] -> Ast Name a -> Ast Name a
@@ -113,7 +111,7 @@ rewrite rules ast =
     rewriteElse = fmap (map (rewrite rules))
 
     rewriteElseIfs :: [(Ast Name Expr, [Ast Name Stmt])] -> [(Ast Name Expr, [Ast Name Stmt])]
-    rewriteElseIfs = map (rewriteExpr *** (map (rewrite rules)))
+    rewriteElseIfs = map (rewriteExpr *** map (rewrite rules))
 
     rewriteCallStmt :: Ast Name Stmt -> Ast Name Stmt
     rewriteCallStmt (Call n args) =
