@@ -54,7 +54,8 @@ intlit = try $ do
     int <- show <$> lexeme (try hexlit <|> try octlit <|> L.decimal)
     return $ n <> int
 
-hexlit = char '0' *> (char 'X' <|> char 'x') *> L.hexadecimal
+hexlit = char '$' *> L.hexadecimal
+     <|> char '0' *> (char 'X' <|> char 'x') *> L.hexadecimal
 octlit = char '0' *> L.octal
 
 
