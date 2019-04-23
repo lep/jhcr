@@ -250,6 +250,16 @@ eliminateLocalSetBeforeRet =
     [ "call s fn n"
     , "ret type"
     ]
+    
+  , [ "neg * #z *"
+    , "ret type"
+    ] -->
+    [ "ret type"]
+    
+  , [ "not #z *"
+    , "ret type"
+    ] -->
+    [ "ret type"]
   ]
 
 eliminateTmpOther =
@@ -425,6 +435,17 @@ algebraic =
     , "add type r %t b"
     ] -->
     [ "sub type r b a"]
+    
+    -- div by one
+  , [ "lit integer %l i'1"
+    , "div integer t a %l"
+    ] -->
+    [ "set integer t a"]
+    
+  , [ "lit real %l r'1"
+    , "div real t a %l"
+    ] -->
+    [ "set real t a"]
   ]
 
 removeComputeToZero =
@@ -458,8 +479,42 @@ removeSetToZero =
     [ "set type 0 a"
     , "ret type"
     ]
+    
+  , [ "not t a"
+    , "set boolean 0 t"
+    , "ret boolean"
+    ] -->
+    [ "not 0 a"
+    , "ret boolean"
+    ]
+    
+  , [ "neg type t a"
+    , "set type 0 t"
+    , "ret type"
+    ] -->
+    [ "neg type 0 a"
+    , "ret type"
+    ]
   ]
 
+removeNoOps =
+  [ [ "set type a a"
+    ] --> 
+    []
+    
+  , [ "set type a b"
+    , "set type a b"
+    ] -->
+    [ "set type a b"]
+    
+  , [ "sub integer t a a"
+    ] -->
+    [ "lit integer t i'0"]
+    
+  , [ "sub real t a a"
+    ] -->
+    [ "lit real t r'0"]
+  ]
 
 -- everything but label and fun after ret is removed
 removeUnreachableCode =
@@ -524,3 +579,4 @@ someRules =
     <> removeUnreachableCode
     <> removeEmptyJumps
     <> removeCodeAfterJump
+    <> removeNoOps

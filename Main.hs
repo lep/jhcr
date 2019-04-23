@@ -125,6 +125,12 @@ someJassRewriteRules =
   , mkRR ["a"] "0.0+a" "a"
   , mkRR ["a"] "1.0*a" "a"
   , mkRR ["a"] "a*1.0" "a"
+  
+  , mkRR ["a"] "a/1" "a"
+  , mkRR ["a"] "a/1.0" "a"
+  
+  , mkRR ["a"] "a/-1" "-a"
+  , mkRR ["a"] "a/-1.0" "-a"
   ]
   where
     mkRR fv from to =
