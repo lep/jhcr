@@ -43,7 +43,7 @@ convert: convert.hs
 	cabal v1-exec -- ghc $(HSFLAGS) convert
 
 runtime/convert.j Hot/Types.hs runtime/types.j runtime/g-type-bin.j: convert common.j
-	./convert
+	./convert common.j
 
 jhcr: $(SRC) $(PROCESSED)
 	cabal v1-exec -- ghc $(HSFLAGS) Main.hs -o jhcr

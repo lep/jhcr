@@ -94,17 +94,17 @@ data Instruction
     | Ret Type
     deriving (Show)
 
-pad2Dec :: Int8 -> Builder
+pad2Dec :: Int16 -> Builder
 pad2Dec x =
   let l = intlog10 $ abs x
       w = 2 - if x < 0 then 1 else 0
-  in int8Dec x <> stringUtf8 (replicate (w-l) '.')
+  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
 
-pad3Dec :: Int8 -> Builder
+pad3Dec :: Int16 -> Builder
 pad3Dec x =
   let l = intlog10 $ abs x
       w = 3 - if x < 0 then 1 else 0
-  in int8Dec x <> stringUtf8 (replicate (w-l) '.')
+  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
 
 
 pad6Dec :: Int16 -> Builder

@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
 
+import System.Environment
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -202,7 +203,8 @@ mkJassTypes ty = Programm $ map mkGlobal $ concatMap allChildren ty
 
 main :: IO ()
 main = do
-    x <- parse programm "common.j" . (<>"\n") <$> readFile "common.j"
+    [commonj] <- getArgs
+    x <- parse programm commonj . (<>"\n") <$> readFile commonj
     case x of
         Left err -> putStrLn $ errorBundlePretty err
         Right j -> do
@@ -234,7 +236,7 @@ main = do
           , "import Data.Map (Map)"
           , "import qualified Data.Map as Map"
           , "import Data.Int"
-          , "types :: Map String Int8"
+          , "types :: Map String Int16"
           , ("types = Map.fromList " <> ) . show . map swap $ concatMap allChildren ty
           ]
         hClose f
