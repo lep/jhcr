@@ -241,11 +241,8 @@ function _step takes integer ctx returns integer
         elseif Ins#_type[op] == Types#_code then
             call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Ins#_integer[op])
         else // null
-            //#define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], null)
-            //#define ty Ins#_type[op]
-            //#include "g-type-bin.j"
-            //#undef ty
-            //#undef macro
+            // dont like how we use tables global, but whatev
+            call RemoveSavedHandle(Table#_ht, Context#_locals[ctx], Ins#_a1[op])
         endif
     elseif t == Ins#_Convert then
         call Convert#_convert(Ins#_type[op], Ins#_a1[op], Ins#_a2[op], Ins#_a3[op], ctx)
