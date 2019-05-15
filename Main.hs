@@ -342,7 +342,7 @@ updateX o = do
                     hClose cfd
 
                     hPutStrLn stderr "Writing state file"
-                    encodeFile (statePath o) (st', hmap' <> hmap)
+                    encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy)
                     hPutStrLn stderr "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
