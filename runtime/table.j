@@ -36,6 +36,8 @@ function _destroy takes integer _tbl returns nothing
     call _free(_tbl)
 endfunction
 
+// native saveable
+
 function _get_boolean takes integer _this,integer _key returns boolean
     return LoadBoolean(_ht, _this, _key)
 endfunction
@@ -372,7 +374,14 @@ function _set_widget takes integer _this,integer _key,widget _value returns noth
     call SaveWidgetHandle(_ht, _this, _key, _value)
 endfunction
 
+function _get_framehandle takes integer _this,integer _key returns framehandle
+    return LoadFrameHandle(_ht, _this, _key)
+endfunction
+function _set_framehandle takes integer _this,integer _key,framehandle _value returns nothing
+    call SaveFrameHandle(_ht, _this, _key, _value)
+endfunction
 
+// saveable via ConvertFogState
 
 function _get_aidifficulty takes integer _this,integer _key returns aidifficulty
     return ConvertAIDifficulty(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
@@ -738,8 +747,233 @@ function _set_widgetevent takes integer _this,integer _key,widgetevent _value re
     call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
+// 1.31
+
+function _get_originframetype takes integer _this,integer _key returns originframetype
+    return ConvertOriginFrameType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_originframetype takes integer _this,integer _key, originframetype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_framepointtype takes integer _this,integer _key returns framepointtype
+    return ConvertFramePointType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_framepointtype takes integer _this,integer _key, framepointtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_textaligntype takes integer _this,integer _key returns textaligntype
+    return ConvertTextAlignType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_textaligntype takes integer _this,integer _key, textaligntype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_frameeventtype takes integer _this,integer _key returns frameeventtype
+    return ConvertFrameEventType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_frameeventtype takes integer _this,integer _key, frameeventtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_oskeytype takes integer _this,integer _key returns oskeytype
+    return ConvertOsKeyType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_oskeytype takes integer _this,integer _key, oskeytype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilityintegerfield takes integer _this,integer _key returns abilityintegerfield
+    return ConvertAbilityIntegerField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilityintegerfield takes integer _this,integer _key, abilityintegerfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilityrealfield takes integer _this,integer _key returns abilityrealfield
+    return ConvertAbilityRealField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilityrealfield takes integer _this,integer _key, abilityrealfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilitybooleanfield takes integer _this,integer _key returns abilitybooleanfield
+    return ConvertAbilityBooleanField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilitybooleanfield takes integer _this,integer _key, abilitybooleanfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilitystringfield takes integer _this,integer _key returns abilitystringfield
+    return ConvertAbilityStringField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilitystringfield takes integer _this,integer _key, abilitystringfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilityintegerlevelfield takes integer _this,integer _key returns abilityintegerlevelfield
+    return ConvertAbilityIntegerLevelField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilityintegerlevelfield takes integer _this,integer _key, abilityintegerlevelfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilityreallevelfield takes integer _this,integer _key returns abilityreallevelfield
+    return ConvertAbilityRealLevelField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilityreallevelfield takes integer _this,integer _key, abilityreallevelfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilitybooleanlevelfield takes integer _this,integer _key returns abilitybooleanlevelfield
+    return ConvertAbilityBooleanLevelField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilitybooleanlevelfield takes integer _this,integer _key, abilitybooleanlevelfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilitystringlevelfield takes integer _this,integer _key returns abilitystringlevelfield
+    return ConvertAbilityStringLevelField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilitystringlevelfield takes integer _this,integer _key, abilitystringlevelfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilityintegerlevelarrayfield takes integer _this,integer _key returns abilityintegerlevelarrayfield
+    return ConvertAbilityIntegerLevelArrayField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilityintegerlevelarrayfield takes integer _this,integer _key, abilityintegerlevelarrayfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilityreallevelarrayfield takes integer _this,integer _key returns abilityreallevelarrayfield
+    return ConvertAbilityRealLevelArrayField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilityreallevelarrayfield takes integer _this,integer _key, abilityreallevelarrayfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilitybooleanlevelarrayfield takes integer _this,integer _key returns abilitybooleanlevelarrayfield
+    return ConvertAbilityBooleanLevelArrayField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilitybooleanlevelarrayfield takes integer _this,integer _key, abilitybooleanlevelarrayfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_abilitystringlevelarrayfield takes integer _this,integer _key returns abilitystringlevelarrayfield
+    return ConvertAbilityStringLevelArrayField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_abilitystringlevelarrayfield takes integer _this,integer _key, abilitystringlevelarrayfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitintegerfield takes integer _this,integer _key returns unitintegerfield
+    return ConvertUnitIntegerField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitintegerfield takes integer _this,integer _key, unitintegerfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitrealfield takes integer _this,integer _key returns unitrealfield
+    return ConvertUnitRealField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitrealfield takes integer _this,integer _key, unitrealfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitbooleanfield takes integer _this,integer _key returns unitbooleanfield
+    return ConvertUnitBooleanField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitbooleanfield takes integer _this,integer _key, unitbooleanfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitstringfield takes integer _this,integer _key returns unitstringfield
+    return ConvertUnitStringField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitstringfield takes integer _this,integer _key, unitstringfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitweaponintegerfield takes integer _this,integer _key returns unitweaponintegerfield
+    return ConvertUnitWeaponIntegerField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitweaponintegerfield takes integer _this,integer _key, unitweaponintegerfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitweaponrealfield takes integer _this,integer _key returns unitweaponrealfield
+    return ConvertUnitWeaponRealField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitweaponrealfield takes integer _this,integer _key, unitweaponrealfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitweaponbooleanfield takes integer _this,integer _key returns unitweaponbooleanfield
+    return ConvertUnitWeaponBooleanField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitweaponbooleanfield takes integer _this,integer _key, unitweaponbooleanfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitweaponstringfield takes integer _this,integer _key returns unitweaponstringfield
+    return ConvertUnitWeaponStringField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitweaponstringfield takes integer _this,integer _key, unitweaponstringfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_itemintegerfield takes integer _this,integer _key returns itemintegerfield
+    return ConvertItemIntegerField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_itemintegerfield takes integer _this,integer _key, itemintegerfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_itemrealfield takes integer _this,integer _key returns itemrealfield
+    return ConvertItemRealField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_itemrealfield takes integer _this,integer _key, itemrealfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_itembooleanfield takes integer _this,integer _key returns itembooleanfield
+    return ConvertItemBooleanField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_itembooleanfield takes integer _this,integer _key, itembooleanfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_itemstringfield takes integer _this,integer _key returns itemstringfield
+    return ConvertItemStringField(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_itemstringfield takes integer _this,integer _key, itemstringfield _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_movetype takes integer _this,integer _key returns movetype
+    return ConvertMoveType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_movetype takes integer _this,integer _key, movetype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_targetflag takes integer _this,integer _key returns targetflag
+    return ConvertTargetFlag(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_targetflag takes integer _this,integer _key, targetflag _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_armortype takes integer _this,integer _key returns armortype
+    return ConvertArmorType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_armortype takes integer _this,integer _key, armortype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_heroattribute takes integer _this,integer _key returns heroattribute
+    return ConvertHeroAttribute(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_heroattribute takes integer _this,integer _key, heroattribute _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_defensetype takes integer _this,integer _key returns defensetype
+    return ConvertDefenseType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_defensetype takes integer _this,integer _key, defensetype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_regentype takes integer _this,integer _key returns regentype
+    return ConvertRegenType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_regentype takes integer _this,integer _key, regentype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_unitcategory takes integer _this,integer _key returns unitcategory
+    return ConvertUnitCategory(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_unitcategory takes integer _this,integer _key, unitcategory _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+function _get_pathingflag takes integer _this,integer _key returns pathingflag
+    return ConvertPathingFlag(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_pathingflag takes integer _this,integer _key, pathingflag _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
 
 
+// neither native saveable nor convertfogstate-hackable
 
 function _get_agent takes integer _this,integer _key returns agent
     return _agent[(LoadInteger(_ht, _this, _key))]
@@ -849,3 +1083,4 @@ function _set_weathereffect takes integer _this,integer _key,weathereffect _valu
     set _weathereffect[_list[_this]]=_value
     call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
+
