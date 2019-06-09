@@ -35,8 +35,8 @@ function _parse takes nothing returns nothing
     set Parser#_prev_ins = 0
     loop
     exitwhen _cnt == 0
-        call Parser#_parse_and_init(BlzGetAbilityTooltip(_fn_ids[_cnt], 1))
-        call BlzSetAbilityTooltip(_fn_ids[_cnt], _tmp[_cnt], 1)
+        call Parser#_parse_and_init(BlzGetAbilityTooltip(_fn_ids[_cnt], 0))
+        call BlzSetAbilityTooltip(_fn_ids[_cnt], _tmp[_cnt], 0)
         set _cnt = _cnt -1
     endloop
     
@@ -44,8 +44,8 @@ function _parse takes nothing returns nothing
     set Parser#_prev_ins = 0
     loop
     exitwhen _cnt == 0
-        set _g = Parser#_parse_globals(BlzGetAbilityTooltip(_g_ids[_cnt], 1), _g)
-        call BlzSetAbilityTooltip(_g_ids[_cnt], _tmp[_cnt + _fn_max], 1)
+        set _g = Parser#_parse_globals(BlzGetAbilityTooltip(_g_ids[_cnt], 0), _g)
+        call BlzSetAbilityTooltip(_g_ids[_cnt], _tmp[_cnt + _fn_max], 0)
         set _cnt = _cnt -1
     endloop
     

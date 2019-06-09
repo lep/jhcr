@@ -390,7 +390,7 @@ updateX o = do
         let availableIds = map J.Rawcode ids
             cnt = length asms
             
-            mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "1" ]
+            mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "0" ]
             
         guard (length availableIds >= cnt)
         
