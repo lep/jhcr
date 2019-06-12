@@ -22,7 +22,6 @@ import qualified Data.ByteString.Char8 as S8
 import Data.ByteString.Builder
 
 import Data.List (isPrefixOf)
-import Data.Maybe (fromJust)
 
 import Data.Binary (decodeFile, encodeFile)
 
@@ -35,6 +34,7 @@ import qualified Jass.Parser as J
 import qualified Jass.Ast as J
 import qualified Jass.Printer as J
 import qualified Jass.Opt.Rewrite as Jass.Opt
+import qualified Jass.Opt.Rewrite.SomeRules as Jass.Opt
 import qualified Jass.LCA as LCA
 
 import qualified Hot.Ast as H
@@ -48,6 +48,7 @@ import qualified Hot.Init.Stubs as Stubs
 import qualified Hot.Init.Auto as Auto
 
 import qualified Hot.Instruction.Opt.Rewrite as Ins.Opt
+import qualified Hot.Instruction.Opt.Rewrite.SomeRules as Ins.Opt
 
 import qualified Hot.HandleCode as HandleCode
 import qualified Hot.JassHelper as JH
@@ -68,76 +69,6 @@ parse fp p src = Mega.parse fp p $ src <> "\n"
 
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
-
--- it might be that not every rule brings a huge advantage in the generated
--- assembler code, but no rule should hurt the generated code.
-someJassRewriteRules =
-  [ mkRR ["a"] "-(-a)" "a"
-  , mkRR ["a"] "a==true" "a"
-  , mkRR ["a"] "true==a" "a"
-  , mkRR ["a", "b"] "not (a<=b)" "a>b"
-  , mkRR ["a", "b"] "not (a<b)" "a>=b"
-  , mkRR ["a", "b"] "not (a>=b)" "a<b"
-  , mkRR ["a", "b"] "not (a>b)" "a<=b"
-  , mkRR ["a"] "false==a" "not a"
-  , mkRR ["a"] "a==false" "not a"
-  , mkRR ["a"] "false!=a" "a"
-  , mkRR ["a"] "a!=false" "a"
-  , mkRR ["a"] "a!=true" "not a"
-  , mkRR ["a"] "true!=a" "not a"
-  , mkRR ["a"] "not (not a)" "a"
-  , mkRR ["a", "b"] "(not a) or (not b)" "not (a and b)"
-  , mkRR ["a", "b"] "(not a) and (not b)" "not (a or b)"
-  , mkRR ["a"] "false and a" "false"
-  , mkRR ["a"] "true or a" "true"
-  , mkRR ["a"] "true and a" "a"
-  , mkRR ["a"] "a and true" "a"
-  , mkRR ["a"] "false or a" "a"
-  , mkRR ["a"] "a or false" "a"
-  , mkRR ["a", "b"] "IsUnit(a,b)" "a == b"
-  , mkRR ["u", "l"] "SetUnitState(u, UNIT_STATE_LIFE, l)" "SetWidgetLife(u, l)" -- gg, bind vs conv
-  , mkRR ["u"] "GetUnitState(u, UNIT_STATE_LIFE)" "GetWidgetLife(u)" -- gg, bind vs conv
-  , mkRR ["u", "p"] "GetOwningPlayer(u) == p" "IsUnitOwnedByPlayer(u, p)"
-  
-  -- this one seems rather nice: bind, call vs conv, lit, add but
-  -- the asm rewrite engine can reduce it to just conv
-  , mkRR ["i"] "I2R(i)" "(i+0.0)"
-  
-  , mkRR ["a", "b"] "a + (-b)" "a-b"
-  
-  -- note the lacking decimal point, as otherwise we could lose promotion
-  -- from int to real but we use the knowledge that our parser parses these as
-  -- integer literals. these rules are jass safe.
-  -- look below for normally non-safe rewrite rules.
-  , mkRR ["a"] "-1*a" "-a"
-  , mkRR ["a"] "a*-1" "-a"
-  , mkRR ["a"] "a+0" "a"
-  , mkRR ["a"] "0+a" "a"
-  , mkRR ["a"] "1*a" "a"
-  , mkRR ["a"] "a*1" "a"
-  
-  -- 1.0*a can be used in jass to promote an integer to a real, so normally
-  -- this would not be a valid rewrite rule, but the instruction compiler
-  -- inserts the correct conv instructions which allows these rules
-  , mkRR ["a"] "-1.0*a" "-a"
-  , mkRR ["a"] "a*-1.0" "-a"
-  , mkRR ["a"] "a+0.0" "a"
-  , mkRR ["a"] "0.0+a" "a"
-  , mkRR ["a"] "1.0*a" "a"
-  , mkRR ["a"] "a*1.0" "a"
-  
-  , mkRR ["a"] "a/1" "a"
-  , mkRR ["a"] "a/1.0" "a"
-  
-  , mkRR ["a"] "a/-1" "-a"
-  , mkRR ["a"] "a/-1.0" "-a"
-  ]
-  where
-    mkRR fv from to =
-      Jass.Opt.Rule
-        (Set.fromList fv)
-        (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) from)
-        (fromJust $ Mega.parseMaybe (J.expression <* Mega.eof) to)
 
 
 runtime1 :: [String]
@@ -204,7 +135,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
                <*> pAsm
     compileOptions =
         Compile <$> argument str (help "Path to common.j" <> metavar "common.j")
-                <*> some (argument str mempty)
+                <*> some (argument str (metavar "[FILE]" <> help "jass files to compile"))
                 <*> switch (long "opt-jass" <> help "Applies jass optimisations")
                 <*> switch (long "opt-asm" <> help "Applies asm optimisations")
 
@@ -264,7 +195,7 @@ mkHashMap x =
     _ -> composeFold mkHashMap x
 
 compileX o = do
-    let jass_opt = if optJass o then Jass.Opt.rewrite someJassRewriteRules else id
+    let jass_opt = if optJass o then Jass.Opt.rewrite Jass.Opt.someRules else id
         ins_opt = if optAsm o then (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules) else id
     x <- runExceptT $ do
         src <- liftIO $ readFile (commonjPath o)
@@ -290,7 +221,7 @@ compileX o = do
 
 updateX o = do
     let jhc = if processJasshelper o then JH.compile else id
-        jass_opt = Jass.Opt.rewrite someJassRewriteRules
+        jass_opt = Jass.Opt.rewrite Jass.Opt.someRules
         ins_opt = (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules)
         
     (st, hmap, typeHierachy) <- decodeFile (statePath o)
