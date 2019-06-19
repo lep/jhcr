@@ -104,7 +104,7 @@ typeOfVar v =
 lca :: Type -> Type -> CompileMonad Type
 lca a b = do
     hierachy <- asks snd
-    let t = fromMaybe (error "lca error") $ Jass.lca hierachy a b
+    let t = fromMaybe (error $ unwords ["lca error for types", a, b]) $ Jass.lca hierachy a b
     return t
 
 compileProgram :: Ast Var Programm -> CompileMonad ()
@@ -222,6 +222,10 @@ numericType "real" _ = "real"
 numericType _ "real" = "real"
 numericType a _ = a
 
+compType "string" _ = pure "string"
+compType _ "string" = pure "string"
+compType a b = lca a b
+
 compileExpr :: Ast Var Expr -> CompileMonad Register
 compileExpr e =
   case e of
@@ -271,7 +275,7 @@ compileExpr e =
     
     H.Call (Op n) [a, b] | n `elem` ["==", "!="] -> do
         let op = name2op n
-        t <- lca (typeOfExpr a) (typeOfExpr b)
+        t <- compType (typeOfExpr a) (typeOfExpr b)
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
