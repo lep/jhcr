@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 import Data.FileEmbed
 
@@ -21,7 +22,7 @@ import System.FilePath ((</>))
 import qualified Data.ByteString.Char8 as S8
 import Data.ByteString.Builder
 
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, partition)
 
 import Data.Binary (decodeFile, encodeFile)
 
@@ -397,7 +398,9 @@ initX o = do
                         
                         generated'' = replaceExecuteFunc . J.fmap H.nameOf $ addPrefix (prefix o) generated'
                         
-                        outj = concatPrograms (concatPrograms rt1' generated'') rt2'
+                        (main, rest) = extractMainAndConfig generated''
+                        
+                        outj = foldl1 concatPrograms [ rt1', rest, rt2', main]
                         
                         hmap = mkHashMap jhast
                     
@@ -419,6 +422,14 @@ initX o = do
              -- dont think valid jass would allow nested execute funcs but whatev
             $ map replaceExecuteFunc args
         _ -> composeOp replaceExecuteFunc x
+    
+    extractMainAndConfig :: J.Ast J.Name J.Programm -> (J.Ast J.Name J.Programm, J.Ast J.Name J.Programm)
+    extractMainAndConfig (J.Programm ts) =
+        let (a, b) = flip partition ts $ \case
+                        J.Function _ "main" _ _ _ -> True
+                        J.Function _ "config" _ _ _ -> True
+                        _ -> False
+        in (J.Programm a, J.Programm b)
 
 addPrefix' :: J.Name -> J.Ast J.Name a -> J.Ast J.Name a
 addPrefix' p x =

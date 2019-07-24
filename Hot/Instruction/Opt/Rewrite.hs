@@ -11,6 +11,9 @@ import qualified Data.ByteString.Lazy.Char8 as L8
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Data.DList (DList)
+import qualified Data.DList as DList
+
 import Control.Monad
 import Control.Monad.State
 
@@ -161,8 +164,8 @@ rewrite rules input = {-trace (unwords ["rewriting", show input]) $-} go mempty 
     input' :: [[Value]]
     input' = map toList input
     
-    go :: [[Value]] -> [[Value]] -> [Instruction]
-    go acc [] = map fromList acc
+    go :: DList [Value] -> [[Value]] -> [Instruction]
+    go acc [] = map fromList $ DList.toList acc
     go acc ls@(x:xs) =
         let potentialMatches = mapMaybe (matchRule ls) rules
         in case potentialMatches of
@@ -173,7 +176,7 @@ rewrite rules input = {-trace (unwords ["rewriting", show input]) $-} go mempty 
                 in go acc $ {-trace (unwords ["continuing with", show $ new <> ls']) $-} new <> ls'
             [] -> go (acc `snoc` x) xs
             
-    snoc xs x = xs ++ [x]
+    snoc = DList.snoc
 
 
 parse :: String -> [Tok]

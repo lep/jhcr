@@ -121,14 +121,14 @@ compile pr =
 
         let r :: Int -> Ast Var Stmt
             r idx = let fn = (fns' ++ fns) !! (100+idx)
-                        (v, args) = case fn of
-                            Native _ v args _ -> (Code v, args)
-                            Function _ v args _ _ -> (Code v, args)
-                            Global (SDef _ v _ _) -> (Var $ SVar v, [])
-                    in if null args
-                    then Return $ Just v
-                    else Return . Just . Code $ mkFn "DoNothing"
-                    --else Return $ Just Null
+                        (v, args, name) = case fn of
+                            Native _ v args _ -> (Code v, args, v)
+                            Function _ v args _ _ -> (Code v, args, v)
+                            --Global (SDef _ v _ _) -> (Var $ SVar v, [])
+                    in case () of
+                        _ | H.nameOf name `elem` donttouch -> Return . Just . Code $ mkFn "DoNothing"
+                          | null args -> Return $ Just v
+                          | otherwise -> Return . Just . Code $ mkFn "DoNothing"
 
 
             mkDummyFn idx =
@@ -141,6 +141,7 @@ compile pr =
         in fns' ++ [Function Normal (mkFn "_Auto_i2code") [("integer", uid)] "code" [
             bin (-100) (length fns) (Var $ SVar uid) r
         ]]
+
                     
 
     enterFunction :: [Ast Var Toplevel] -> Ast Var Toplevel
@@ -157,7 +158,8 @@ compile pr =
                                 else Call (mkFn $ "_Table_get_" <> ty) [Var bind, Int . fromString $ show pos] )
                             types [1, 2 ..]
 
-                    stmt 
+                    stmt
+                      | H.nameOf v `elem` donttouch = Call (mkFn "DoNothing") []
                       | ret == "nothing" = Call v args
                       | ret == "code"    = Call (mkFn "_Table_set_code") [Call (mkFn "_Auto_i2code") [Var scope, Var $ SVar reg, Call v args]]
                       | otherwise        = Call (mkFn $ "_Table_set_" <> ret) [Var scope, Var $ SVar reg, Call v args ]
@@ -206,6 +208,12 @@ compile pr =
                     in Return . Just . Var $ SVar v
         in Function Normal (mkFn $ "_Auto_get_global_" <> ty) [("integer", uid)] ty
             [bin 1 (length g) (Var $ SVar uid) r]
+
+    donttouch =
+      [ "main", "config", "InitCustomPlayerSlots", "SetPlayerSlotAvailable"
+      , "InitGenericPlayerSlots", "InitCustomTeams", "InitCustomTriggers"
+      , "CreateAllUnits", "InitBlizzard", "InitGlobals"
+      ]
 
 bin :: Int -> Int -> Ast Var Expr -> (Int -> Ast Var Stmt) -> Ast Var Stmt
 bin lo hi c f = go lo (hi+1)
