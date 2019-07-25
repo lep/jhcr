@@ -1,4 +1,5 @@
 // scope StringTable
+// REQUIRES Table
 
 globals
     string array _key

@@ -1,4 +1,5 @@
 // scope Table
+// REQUIRES List
 
 globals
     #include "alloc-globals.j"

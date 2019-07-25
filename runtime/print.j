@@ -1,4 +1,5 @@
 // scope Print
+// REQUIRES 
 
 function _b2s takes boolean b returns string
     if b then

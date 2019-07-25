@@ -1,4 +1,5 @@
 // scope Context
+// REQUIRES Table
 
 globals
     #include "alloc-globals.j"

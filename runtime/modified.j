@@ -1,4 +1,5 @@
 // scope Modified
+// REQUIRES Table
 
 globals
     integer _m = 0

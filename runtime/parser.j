@@ -1,4 +1,5 @@
 // scope Parser
+// REQUIRES Ins Types StringTable Modified Wrap Table
 
 globals
     constant integer _OpWidth = 2

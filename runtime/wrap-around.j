@@ -1,4 +1,5 @@
 // scope Wrap
+// REQUIRES Table StringTable
 
 globals
     integer _p = 0
