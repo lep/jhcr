@@ -62,4 +62,6 @@ init:
 clean:
 	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
 	rm -f $(HS_O) $(HS_HI)
-	rm -f jhcr convert jhcr.zip
+	rm -f Main.o Main.hi
+	rm -f convert convert.o convert.hi
+	rm -f jhcr.zip jhcr 
