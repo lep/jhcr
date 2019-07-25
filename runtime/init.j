@@ -107,6 +107,7 @@ function _init takes nothing returns nothing
     
     call TriggerAddCondition(Wrap#_t2, Condition(function _i2code))
 
+    call Types#_init()
     call Wrap#_init()
     call Convert#_init()
     call Ins#_init()

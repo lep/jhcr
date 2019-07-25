@@ -196,10 +196,17 @@ script2typehierachy x =
     Typedef a b -> singleton b [a]
     _ -> composeFold script2typehierachy x
 
-mkJassTypes :: (Semigroup var, IsString var, Foldable t) => t (Tree var) -> Ast var Programm
-mkJassTypes ty = Programm $ map mkGlobal $ concatMap allChildren ty
+mkJassTypes :: (Foldable t) => t (Tree Name) -> Ast Name Programm
+mkJassTypes ty = Programm $ init:(Global (ADef "_TypeNames" "string")):globals
   where
+    types = concatMap allChildren ty
+    
+    globals = map mkGlobal types
     mkGlobal (id, name) = Global $ SDef Const ("_" <> name) "integer" $ Just (Int $ show id)
+    
+    init = Function Normal "_init" [] "nothing" $ map mkName types
+    
+    mkName (id, name) = Set (AVar "_TypeNames" (Int $ show id)) (String name)
 
 main :: IO ()
 main = do
@@ -209,7 +216,8 @@ main = do
         Left err -> putStrLn $ errorBundlePretty err
         Right j -> do
             let base2children = getMonoidMap $ script2typehierachy j <> singleton "real" ["integer"]
-            let types@(a:b:_) = evalState (mapM (go base2children) ["handle", "real", "string", "boolean", "code", "nothing"]) 1
+            let types :: [Tree Name]
+                types@(a:b:_) = evalState (mapM (go base2children) ["handle", "real", "string", "boolean", "code", "nothing"]) 1
 
             printHaskell types
             printRuntime [a, b]
