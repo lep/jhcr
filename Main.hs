@@ -74,16 +74,22 @@ concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
 
 runtime1 :: [String]
 runtime1 = map S8.unpack
-  [ $(embedFile "out/print.j"), $(embedFile "out/types.j")
-  , $(embedFile "out/list.j"), $(embedFile "out/table.j")
-  , $(embedFile "out/stringtable.j"), $(embedFile "out/convert.j")
-  , $(embedFile "out/wrap-around.j"), $(embedFile "out/modified.j")
+  [ $(embedFile "out/print.j") -- print is used by alloc
+  , $(embedFile "out/list.j")
+  , $(embedFile "out/table.j")
+  , $(embedFile "out/stringtable.j")
+  , $(embedFile "out/types.j")
+  , $(embedFile "out/context.j")
+  , $(embedFile "out/wrap-around.j")
+  , $(embedFile "out/modified.j")
+  , $(embedFile "out/instruction.j")
   ]
 
 runtime2 :: [String]
 runtime2 = map S8.unpack
-  [ $(embedFile "out/context.j"), $(embedFile "out/instruction.j")
-  , $(embedFile "out/parser.j"), $(embedFile "out/interpreter.j")
+  [ $(embedFile "out/parser.j")
+  , $(embedFile "out/convert.j")
+  , $(embedFile "out/interpreter.j")
   , $(embedFile "out/init.j")
   ]
 
@@ -399,8 +405,9 @@ initX o = do
                         generated'' = replaceExecuteFunc . J.fmap H.nameOf $ addPrefix (prefix o) generated'
                         
                         (main, rest) = extractMainAndConfig generated''
+                        main' = injectInit main
                         
-                        outj = foldl1 concatPrograms [ rt1', rest, rt2', main]
+                        outj = foldl1 concatPrograms [ rt1', rest, rt2', main']
                         
                         hmap = mkHashMap jhast
                     
@@ -430,6 +437,15 @@ initX o = do
                         J.Function _ "config" _ _ _ -> True
                         _ -> False
         in (J.Programm a, J.Programm b)
+    
+    injectInit :: J.Ast J.Name x -> J.Ast J.Name x
+    injectInit x =
+      case x of
+        J.Function c "main" args ret body ->
+            let (locals, stmts) = partition J.isLocal body
+                call = J.Call (prefix o <> "_Init_init") []
+            in J.Function c "main" args ret $ locals <> (call:stmts)
+        _ -> composeOp injectInit x
 
 addPrefix' :: J.Name -> J.Ast J.Name a -> J.Ast J.Name a
 addPrefix' p x =

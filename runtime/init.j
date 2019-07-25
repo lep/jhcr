@@ -6,6 +6,8 @@ globals
     
     integer array _g_ids
     constant integer _g_max = 9
+    
+    boolean _already_init = false
 endglobals
 
 function _parse takes nothing returns nothing
@@ -61,6 +63,11 @@ endfunction
 
 
 function _init takes nothing returns nothing
+    if _already_init then
+        return
+    endif
+    set _already_init = true
+    
     set _fn_ids[1] = 'Agyv'
     set _fn_ids[2] = 'Aflk'
     set _fn_ids[3] = 'Agyb'

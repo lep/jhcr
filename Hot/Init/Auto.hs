@@ -124,7 +124,6 @@ compile pr =
                         (v, args, name) = case fn of
                             Native _ v args _ -> (Code v, args, v)
                             Function _ v args _ _ -> (Code v, args, v)
-                            --Global (SDef _ v _ _) -> (Var $ SVar v, [])
                     in case () of
                         _ | H.nameOf name `elem` donttouch -> Return . Just . Code $ mkFn "DoNothing"
                           | null args -> Return $ Just v
