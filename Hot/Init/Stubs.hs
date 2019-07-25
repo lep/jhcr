@@ -58,15 +58,15 @@ stubifyFn e =
             body' =  sets <> binds <> [call] <> maybeToList set <> [flush, ret]
 
 
-        in [ Function c ("_" ## n) args retty  $ map (rename n) body
+        in [ Function c ("_Auto_" ## n) args retty  $ map (rename n) body
         , Function c n args retty $ maybeToList ldef <> [
             localTbl,
             If (Call (mkFn "_Modified_modified") [Int $ getId' n])
                   body'
                 [] (Just [
                   if retty == "nothing"
-                  then Call ("_" ## n) $ map (Var . SVar . snd) args
-                  else Return . Just $ Call ("_" ## n) $ map (Var . SVar . snd) args
+                  then Call ("_Auto_" ## n) $ map (Var . SVar . snd) args
+                  else Return . Just $ Call ("_Auto_" ## n) $ map (Var . SVar . snd) args
                 ])
           ]
         ]
@@ -89,4 +89,4 @@ stubifyFn e =
         Code n -> Code $ r n
         _ -> composeOp (rename v) x
       where
-        r n = if n == v then "_" ## n else n
+        r n = if n == v then "_Auto_" ## n else n
