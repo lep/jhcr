@@ -251,9 +251,9 @@ updateX o = do
                 ast'' = H.jass2hot ast'
 
             forM_ nameU $ \n ->
-                hPutStrLn stderr $ unwords ["Updating function", n]
+                hPutStrLn stdout $ unwords ["Updating function", n]
 
-            hPutStrLn stderr "Writing bytecode"
+            hPutStrLn stdout "Writing bytecode"
         
             let fnsCompiled = ins_opt $ Ins.compile typeHierachy ast''
                 gCompiled = ins_opt $ Ins.compileGlobals typeHierachy $ H.globals2statements ast'
@@ -279,9 +279,9 @@ updateX o = do
                     hFlush cfd
                     hClose cfd
 
-                    hPutStrLn stderr "Writing state file"
+                    hPutStrLn stdout "Writing state file"
                     encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy)
-                    hPutStrLn stderr "Ok."
+                    hPutStrLn stdout "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
     isUpdated old new x =
@@ -371,7 +371,7 @@ initX o = do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
         Right (prelude, rt1, rt2) -> do
-            hPutStrLn stderr "Initializing...."
+            hPutStrLn stdout "Initializing...."
             
             let rt1' = addPrefix' (prefix o) rt1
                 rt2' = addPrefix' (prefix o) rt2
@@ -411,16 +411,16 @@ initX o = do
                         
                         hmap = mkHashMap jhast
                     
-                    hPutStrLn stderr "Writing state file"
+                    hPutStrLn stdout "Writing state file"
                     encodeFile (statePath o) (st', hmap, typeHierachy)
 
-                    hPutStrLn stderr "Writing map script"
+                    hPutStrLn stdout "Writing map script"
                     jh <- openBinaryFile (outjPath o) WriteMode
                     hPutBuilder jh $ J.pretty outj
                     hFlush jh
                     hClose jh
 
-                    hPutStrLn stderr "Ok."
+                    hPutStrLn stdout "Ok."
   where
     replaceExecuteFunc :: J.Ast J.Name x -> J.Ast J.Name x
     replaceExecuteFunc x =
