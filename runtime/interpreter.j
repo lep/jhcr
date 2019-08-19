@@ -18,14 +18,14 @@ function _step takes integer ctx returns integer
         #undef macro
         
     elseif t == Ins#_SetLocalArray then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op] + Ins@_a2[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
+        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op] + Table@_get_integer(Context@_locals[ctx], Ins@_a2[op]), Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
     
     elseif t == Ins#_GetLocalArray then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op] + Ins@_a3[op]))
+        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op] + Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
         #define ty Ins#_type[op]
         #include "g-type-bin.j"
         #undef ty

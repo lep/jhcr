@@ -44,6 +44,7 @@ data RenameVariablesState = RenameVariablesState
     { _globalScope :: Map Name Var
     , _globalCount :: Map (Type, IsArray) Int32
     , _localScope :: Map Name Var
+    , _localCount :: Int32
     , _fnScope :: Map Name Var
     , _newFnCount :: Int32
     } deriving (Generic)
@@ -52,7 +53,7 @@ makeLenses ''RenameVariablesState
 instance Binary RenameVariablesState
 
 defaultRenameVariableState :: RenameVariablesState
-defaultRenameVariableState = RenameVariablesState mempty mempty mempty mempty 0
+defaultRenameVariableState = RenameVariablesState mempty mempty mempty 1 mempty 0
 
 
 newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, Type -> Type) (State RenameVariablesState) a }
@@ -72,8 +73,9 @@ addLocal name ty isArray = do
     case v' of
         Just v -> return v
         Nothing -> do
-            let successor = if isArray then (+32768) else (+1)
-            id <- uses localScope (fromIntegral . successor . Map.size)
+            let idf = if isArray then (+32768) else succ
+            id <- use localCount
+            localCount %= idf
             let v = H.Local name (f ty) isArray id
             localScope %= (at name ?~ v)
             return v
