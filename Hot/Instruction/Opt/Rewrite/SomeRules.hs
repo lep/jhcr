@@ -307,6 +307,14 @@ removeSetToZero =
     [ "neg type 0 a"
     , "ret type"
     ]
+  
+  , [ "gg type t a"
+    , "set type 0 t"
+    , "ret type"
+    ] -->
+    [ "gg type 0 a"
+    , "ret type"
+    ]
   ]
 
 removeNoOps =
