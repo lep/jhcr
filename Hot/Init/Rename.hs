@@ -68,7 +68,7 @@ compile' m f = compile m f defaultRenameVariableState
 
 addLocal :: Name -> Type -> IsArray -> RenameVariablesM Var
 addLocal name ty isArray = do
-    v' <- uses globalScope $ Map.lookup name
+    v' <- uses localScope $ Map.lookup name
     f <- asks snd
     case v' of
         Just v -> return v
@@ -141,7 +141,9 @@ getVar n = do
 
 
 enter :: RenameVariablesM ()
-enter = localScope .= mempty
+enter = do
+    localScope .= mempty
+    localCount .= 1
 
 {-
 This renames all functions, globals and locals.
