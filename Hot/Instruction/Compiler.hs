@@ -318,10 +318,11 @@ compileExpr e =
         typedGet t r
 
 
-    Int _ -> do
+    Int val -> do
         r <- newRegister
         t <- asks fst
-        emit $ Literal t r e
+        let e' = if t == "real" then Real $ fromIntegral val else e
+        emit $ Literal t r e'
         return r
 
     Real _ -> do

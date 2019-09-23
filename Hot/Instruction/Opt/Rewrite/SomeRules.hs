@@ -258,6 +258,30 @@ algebraic =
     , "div real t a %l"
     ] -->
     [ "set real t a"]
+    
+    -- v*2 = 2*v = v+v
+    -- for integers
+  , [ "lit integer %t i'2"
+    , "mul integer r s %t"
+    ] -->
+    [ "add integer r s s"]
+    
+  , [ "lit integer %t i'2"
+    , "mul integer r %t s"
+    ] -->
+    [ "add integer r s s"]
+  
+    -- and for reals
+  , [ "lit real %t r'2"
+    , "mul real x s %t"
+    ] -->
+    [ "add real x s s"]
+    
+  , [ "lit real %t r'2"
+    , "mul real x %t s"
+    ] -->
+    [ "add real x s s"]
+
   ]
 
 removeComputeToZero =
