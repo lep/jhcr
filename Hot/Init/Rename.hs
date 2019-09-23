@@ -137,7 +137,7 @@ getVar n = do
    let g = First $ Map.lookup n gt
    let f = First $ Map.lookup n fn
    let l = First $ Map.lookup n lt
-   return . fromMaybe (error $ show n) . getFirst $ l <> g <> f
+   return . fromMaybe (error $ "Error: Unknown name " <> show n) . getFirst $ l <> g <> f
 
 
 enter :: RenameVariablesM ()
