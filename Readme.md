@@ -36,9 +36,9 @@ have to extract and insert the war3map.j yourself.
 
 ## Map Preparation
 
-The runtime has to get initialized. Use `call ExecuteFunc("JHCR_Init_init")`
-for example at 0 elapsed game time. To load updates to the mapscript
-use `call ExecuteFunc("JHCR_Init_parse")` when appropiate. I use pressing escape.
+To load updates to the mapscript use `call ExecuteFunc("JHCR_Init_parse")` 
+when appropiate. I use pressing escape. Do this after you've done an `update`
+like above.
 
 
 ## Building JHCR
