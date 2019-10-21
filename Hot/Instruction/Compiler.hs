@@ -72,26 +72,32 @@ isBooleanOp x = x `elem` (["==", "!=", "<", "<=", ">", ">=", "and", "or"] :: [Na
 code2int "code" = "integer"
 code2int x      = x
 
-typeOfExpr :: Ast Var Expr -> Type
+typeOfExpr :: Ast Var Expr -> CompileMonad Type
 typeOfExpr e =
   case e of
     H.Call (Op "-") [a] -> typeOfExpr a
-    H.Call (Op "not") [_] -> "boolean"
+    H.Call (Op "not") [_] -> pure "boolean"
     H.Call (Op o) [a, b]
-        | isBooleanOp o -> "boolean"
-        | otherwise -> numericType (typeOfExpr a) (typeOfExpr b)
-    H.Call n _ -> typeOfVar n
-    Var (SVar v) -> typeOfVar v
-    Var (AVar v _) -> typeOfVar v
+        | isBooleanOp o -> pure "boolean"
+        | otherwise -> numericType <$> (typeOfExpr a) <*> (typeOfExpr b)
+    H.Call n _ -> pure $ typeOfVar n
+    Var (SVar v) -> pure $ typeOfVar v
+    Var (AVar v _) -> pure $ typeOfVar v
 
     -- we might not need this since all code references are now integers...
-    Code{} -> "integer" 
+    Code{} -> pure "integer" 
 
-    Int{} -> "integer"
-    Real{} -> "real"
-    Bool{} -> "boolean"
-    String{} -> "string"
-    Null -> "handle"
+    --Int{} -> "integer"
+    Int{} -> do
+        wanted <- asks fst
+        if wanted == "real"
+        then pure "real"
+        else pure "integer"
+        
+    Real{} -> pure "real"
+    Bool{} -> pure "boolean"
+    String{} -> pure "string"
+    Null -> pure "handle"
 
 typeOfVar :: Var -> Type
 typeOfVar v =
@@ -226,6 +232,9 @@ compType "string" _ = pure "string"
 compType _ "string" = pure "string"
 compType a b = lca a b
 
+bind2 :: Monad m => (a -> b -> m c) -> m a -> m b -> m c
+bind2 f x y = liftM2 (,) x y >>= uncurry f
+
 compileExpr :: Ast Var Expr -> CompileMonad Register
 compileExpr e =
   case e of
@@ -238,8 +247,9 @@ compileExpr e =
     H.Call (Op "-") [a] -> do
         r <- newRegister
         t <- compileExpr a
-        emit $ Negate (typeOfExpr a) r t
-        typedGet (typeOfExpr a) r
+        ta <- typeOfExpr a
+        emit $ Negate ta r t
+        typedGet ta r
 
     H.Call (Op "or") [a, b] -> do
         r <- newRegister
@@ -266,7 +276,7 @@ compileExpr e =
     
     H.Call (Op n) [a, b] | n `elem` ["<", "<=", ">", ">="] -> do
         let op = name2op n
-        let t = numericType (typeOfExpr a) (typeOfExpr b)
+        t <- numericType <$> (typeOfExpr a) <*> (typeOfExpr b)
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
@@ -275,7 +285,7 @@ compileExpr e =
     
     H.Call (Op n) [a, b] | n `elem` ["==", "!="] -> do
         let op = name2op n
-        t <- compType (typeOfExpr a) (typeOfExpr b)
+        t <- bind2 compType (typeOfExpr a) (typeOfExpr b)
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
@@ -284,7 +294,7 @@ compileExpr e =
 
     H.Call (Op n) [a, b] | n `elem` ["+", "-", "*", "/", "%"] -> do
         let op = name2op n
-        let t = numericType (typeOfExpr a) (typeOfExpr b)
+        t <- numericType <$> (typeOfExpr a) <*> (typeOfExpr b)
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
