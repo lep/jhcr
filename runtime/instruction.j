@@ -89,15 +89,15 @@ function _toString takes integer _ins returns string
         return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == _Lit then
         if _type[_ins] == Types#_string then
-            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ (_string[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ (_string[_ins]) )
         elseif _type[_ins] == Types#_integer then
-            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_integer[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_integer[_ins]) )
         elseif _type[_ins] == Types#_real then
-            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]]  +" "+ R2S(_real[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ R2S(_real[_ins]) )
         elseif _type[_ins] == Types#_boolean then
-            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ Print#_b2s(_boolean[_ins]) )
+            return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" "+ Print#_b2s(_boolean[_ins]) )
         else
-            return _OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" null"
+            return _OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) +" null"
         endif
     elseif _op[_ins] == _Call then
         return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
