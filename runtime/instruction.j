@@ -133,9 +133,9 @@ function _destroy takes integer _ins returns nothing
     endloop
 endfunction
 
-function _print takes integer i returns nothing
+function _print takes integer _i returns nothing
     //call Print#_print(I2S(_op[_ins]) +" "+ I2S(_type[_ins]) +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) +" "+ I2S(_a3[_ins]))
-    call Print#_print(_toString(i))
+    call Print#_print(_toString(_i))
 endfunction
 
 function _init takes nothing returns nothing

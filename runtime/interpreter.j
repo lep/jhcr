@@ -2,280 +2,280 @@
 // REQUIRES Types Context Ins Table Parser Auto Wrap Convert
 
 // _step :: Context -> IO Context
-function _step takes integer ctx returns integer
-    local integer op = Context#_pc[ctx]
-    local integer t = Ins#_op[op]
-    local integer tmp
-    local integer fn
+function _step takes integer _ctx returns integer
+    local integer _op = Context#_pc[_ctx]
+    local integer _t = Ins#_op[_op]
+    local integer _tmp
+    local integer _fn
     
-    //call Print#_log(Ins#_toString(op))
+    //call Print#_log(Ins#_toString(_op))
     
-    if t == Ins#_Set then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
-        #define ty Ins#_type[op]
+    if _t == Ins#_Set then
+        #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]))
+        #define ty Ins#_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
         
-    elseif t == Ins#_SetLocalArray then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op] + Table@_get_integer(Context@_locals[ctx], Ins@_a2[op]), Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
-        #define ty Ins#_type[op]
+    elseif _t == Ins#_SetLocalArray then
+        #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op] + Table@_get_integer(Context@_locals[_ctx], Ins@_a2[_op]), Table@_get_##ty(Context@_locals[_ctx], Ins@_a3[_op]))
+        #define ty Ins#_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
     
-    elseif t == Ins#_GetLocalArray then
-        #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op] + Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
-        #define ty Ins#_type[op]
+    elseif _t == Ins#_GetLocalArray then
+        #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op] + Table@_get_integer(Context@_locals[_ctx], Ins@_a3[_op])))
+        #define ty Ins#_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
 
-    elseif t == Ins#_Lt then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) < Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]))
+    elseif _t == Ins#_Lt then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) < Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]))
         else
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) < Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real(Context#_locals[_ctx], Ins#_a2[_op]) < Table#_get_real(Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Le then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) <= Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Le then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) <= Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) <= Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real(Context#_locals[_ctx], Ins#_a2[_op]) <= Table#_get_real(Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Gt then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) > Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Gt then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) > Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real   (Context#_locals[ctx], Ins#_a2[op]) > Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real   (Context#_locals[_ctx], Ins#_a2[_op]) > Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Ge then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) >= Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Ge then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) >= Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Table#_get_real(Context#_locals[ctx], Ins#_a2[op]) >= Table#_get_real(Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real(Context#_locals[_ctx], Ins#_a2[_op]) >= Table#_get_real(Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Eq then
-        #define macro(ty) Table@_set_boolean(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]) == Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
-        #define ty Ins@_type[op]
+    elseif _t == Ins#_Eq then
+        #define macro(ty) Table@_set_boolean(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]) == Table@_get_##ty(Context@_locals[_ctx], Ins@_a3[_op]))
+        #define ty Ins@_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
         
-    elseif t == Ins#_Neq then
-        #define macro(ty) Table@_set_boolean(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]) != Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
-        #define ty Ins@_type[op]
+    elseif _t == Ins#_Neq then
+        #define macro(ty) Table@_set_boolean(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]) != Table@_get_##ty(Context@_locals[_ctx], Ins@_a3[_op]))
+        #define ty Ins@_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
         
-    elseif t == Ins#_Add then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) + Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
-        elseif Ins#_type[op] == Types#_real then
-            call Table#_set_real   (Context#_locals[ctx], Ins#_a1[op], Table#_get_real   (Context#_locals[ctx], Ins#_a2[op]) + Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Add then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) + Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
+        elseif Ins#_type[_op] == Types#_real then
+            call Table#_set_real   (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real   (Context#_locals[_ctx], Ins#_a2[_op]) + Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_string (Context#_locals[ctx], Ins#_a1[op], Table#_get_string (Context#_locals[ctx], Ins#_a2[op]) + Table#_get_string (Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_string (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_string (Context#_locals[_ctx], Ins#_a2[_op]) + Table#_get_string (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Sub then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) - Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Sub then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_integer (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) - Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real   (Context#_locals[ctx], Ins#_a2[op]) - Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real   (Context#_locals[_ctx], Ins#_a2[_op]) - Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Mul then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer  (Context#_locals[ctx], Ins#_a2[op]) * Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Mul then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_integer (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer  (Context#_locals[_ctx], Ins#_a2[_op]) * Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real     (Context#_locals[ctx], Ins#_a2[op]) * Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real     (Context#_locals[_ctx], Ins#_a2[_op]) * Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
-    elseif t == Ins#_Div then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], Table#_get_integer  (Context#_locals[ctx], Ins#_a2[op]) / Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Div then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_integer (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer  (Context#_locals[_ctx], Ins#_a2[_op]) / Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], Table#_get_real     (Context#_locals[ctx], Ins#_a2[op]) / Table#_get_real   (Context#_locals[ctx], Ins#_a3[op]))
+            call Table#_set_real    (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real     (Context#_locals[_ctx], Ins#_a2[_op]) / Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
-    elseif t == Ins#_Mod then
-        call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Table#_get_integer(Context#_locals[ctx], Ins#_a2[op]) % Table#_get_integer(Context#_locals[ctx], Ins#_a3[op]))
+    elseif _t == Ins#_Mod then
+        call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) % Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         
-    elseif t == Ins#_Not then
-        call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], not Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]))
+    elseif _t == Ins#_Not then
+        call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], not Table#_get_boolean(Context#_locals[_ctx], Ins#_a2[_op]))
         
-    elseif t == Ins#_Negate then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer (Context#_locals[ctx], Ins#_a1[op], -Table#_get_integer (Context#_locals[ctx], Ins#_a2[op]))
+    elseif _t == Ins#_Negate then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_integer (Context#_locals[_ctx], Ins#_a1[_op], -Table#_get_integer (Context#_locals[_ctx], Ins#_a2[_op]))
         else
-            call Table#_set_real    (Context#_locals[ctx], Ins#_a1[op], -Table#_get_real    (Context#_locals[ctx], Ins#_a2[op]))
+            call Table#_set_real    (Context#_locals[_ctx], Ins#_a1[_op], -Table#_get_real    (Context#_locals[_ctx], Ins#_a2[_op]))
         endif
         
-    elseif t == Ins#_Label then
+    elseif _t == Ins#_Label then
         // do nothing
         
-    elseif t == Ins#_Jmp then
-        set Context#_pc[ctx] = Ins#_next[Table#_get_integer(Context#_labels[ctx], Ins#_a1[op])]
-        return ctx
+    elseif _t == Ins#_Jmp then
+        set Context#_pc[_ctx] = Ins#_next[Table#_get_integer(Context#_labels[_ctx], Ins#_a1[_op])]
+        return _ctx
         
-    elseif t == Ins#_JmpT then
-        if Table#_get_boolean(Context#_locals[ctx], Ins#_a2[op]) then
-            set Context#_pc[ctx] = Table#_get_integer(Context#_labels[ctx], Ins#_a1[op])
-            return ctx
+    elseif _t == Ins#_JmpT then
+        if Table#_get_boolean(Context#_locals[_ctx], Ins#_a2[_op]) then
+            set Context#_pc[_ctx] = Table#_get_integer(Context#_labels[_ctx], Ins#_a1[_op])
+            return _ctx
         endif
         
-    elseif t == Ins#_Ret then
-        #define macro(ty) Table@_set_##ty(Context@_locals[Context@_parent[ctx]], Ins@_a1[Context@_pc[Context@_parent[ctx]]], Table@_get_##ty(Context@_locals[ctx], 0))
-        #define ty Ins@_type[op]
+    elseif _t == Ins#_Ret then
+        #define macro(ty) Table@_set_##ty(Context@_locals[Context@_parent[_ctx]], Ins@_a1[Context@_pc[Context@_parent[_ctx]]], Table@_get_##ty(Context@_locals[_ctx], 0))
+        #define ty Ins@_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
         
-        set tmp = ctx
-        set ctx = Context#_parent[ctx]
-        call Table#_destroy(Context#_bindings[tmp])
-        call Context#_free(tmp)
+        set _tmp = _ctx
+        set _ctx = Context#_parent[_ctx]
+        call Table#_destroy(Context#_bindings[_tmp])
+        call Context#_free(_tmp)
         
-    elseif t == Ins#_Call then
-        set fn = Ins#_a2[op]
-        if fn < 0 or Modified@_modified(fn) then
+    elseif _t == Ins#_Call then
+        set _fn = Ins#_a2[_op]
+        if _fn < 0 or Modified@_modified(_fn) then
             // newly defined or reloaded function
             
-            set tmp = Context#_alloc()
+            set _tmp = Context#_alloc()
             
-            set Context#_parent[tmp]   = ctx
-            set Context#_pc[tmp]       = Parser#_fn_entry[fn + 100]
-            set Context#_labels[tmp]   = Parser#_fn_labels[fn + 100]
-            set Context#_locals[tmp]   = Context#_bindings[ctx]
-            set Context#_bindings[tmp] = Table#_alloc()
+            set Context#_parent[_tmp]   = _ctx
+            set Context#_pc[_tmp]       = Parser#_fn_entry[_fn + 100]
+            set Context#_labels[_tmp]   = Parser#_fn_labels[_fn + 100]
+            set Context#_locals[_tmp]   = Context#_bindings[_ctx]
+            set Context#_bindings[_tmp] = Table#_alloc()
             
-            return tmp
-        elseif fn > 0 then
+            return _tmp
+        elseif _fn > 0 then
             // auto generated call for pre-defined functions
-            call Auto#_call_predefined(Ins#_a1[op], fn, ctx)
+            call Auto#_call_predefined(Ins#_a1[_op], _fn, _ctx)
             
         endif
 
-    elseif t == Ins#_Bind then // should be same as Set except different target table
-        #define macro(ty) Table@_set_##ty(Context@_bindings[ctx], Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
-        #define ty Ins#_type[op]
+    elseif _t == Ins#_Bind then // should be same as Set except different target table
+        #define macro(ty) Table@_set_##ty(Context@_bindings[_ctx], Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]))
+        #define ty Ins#_type[_op]
         #include "g-type-bin.j"
         #undef ty
         #undef macro
  
-    elseif t == Ins#_SetGlobal then
-        if Ins#_a1[op] > 0 then
-            #define macro(ty) Auto@_set_global_##ty(Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
-            #define ty Ins#_type[op]
+    elseif _t == Ins#_SetGlobal then
+        if Ins#_a1[_op] > 0 then
+            #define macro(ty) Auto@_set_global_##ty(Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         else
-            #define macro(ty) Table@_set_##ty(Modified@_globals, Ins@_a1[op], Table@_get_##ty(Context@_locals[ctx], Ins@_a2[op]))
-            #define ty Ins#_type[op]
+            #define macro(ty) Table@_set_##ty(Modified@_globals, Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         endif
 
-    elseif t == Ins#_GetGlobal then
-        if Ins#_a2[op] > 0 then
-            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_get_global_##ty(Ins@_a2[op]))
-            #define ty Ins#_type[op]
+    elseif _t == Ins#_GetGlobal then
+        if Ins#_a2[_op] > 0 then
+            #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Auto@_get_global_##ty(Ins@_a2[_op]))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef macro
         else
-            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Modified@_globals, Ins@_a2[op]))
-            #define ty Ins#_type[op]
+            #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Modified@_globals, Ins@_a2[_op]))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         endif
 
-    elseif t == Ins#_SetGlobalArray then
-        if Ins#_a1[op] > 0 then
-            #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[op], Table@_get_integer(Context@_locals[ctx], Ins@_a2[op]), Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
-            #define ty Ins#_type[op]
+    elseif _t == Ins#_SetGlobalArray then
+        if Ins#_a1[_op] > 0 then
+            #define macro(ty) Auto@_array_set_global_##ty(Ins@_a1[_op], Table@_get_integer(Context@_locals[_ctx], Ins@_a2[_op]), Table@_get_##ty(Context@_locals[_ctx], Ins@_a3[_op]))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         else
-            #define macro(ty) Table@_set_##ty(Modified@_globals, Ins@_a1[op] - Table@_get_integer(Context@_locals[ctx], Ins@_a2[op]), Table@_get_##ty(Context@_locals[ctx], Ins@_a3[op]))
-            #define ty Ins#_type[op]
+            #define macro(ty) Table@_set_##ty(Modified@_globals, Ins@_a1[_op] - Table@_get_integer(Context@_locals[_ctx], Ins@_a2[_op]), Table@_get_##ty(Context@_locals[_ctx], Ins@_a3[_op]))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         endif
 
-    elseif t == Ins#_GetGlobalArray then
-        if Ins#_a2[op] > 0 then
-            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Auto@_array_get_global_##ty(Ins@_a2[op], Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
-            #define ty Ins#_type[op]
+    elseif _t == Ins#_GetGlobalArray then
+        if Ins#_a2[_op] > 0 then
+            #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Auto@_array_get_global_##ty(Ins@_a2[_op], Table@_get_integer(Context@_locals[_ctx], Ins@_a3[_op])))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         else
-            #define macro(ty) Table@_set_##ty(Context@_locals[ctx], Ins@_a1[op], Table@_get_##ty(Modified@_globals, Ins@_a2[op] - Table@_get_integer(Context@_locals[ctx], Ins@_a3[op])))
-            #define ty Ins#_type[op]
+            #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Modified@_globals, Ins@_a2[_op] - Table@_get_integer(Context@_locals[_ctx], Ins@_a3[_op])))
+            #define ty Ins#_type[_op]
             #include "g-type-bin.j"
             #undef ty
             #undef macro
         endif
 
-    elseif t == Ins#_Lit then
-        if Ins#_type[op] == Types#_integer then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Ins#_integer[op])
+    elseif _t == Ins#_Lit then
+        if Ins#_type[_op] == Types#_integer then
+            call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], Ins#_integer[_op])
             
-        elseif Ins#_type[op] == Types#_real then
-            call Table#_set_real(Context#_locals[ctx], Ins#_a1[op], Ins#_real[op])
+        elseif Ins#_type[_op] == Types#_real then
+            call Table#_set_real(Context#_locals[_ctx], Ins#_a1[_op], Ins#_real[_op])
             
-        elseif Ins#_type[op] == Types#_string then
-            call Table#_set_string(Context#_locals[ctx], Ins#_a1[op], Ins#_string[op])
+        elseif Ins#_type[_op] == Types#_string then
+            call Table#_set_string(Context#_locals[_ctx], Ins#_a1[_op], Ins#_string[_op])
         
-        elseif Ins#_type[op] == Types#_boolean then
-            call Table#_set_boolean(Context#_locals[ctx], Ins#_a1[op], Ins#_boolean[op])
+        elseif Ins#_type[_op] == Types#_boolean then
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Ins#_boolean[_op])
             
-        elseif Ins#_type[op] == Types#_code then
-            call Table#_set_integer(Context#_locals[ctx], Ins#_a1[op], Ins#_integer[op])
+        elseif Ins#_type[_op] == Types#_code then
+            call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], Ins#_integer[_op])
         else // null
             // dont like how we use tables global, but whatev
-            call RemoveSavedHandle(Table#_ht, Context#_locals[ctx], Ins#_a1[op])
+            call RemoveSavedHandle(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
         endif
-    elseif t == Ins#_Convert then
-        call Convert#_convert(Ins#_type[op], Ins#_a1[op], Ins#_a2[op], Ins#_a3[op], ctx)
+    elseif _t == Ins#_Convert then
+        call Convert#_convert(Ins#_type[_op], Ins#_a1[_op], Ins#_a2[_op], Ins#_a3[_op], _ctx)
     endif
     
-    set Context#_pc[ctx] = Ins#_next[Context#_pc[ctx]]
-    return ctx
+    set Context#_pc[_ctx] = Ins#_next[Context#_pc[_ctx]]
+    return _ctx
 endfunction
 
 
 function _start_interpreter_wrap takes nothing returns boolean
-    local integer ctx = Context#_alloc()
-    local integer parent = Context#_alloc()
+    local integer _ctx = Context#_alloc()
+    local integer _parent = Context#_alloc()
 
-    set Context#_pc[ctx]       = Parser#_fn_entry[Wrap#_p + 100]
-    set Context#_parent[ctx]   = parent
-    set Context#_labels[ctx]   = Parser#_fn_labels[Wrap#_p + 100]
-    set Context#_locals[ctx]   = Wrap#_args
-    set Context#_bindings[ctx] = Table#_alloc()
+    set Context#_pc[_ctx]       = Parser#_fn_entry[Wrap#_p + 100]
+    set Context#_parent[_ctx]   = _parent
+    set Context#_labels[_ctx]   = Parser#_fn_labels[Wrap#_p + 100]
+    set Context#_locals[_ctx]   = Wrap#_args
+    set Context#_bindings[_ctx] = Table#_alloc()
     
-    set Context#_pc[parent]     = 0
-    set Context#_labels[parent] = 0
-    set Context#_locals[parent] = Wrap#_args
-    set Context#_parent[parent] = 0
+    set Context#_pc[_parent]     = 0
+    set Context#_labels[_parent] = 0
+    set Context#_locals[_parent] = Wrap#_args
+    set Context#_parent[_parent] = 0
 
     
     loop
-    exitwhen ctx == parent
-        set ctx = _step(ctx)
+    exitwhen _ctx == _parent
+        set _ctx = _step(_ctx)
     endloop
 
-    call Context#_free(parent)
+    call Context#_free(_parent)
     return true
 endfunction
 
