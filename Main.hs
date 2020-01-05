@@ -100,7 +100,6 @@ data Options =
          , processJasshelper :: Bool
          , statePath :: FilePath
          , outjPath :: FilePath
-         , prefix :: String
          }
   | Update { inputjPath :: FilePath
            , preloadPath :: FilePath
@@ -133,7 +132,6 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
              <*> pJasshelper
              <*> pState
              <*> pOutWar3Map
-             <*> pPrefix
     updateOptions =
         Update <$> pWar3Map
                <*> pPreload
@@ -159,12 +157,6 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
         <> metavar "FILE"
         <> value "jhcr_war3map.j"
         <> help "Where to write the compiled mapscript"
-        <> showDefault
-        )
-    pPrefix = strOption
-        (  long "prefix"
-        <> value "JHCR"
-        <> help "Prefix for the runtime jass functions"
         <> showDefault
         )
     pState = strOption  
@@ -373,8 +365,8 @@ initX o = do
         Right (prelude, rt1, rt2) -> do
             hPutStrLn stdout "Initializing...."
             
-            let rt1' = addPrefix' (prefix o) rt1
-                rt2' = addPrefix' (prefix o) rt2
+            let rt1' = addPrefix' "JHCR" rt1
+                rt2' = addPrefix' "JHCR" rt2
 
             let (prelude', st) = Rename.compile' Rename.Init id prelude
                 typeHierachy = LCA.child2parent prelude
@@ -402,7 +394,7 @@ initX o = do
                         generated' :: J.Ast H.Var H.Programm
                         generated' = foldr1 concatPrograms $ stubs:generated
                         
-                        generated'' = replaceExecuteFunc . J.fmap H.nameOf $ addPrefix (prefix o) generated'
+                        generated'' = replaceExecuteFunc . J.fmap H.nameOf $ addPrefix "JHCR" generated'
                         
                         (main, rest) = extractMainAndConfig generated''
                         main' = injectInit main
@@ -425,7 +417,7 @@ initX o = do
     replaceExecuteFunc :: J.Ast J.Name x -> J.Ast J.Name x
     replaceExecuteFunc x =
       case x of
-        J.Call "ExecuteFunc" args -> J.Call (prefix o <> "_Wrap_ExecuteFunc")
+        J.Call "ExecuteFunc" args -> J.Call ("JHCR" <> "_Wrap_ExecuteFunc")
              -- dont think valid jass would allow nested execute funcs but whatev
             $ map replaceExecuteFunc args
         _ -> composeOp replaceExecuteFunc x
@@ -443,7 +435,7 @@ initX o = do
       case x of
         J.Function c "main" args ret body ->
             let (locals, stmts) = partition J.isLocal body
-                call = J.Call (prefix o <> "_Init_init") []
+                call = J.Call ("JHCR" <> "_Init_init") []
             in J.Function c "main" args ret $ locals <> (call:stmts)
         _ -> composeOp injectInit x
 
