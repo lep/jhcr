@@ -227,6 +227,7 @@ main = do
     printJassTypes ty = do
         f <- openFile "runtime/types.j" WriteMode
         hPutStrLn f "// scope Types"
+        hPutStrLn f "// REQUIRES "
         hPutBuilder f . pretty $ mkJassTypes ty
         hClose f
 
@@ -253,6 +254,7 @@ main = do
     printRuntime ty = do
         f <- openFile "runtime/convert.j" WriteMode
         hPutStrLn f "// scope Convert"
+        hPutStrLn f "// REQUIRES Table Context"
         hPutBuilder f . pretty $ Programm
             [ Global (ADef "_toTypeOffset" "integer")
             , convert ty
