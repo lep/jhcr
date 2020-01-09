@@ -145,7 +145,7 @@ compile pr =
 
     enterFunction :: [Ast Var Toplevel] -> Ast Var Toplevel
     enterFunction fns =
-        let reg = mkLocal "reg"
+        let reg = mkLocal "_reg"
             r idx =
                 let fn = fns !! pred idx
                     v@(H.Fn _ types ret _) = case fn of

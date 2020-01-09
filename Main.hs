@@ -111,6 +111,7 @@ data Options =
              , inputPaths :: [FilePath]
              , optJass :: Bool
              , optAsm :: Bool
+             , showSerialize :: Bool
              }
     deriving (Show)
 
@@ -143,6 +144,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
                 <*> some (argument str (metavar "[FILE]" <> help "jass files to compile"))
                 <*> switch (long "opt-jass" <> help "Applies jass optimisations")
                 <*> switch (long "opt-asm" <> help "Applies asm optimisations")
+                <*> switch (long "show-serialize" <> help "Show serialized asm")
 
     pJasshelper = switch
       (  long "jasshelper" 
@@ -216,6 +218,10 @@ compileX o = do
                 prog' = H.jass2hot . fst $ Rename.compile Rename.Init id st prog
                 asm = ins_opt $ Ins.compile typeHierachy prog'
             hPutBuilder stdout $ Ins.serializeAsm asm
+            when (showSerialize o) $ do
+                putStrLn ""
+                forM_ (Ins.serializeChunked 700 asm) $ \s ->
+                    putStrLn s
             
 
 updateX o = do
@@ -243,9 +249,9 @@ updateX o = do
                 ast'' = H.jass2hot ast'
 
             forM_ nameU $ \n ->
-                hPutStrLn stdout $ unwords ["Updating function", n]
+                putStrLn $ unwords ["Updating function", n]
 
-            hPutStrLn stdout "Writing bytecode"
+            putStrLn "Writing bytecode"
         
             let fnsCompiled = ins_opt $ Ins.compile typeHierachy ast''
                 gCompiled = ins_opt $ Ins.compileGlobals typeHierachy $ H.globals2statements ast'
@@ -271,9 +277,9 @@ updateX o = do
                     hFlush cfd
                     hClose cfd
 
-                    hPutStrLn stdout "Writing state file"
+                    putStrLn "Writing state file"
                     encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy)
-                    hPutStrLn stdout "Ok."
+                    putStrLn "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
     isUpdated old new x =
@@ -363,7 +369,7 @@ initX o = do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
         Right (prelude, rt1, rt2) -> do
-            hPutStrLn stdout "Initializing...."
+            putStrLn "Initializing...."
             
             let rt1' = addPrefix' "JHCR" rt1
                 rt2' = addPrefix' "JHCR" rt2
@@ -403,16 +409,16 @@ initX o = do
                         
                         hmap = mkHashMap jhast
                     
-                    hPutStrLn stdout "Writing state file"
+                    putStrLn "Writing state file"
                     encodeFile (statePath o) (st', hmap, typeHierachy)
 
-                    hPutStrLn stdout "Writing map script"
+                    putStrLn "Writing map script"
                     jh <- openBinaryFile (outjPath o) WriteMode
                     hPutBuilder jh $ J.pretty outj
                     hFlush jh
                     hClose jh
 
-                    hPutStrLn stdout "Ok."
+                    putStrLn "Ok."
   where
     replaceExecuteFunc :: J.Ast J.Name x -> J.Ast J.Name x
     replaceExecuteFunc x =
