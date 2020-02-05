@@ -19,6 +19,8 @@ globals
     handle array _handle
     terraindeformation array _terraindeformation
     weathereffect array _weathereffect
+    minimapicon array _minimapicon
+    commandbuttoneffect array _commandbuttoneffect
 
 endglobals
 
@@ -1085,3 +1087,22 @@ function _set_weathereffect takes integer _this,integer _key,weathereffect _valu
     call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
+
+
+function _get_minimapicon takes integer _this,integer _key returns minimapicon
+    return _minimapicon[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_minimapicon takes integer _this,integer _key,minimapicon _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _minimapicon[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+function _get_commandbuttoneffect takes integer _this,integer _key returns commandbuttoneffect
+    return _commandbuttoneffect[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_commandbuttoneffect takes integer _this,integer _key,commandbuttoneffect _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _commandbuttoneffect[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
