@@ -19,8 +19,11 @@ globals
     handle array _handle
     terraindeformation array _terraindeformation
     weathereffect array _weathereffect
+    
+#if PATCH_LVL >= 132
     minimapicon array _minimapicon
     commandbuttoneffect array _commandbuttoneffect
+#endif
 
 endglobals
 
@@ -401,12 +404,6 @@ function _set_alliancetype takes integer _this,integer _key,alliancetype _value 
     call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
-function _get_animtype takes integer _this,integer _key returns animtype
-    return ConvertAnimType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
-endfunction
-function _set_animtype takes integer _this,integer _key,animtype _value returns nothing
-    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
-endfunction
 
 
 function _get_attacktype takes integer _this,integer _key returns attacktype
@@ -560,13 +557,6 @@ function _set_mapvisibility takes integer _this,integer _key,mapvisibility _valu
     call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
-function _get_mousebuttontype takes integer _this,integer _key returns mousebuttontype
-    return ConvertMouseButtonType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
-endfunction
-function _set_mousebuttontype takes integer _this,integer _key,mousebuttontype _value returns nothing
-    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
-endfunction
-
 
 function _get_pathingtype takes integer _this,integer _key returns pathingtype
     return ConvertPathingType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
@@ -679,13 +669,6 @@ function _set_startlocprio takes integer _this,integer _key,startlocprio _value 
     call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
-function _get_subanimtype takes integer _this,integer _key returns subanimtype
-    return ConvertSubAnimType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
-endfunction
-function _set_subanimtype takes integer _this,integer _key,subanimtype _value returns nothing
-    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
-endfunction
-
 
 function _get_texmapflags takes integer _this,integer _key returns texmapflags
     return ConvertTexMapFlags(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
@@ -750,6 +733,151 @@ function _set_widgetevent takes integer _this,integer _key,widgetevent _value re
     call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
+
+
+// neither native saveable nor convertfogstate-hackable
+
+function _get_agent takes integer _this,integer _key returns agent
+    return _agent[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_agent takes integer _this,integer _key,agent _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _agent[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_buff takes integer _this,integer _key returns buff
+    return _buff[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_buff takes integer _this,integer _key,buff _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _buff[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_camerasetup takes integer _this,integer _key returns camerasetup
+    return _camerasetup[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_camerasetup takes integer _this,integer _key,camerasetup _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _camerasetup[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_conditionfunc takes integer _this,integer _key returns conditionfunc
+    return _conditionfunc[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_conditionfunc takes integer _this,integer _key,conditionfunc _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _conditionfunc[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_eventid takes integer _this,integer _key returns eventid
+    return _eventid[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_eventid takes integer _this,integer _key,eventid _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _eventid[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_filterfunc takes integer _this,integer _key returns filterfunc
+    return _filterfunc[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_filterfunc takes integer _this,integer _key,filterfunc _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _filterfunc[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_gamecache takes integer _this,integer _key returns gamecache
+    return _gamecache[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_gamecache takes integer _this,integer _key,gamecache _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _gamecache[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_gamestate takes integer _this,integer _key returns gamestate
+    return _gamestate[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_gamestate takes integer _this,integer _key,gamestate _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _gamestate[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_handle takes integer _this,integer _key returns handle
+    return _handle[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_handle takes integer _this,integer _key,handle _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _handle[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_terraindeformation takes integer _this,integer _key returns terraindeformation
+    return _terraindeformation[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_terraindeformation takes integer _this,integer _key,terraindeformation _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _terraindeformation[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+
+function _get_weathereffect takes integer _this,integer _key returns weathereffect
+    return _weathereffect[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_weathereffect takes integer _this,integer _key,weathereffect _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _weathereffect[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
+
+#if PATCH_LVL >= 129
+
+// patch 1.29
+function _get_mousebuttontype takes integer _this,integer _key returns mousebuttontype
+    return ConvertMouseButtonType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_mousebuttontype takes integer _this,integer _key,mousebuttontype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+#endif
+
+#if PATCH_LVL >= 130
+
+// patch 1.30
+function _get_animtype takes integer _this,integer _key returns animtype
+    return ConvertAnimType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_animtype takes integer _this,integer _key,animtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+function _get_subanimtype takes integer _this,integer _key returns subanimtype
+    return ConvertSubAnimType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_subanimtype takes integer _this,integer _key,subanimtype _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+#endif
+
+#if PATCH_LVL >= 131
 // 1.31
 
 function _get_originframetype takes integer _this,integer _key returns originframetype
@@ -975,119 +1103,10 @@ function _set_pathingflag takes integer _this,integer _key, pathingflag _value r
     call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
 endfunction
 
+#endif
 
-// neither native saveable nor convertfogstate-hackable
-
-function _get_agent takes integer _this,integer _key returns agent
-    return _agent[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_agent takes integer _this,integer _key,agent _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _agent[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_buff takes integer _this,integer _key returns buff
-    return _buff[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_buff takes integer _this,integer _key,buff _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _buff[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_camerasetup takes integer _this,integer _key returns camerasetup
-    return _camerasetup[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_camerasetup takes integer _this,integer _key,camerasetup _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _camerasetup[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_conditionfunc takes integer _this,integer _key returns conditionfunc
-    return _conditionfunc[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_conditionfunc takes integer _this,integer _key,conditionfunc _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _conditionfunc[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_eventid takes integer _this,integer _key returns eventid
-    return _eventid[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_eventid takes integer _this,integer _key,eventid _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _eventid[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_filterfunc takes integer _this,integer _key returns filterfunc
-    return _filterfunc[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_filterfunc takes integer _this,integer _key,filterfunc _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _filterfunc[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_gamecache takes integer _this,integer _key returns gamecache
-    return _gamecache[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_gamecache takes integer _this,integer _key,gamecache _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _gamecache[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_gamestate takes integer _this,integer _key returns gamestate
-    return _gamestate[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_gamestate takes integer _this,integer _key,gamestate _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _gamestate[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_handle takes integer _this,integer _key returns handle
-    return _handle[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_handle takes integer _this,integer _key,handle _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _handle[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_terraindeformation takes integer _this,integer _key returns terraindeformation
-    return _terraindeformation[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_terraindeformation takes integer _this,integer _key,terraindeformation _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _terraindeformation[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
-function _get_weathereffect takes integer _this,integer _key returns weathereffect
-    return _weathereffect[(LoadInteger(_ht, _this, _key))]
-endfunction
-function _set_weathereffect takes integer _this,integer _key,weathereffect _value returns nothing
-    set _list[_this] = List#_cons(_list[_this])
-    set _weathereffect[_list[_this]]=_value
-    call SaveInteger(_ht, _this, _key, _list[_this])
-endfunction
-
-
+#if PATCH_LVL >= 132
+// patch 1.32
 
 function _get_minimapicon takes integer _this,integer _key returns minimapicon
     return _minimapicon[(LoadInteger(_ht, _this, _key))]
@@ -1106,3 +1125,5 @@ function _set_commandbuttoneffect takes integer _this,integer _key,commandbutton
     set _commandbuttoneffect[_list[_this]]=_value
     call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
+
+#endif

@@ -24,8 +24,30 @@ UPXFLAGS := --best
 Z := /cygdrive/c/Program\ Files/7-Zip/7z
 
 .PHONY: clean process release all
+.PHONY: patch126 patch129 patch130 patch131 patch132
 
-all: jhcr
+all: patch132
+
+# 1.26b to 1.28
+patch128: COMMONJ=common-1.28.j
+patch128: PATCH_LVL=128
+patch128: jhcr
+
+patch129: COMMONJ=common-1.29.j
+patch129: PATCH_LVL=129
+patch129: jhcr
+
+patch130: COMMONJ=common-1.30.j
+patch130: PATCH_LVL=130
+patch130: jhcr
+
+patch131: COMMONJ=common-1.31.j
+patch131: PATCH_LVL=131
+patch131: jhcr
+
+patch132: COMMONJ=common-1.32.j
+patch132: PATCH_LVL=132
+patch132: jhcr
 
 
 release: HSFLAGS=-O -osuf .oo -hisuf .hio
@@ -43,8 +65,8 @@ jhcr.zip: jhcr.exe
 convert: convert.hs
 	cabal v1-exec -- ghc $(HSFLAGS) convert
 
-runtime/convert.j Hot/Types.hs runtime/types.j runtime/g-type-bin.j: convert common.j
-	./convert common.j
+runtime/convert.j Hot/Types.hs runtime/types.j runtime/g-type-bin.j: convert
+	./convert $(COMMONJ)
 
 jhcr: $(SRC) $(PROCESSED)
 	cabal v1-exec -- ghc $(HSFLAGS) Main.hs -o jhcr
@@ -53,7 +75,7 @@ process: $(PROCESSED)
 
 out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
 	@mkdir -p $(@D)
-	bash process.sh $< $@ JHCR_
+	PATCH_LVL=$(PATCH_LVL) bash process.sh $< $@ JHCR_
 
 init:
 	cabal v1-sandbox init
