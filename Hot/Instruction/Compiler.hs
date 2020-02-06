@@ -102,10 +102,14 @@ typeOfExpr e =
 typeOfVar :: Var -> Type
 typeOfVar v =
   case v of
-    Local _ t _ _ -> code2int t
-    Global _ _ t _ _ -> code2int t
-    Fn _ _ t _ -> code2int t
+    Local _ t _ _ -> t
+    Global _ _ t _ _ -> t
+    Fn _ _ t _ -> t
     _ -> ""
+    
+
+typeOfVar' :: Var -> Type
+typeOfVar' = code2int . typeOfVar
 
 lca :: Type -> Type -> CompileMonad Type
 lca a b = do
@@ -201,23 +205,23 @@ compileStmt e = do
         emit $ JmpT loopExit r
 
     H.Set (SVar v@Local{}) e -> do
-        let t = typeOfVar v
+        let t = typeOfVar' v
         r <- typed t $ compileExpr e
         emit $ Set t (getId v) r
 
     H.Set (SVar v@Global{}) e -> do
-        let t = typeOfVar v
+        let t = typeOfVar' v
         r <- typed t $ compileExpr e
         emit $ SetGlobal t (getId v) r
 
     H.Set (AVar v@Local{} idx) e -> do
-        let t = typeOfVar v
+        let t = typeOfVar' v
         idx' <- typed "integer" $ compileExpr idx
         r <- typed t $ compileExpr e
         emit $ SetLocalArray t (getId v) idx' r
 
     H.Set (AVar v@Global{} idx) e -> do
-        let t = typeOfVar v
+        let t = typeOfVar' v
         idx' <- typed "integer" $ compileExpr idx
         r <- typed t $ compileExpr e
         emit $ SetGlobalArray t (getId v) idx' r
@@ -230,6 +234,8 @@ numericType a _ = a
 
 compType "string" _ = pure "string"
 compType _ "string" = pure "string"
+compType "code" _ = pure "code"
+compType _ "code" = pure "code"
 compType a b = lca a b
 
 bind2 :: Monad m => (a -> b -> m c) -> m a -> m b -> m c
@@ -285,7 +291,7 @@ compileExpr e =
     
     H.Call (Op n) [a, b] | n `elem` ["==", "!="] -> do
         let op = name2op n
-        t <- bind2 compType (typeOfExpr a) (typeOfExpr b)
+        t <- code2int <$> bind2 compType (typeOfExpr a) (typeOfExpr b)
         r <- newRegister
         a' <- typed t $ compileExpr a
         b' <- typed t $ compileExpr b
@@ -304,14 +310,14 @@ compileExpr e =
     
     H.Call{} -> compileCall e
 
-    Var (SVar l@Local{}) -> typedGet (typeOfVar l) (getId l)
+    Var (SVar l@Local{}) -> typedGet (typeOfVar' l) (getId l)
     Var (SVar g@Global{}) -> do
         r <- newRegister
-        emit $ GetGlobal (typeOfVar g) r (getId g)
-        typedGet (typeOfVar g) r
+        emit $ GetGlobal (typeOfVar' g) r (getId g)
+        typedGet (typeOfVar' g) r
 
     Var (AVar l@Local{} idx) -> do
-        let t = typeOfVar l
+        let t = typeOfVar' l
 
         r <- newRegister
         idx' <- typed "integer" $ compileExpr idx
@@ -320,7 +326,7 @@ compileExpr e =
         typedGet t r
 
     Var (AVar g@Global{} idx) -> do
-        let t = typeOfVar g
+        let t = typeOfVar' g
         
         r <- newRegister
         idx' <- typed "integer" $ compileExpr idx
@@ -352,7 +358,7 @@ compileExpr e =
 
     Null -> do
         r <- newRegister
-        t <- asks fst
+        t <- code2int <$> asks fst
         if t == "integer"
         then emit $ Literal "integer" r $ Int 0
         else emit $ Literal t r e
