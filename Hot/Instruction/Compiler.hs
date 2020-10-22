@@ -270,11 +270,12 @@ compileExpr e =
 
     H.Call (Op "and") [a, b] -> do
         r <- newRegister
+        t <- newRegister
         cont <- newLabel
         a' <- typed "boolean" $ compileExpr a
         emit $ Set "boolean" r a'
-        emit $ Not r r
-        emit $ JmpT cont r
+        emit $ Not t r
+        emit $ JmpT cont t
         b' <- typed "boolean" $ compileExpr b
         emit $ Set "boolean" r b'
         emit $ Label cont
