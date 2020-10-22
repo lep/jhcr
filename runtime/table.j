@@ -380,13 +380,6 @@ function _set_widget takes integer _this,integer _key,widget _value returns noth
     call SaveWidgetHandle(_ht, _this, _key, _value)
 endfunction
 
-function _get_framehandle takes integer _this,integer _key returns framehandle
-    return LoadFrameHandle(_ht, _this, _key)
-endfunction
-function _set_framehandle takes integer _this,integer _key,framehandle _value returns nothing
-    call SaveFrameHandle(_ht, _this, _key, _value)
-endfunction
-
 // saveable via ConvertFogState
 
 function _get_aidifficulty takes integer _this,integer _key returns aidifficulty
@@ -879,6 +872,14 @@ endfunction
 
 #if PATCH_LVL >= 131
 // 1.31
+
+
+function _get_framehandle takes integer _this,integer _key returns framehandle
+    return LoadFrameHandle(_ht, _this, _key)
+endfunction
+function _set_framehandle takes integer _this,integer _key,framehandle _value returns nothing
+    call SaveFrameHandle(_ht, _this, _key, _value)
+endfunction
 
 function _get_originframetype takes integer _this,integer _key returns originframetype
     return ConvertOriginFrameType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
