@@ -3,12 +3,17 @@ RUNTIME += runtime/modified.j runtime/wrap-around.j runtime/print.j
 RUNTIME += runtime/convert.j runtime/context.j runtime/types.j
 RUNTIME += runtime/instruction.j runtime/interpreter.j runtime/init.j
 
+# RUNTIME += runtime/queue.j
+
+# RUNTIME += runtime/jass-lexer.j runtime/jass-ast.j runtime/jass-parser.j runtime/jass-token.j
+
 SRC := Jass/Parser.hs Jass/Ast.hs Jass/Printer.hs Jass/Opt/Rewrite.hs
 SRC += Jass/Opt/Rewrite/SomeRules.hs Hot/Instruction/Opt/Rewrite/SomeRules.hs
 SRC += Jass/LCA.hs
 SRC += Hot/Ast.hs Hot/Types.hs Hot/Var.hs Hot/Instruction.hs
 SRC += Hot/Instruction/Compiler.hs Hot/Instruction/Opt/Rewrite.hs
 SRC += Hot/Init/Auto.hs Hot/Init/Stubs.hs Hot/Init/Rename.hs
+#SRC += Hot/Ast/Opt/ConstantFolding.hs
 SRC += Hot/JassHelper.hs Hot/HandleCode.hs
 SRC += Data/Composeable.hs
 SRC += Main.hs
@@ -45,7 +50,7 @@ patch131: COMMONJ=common-1.31.j
 patch131: PATCH_LVL=131
 patch131: jhcr
 
-patch132: COMMONJ=common-1.32.j
+patch132: COMMONJ=common-1.32.9.j
 patch132: PATCH_LVL=132
 patch132: jhcr
 
@@ -54,9 +59,9 @@ release: HSFLAGS=-O -osuf .oo -hisuf .hio
 release: jhcr.zip
 
 
-jhcr.exe: HSFLAGS=-O -osuf .oo -hisuf .hio
+jhcr.exe: HSFLAGS=-O -osuf .oo -hisuf .hio -optc-Os -optlo-Os -split-sections
 jhcr.exe: jhcr
-	strip jhcr
+	strip --strip-all jhcr
 	$(UPX) $(UPXFLAGS) jhcr.exe
     
 jhcr.zip: jhcr.exe
