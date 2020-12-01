@@ -18,6 +18,7 @@ import System.IO
 import System.Exit
 
 import System.FilePath ((</>))
+import System.Directory (createDirectoryIfMissing)
 
 import qualified Data.ByteString.Char8 as S8
 import Data.ByteString.Builder
@@ -272,6 +273,7 @@ updateX o = do
                     hPutStrLn stderr "Too many changes. Did not write bytecode to file"
                     exitFailure
                 Just preload -> do
+                    createDirectoryIfMissing True $ preloadPath o
                     cfd <- openBinaryFile (preloadPath o </> "JHCR.txt") WriteMode
                     hPutBuilder cfd $ J.pretty preload
                     hFlush cfd
