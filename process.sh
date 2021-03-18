@@ -3,7 +3,7 @@
 
 [ -z "${PATCH_LVL}" ] && echo "Error: No patch specified" && exit 1
 
-scope=$(head -n1 "$1" | sed 's/^\/\/\s*scope\s\+//')
+scope=$(head -n1 "$1" | sed 's/^\/\/[[:blank:]]*scope[[:blank:]]*//')
 
 cpp -DPATCH_LVL="$PATCH_LVL" "$1" \
   | sed 's/^#/\/\//' \

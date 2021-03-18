@@ -1,0 +1,31 @@
+cabal-version:       >=1.10
+
+name:                jass-hot-code-reload
+version:             1.0.0
+license: LGPL-3
+license-file:        LICENSE
+author:              lep
+maintainer:          lep.delete@googlemail.com
+build-type:          Simple
+extra-source-files:  Readme.md
+
+executable jhcr
+  main-is: Main.hs
+  other-modules: Data.Composeable, Hot.Ast, Hot.HandleCode, Hot.Init.Auto,
+                 Hot.Init.Rename, Hot.Init.Stubs, Hot.Instruction,
+                 Hot.Instruction.Compiler, Hot.Instruction.Opt.Rewrite,
+                 Hot.Instruction.Opt.Rewrite.SomeRules, Hot.JassHelper,
+                 Hot.Types, Hot.Var, Jass.Ast, Jass.LCA, Jass.Opt.Rewrite,
+                 Jass.Opt.Rewrite.SomeRules, Jass.Parser, Jass.Printer
+  build-depends: base, file-embed, transformers, filepath, directory,
+                 bytestring, binary, containers, hashable, megaparsec,
+                 optparse-applicative, gitrev, parser-combinators, lca, mtl,
+                 lens, dlist, unordered-containers, vector
+  default-language: Haskell2010
+
+executable convert
+  main-is: convert.hs
+  other-modules: Data.Composeable, Jass.Ast, Jass.Parser, Jass.Printer
+  build-depends: base, mtl, hashable, binary, megaparsec, parser-combinators,
+                 bytestring, containers
+  default-language: Haskell2010
