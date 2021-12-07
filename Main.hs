@@ -3,6 +3,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 
+import Debug.Trace
+
 import Data.FileEmbed
 
 
@@ -101,12 +103,14 @@ data Options =
          , processJasshelper :: Bool
          , statePath :: FilePath
          , outjPath :: FilePath
+         , oldPatch :: Bool
          }
   | Update { inputjPath :: FilePath
            , preloadPath :: FilePath
            , processJasshelper :: Bool
            , statePath :: FilePath
            , showAsm :: Bool
+           , oldPatch :: Bool
            }
    | Compile { commonjPath :: FilePath
              , inputPaths :: [FilePath]
@@ -134,12 +138,14 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
              <*> pJasshelper
              <*> pState
              <*> pOutWar3Map
+             <*> switch (long "old-patch" <> help "Use for Patches older than 1.29")
     updateOptions =
         Update <$> pWar3Map
                <*> pPreload
                <*> pJasshelper
                <*> pState
                <*> pAsm
+               <*> switch (long "old-patch" <> help "Use for Patches older than 1.29")
     compileOptions =
         Compile <$> argument str (help "Path to common.j" <> metavar "common.j")
                 <*> some (argument str (metavar "[FILE]" <> help "jass files to compile"))
@@ -180,6 +186,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
       )
 
 main = do
+    putStrLn "fcuck cabal."
     options <- parseOptions
     case options of
         Update{} -> updateX options
@@ -206,6 +213,7 @@ compileX o = do
         toCompile <- forM (inputPaths o) $ \j -> do
             src <- liftIO $ readFile j
             J.Programm ast <- exceptT $ parse J.programm j src
+            traceShowM ast
             return ast
         return (commonj, J.Programm $ concat toCompile)
     case x of
@@ -218,6 +226,8 @@ compileX o = do
                 prog = jass_opt j
                 prog' = H.jass2hot . fst $ Rename.compile Rename.Init id st prog
                 asm = ins_opt $ Ins.compile typeHierachy prog'
+            traceShowM j
+            traceShowM prog
             hPutBuilder stdout $ Ins.serializeAsm asm
             when (showSerialize o) $ do
                 putStrLn ""
@@ -266,7 +276,7 @@ updateX o = do
             
             let fnAsm = Ins.serializeChunked 700 fnsCompiled
                 gAsm = Ins.serializeChunked 700 gCompiled
-                preload' = mkPreload fnAsm gAsm
+                preload' = (if oldPatch o then mkPreload128 else mkPreload) fnAsm gAsm
             
             case preload' of
                 Nothing -> do
@@ -315,6 +325,24 @@ updateX o = do
     isSDef :: J.Ast a J.Toplevel -> Bool
     isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
+
+    mkPreload128 :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
+    mkPreload128 fns globals = do
+        guard $ length fns + length globals <= 12
+        fns' <- mkF128 fns "1" 0
+        g' <- mkF128 globals "2" $ length fns
+        return . J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
+            fns' <> g'
+
+    mkF128 :: [String] -> J.Lit -> Int -> Maybe [J.Ast J.Name J.Stmt]
+    mkF128 asms slot offset = do
+        let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show $ length asms ]
+            setCodes = zipWith mkC [offset, offset+1 .. ] $ reverse asms
+
+            mkC id asm = J.Call "SetPlayerName" [ J.Call "Player" [ J.Int $ show id ], J.String asm ]
+
+        return $ setCnt:setCodes
+        
     
     mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
     mkPreload fns globals = do

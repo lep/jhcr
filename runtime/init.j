@@ -11,7 +11,47 @@ globals
     boolean _already_init = false
 endglobals
 
-function _parse takes nothing returns nothing
+function _parse128 takes nothing returns nothing
+#if PATCH_LVL<129
+    local integer _cnt = 11
+    local string array _tmp
+    local integer _g = 0
+    local integer _i = 0
+
+    loop
+    exitwhen _cnt < 0
+        set _tmp[_cnt] = GetPlayerName(Player(_cnt))
+        set _cnt = _cnt -1
+    endloop
+
+    call Preloader("JHCR.txt")
+
+    set _cnt = GetPlayerTechMaxAllowed(Player(0), 1)
+    set Parser#_prev_ins = 0
+    loop
+    exitwhen _i == _cnt
+        call Parser#_parse_and_init(GetPlayerName(Player(_i)))
+	call SetPlayerName(Player(_i), _tmp[_i])
+        set _i = _i +1
+    endloop
+
+    set _cnt = GetPlayerTechMaxAllowed(Player(0), 2)
+    loop
+    exitwhen _i == _cnt
+        set _g = Parser#_parse_globals(GetPlayerName(Player(_i)), _g)
+	call SetPlayerName(Player(_i), _tmp[_i])
+        set _i = _i +1
+    endloop
+
+    // execute _g
+    if _g != 0 then
+        call Interpreter#_exec_globals(_g)
+    endif
+#endif
+endfunction
+
+function _parse129 takes nothing returns nothing
+#if PATCH_LVL>=129
     local integer _cnt = _fn_max
     local string array _tmp
     local integer _g = 0
@@ -56,6 +96,15 @@ function _parse takes nothing returns nothing
     if _g != 0 then
         call Interpreter#_exec_globals(_g)
     endif
+#endif
+endfunction
+
+function _parse takes nothing returns nothing
+#if PATCH_LVL>=129
+    call _parse129()
+#else
+    call _parse128()
+#endif
 endfunction
 
 function _i2code takes nothing returns nothing
