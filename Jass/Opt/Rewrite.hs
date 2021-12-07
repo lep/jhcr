@@ -63,7 +63,7 @@ matches' :: RewriteRule -> Ast Name Expr -> State S Bool
 matches' rr@Rule{..} expr =
   case (fromExpr, expr) of
     (Call n1 a1, Call n2 a2) ->
-      if n1 == n2
+      if n1 == n2 && length a1 == length a2
       then and <$> zipWithM (\a b -> matches' rr{ fromExpr = a} b) a1 a2
       else return False
     (Var (SVar x), y)
