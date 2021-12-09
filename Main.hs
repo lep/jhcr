@@ -186,7 +186,6 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
       )
 
 main = do
-    putStrLn "fcuck cabal."
     options <- parseOptions
     case options of
         Update{} -> updateX options

@@ -1,6 +1,20 @@
 // scope Interpreter
 // REQUIRES Types Context Ins Table Parser Auto Wrap Convert
 
+// older patches didn't have the %-operator
+// we don't use Blizzard.j-ModuloInteger since it's behaviour is different
+// from the %-operator.
+function _mod128 takes integer dividend, integer divisor returns integer
+    local integer modulus = dividend - (dividend / divisor) * divisor
+    if modulus < 0 then
+        if divisor < 0 then
+            set divisor = - divisor
+        endif
+        set modulus = modulus + divisor
+    endif
+    return modulus
+endfunction
+
 // _step :: Context -> IO Context
 function _step takes integer _ctx returns integer
     local integer _op = Context#_pc[_ctx]
@@ -103,7 +117,11 @@ function _step takes integer _ctx returns integer
             call Table#_set_real    (Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real     (Context#_locals[_ctx], Ins#_a2[_op]) / Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
     elseif _t == Ins#_Mod then
+#if PATCH_LVL<129
+        call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], _mod128(Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]), Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op])))
+#else
         call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) % Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
+#endif
         
     elseif _t == Ins#_Not then
         call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], not Table#_get_boolean(Context#_locals[_ctx], Ins#_a2[_op]))
