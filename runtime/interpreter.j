@@ -4,16 +4,18 @@
 // older patches didn't have the %-operator
 // we don't use Blizzard.j-ModuloInteger since it's behaviour is different
 // from the %-operator.
-function _mod128 takes integer dividend, integer divisor returns integer
-    local integer modulus = dividend - (dividend / divisor) * divisor
-    if modulus < 0 then
-        if divisor < 0 then
-            set divisor = - divisor
+#if PATCH_LVL<129
+function _mod128 takes integer _dividend, integer _divisor returns integer
+    local integer _modulus = _dividend - (_dividend / _divisor) * _divisor
+    if _modulus < 0 then
+        if _divisor < 0 then
+            set _divisor = - _divisor
         endif
-        set modulus = modulus + divisor
+        set _modulus = _modulus + _divisor
     endif
-    return modulus
+    return _modulus
 endfunction
+#endif
 
 // _step :: Context -> IO Context
 function _step takes integer _ctx returns integer

@@ -107,8 +107,9 @@ function _parse takes nothing returns nothing
 #endif
 endfunction
 
-function _i2code takes nothing returns nothing
+function _i2code takes nothing returns boolean
     set Wrap#_ret = Auto#_i2code(Wrap#_p)
+    return true
 endfunction
 
 
