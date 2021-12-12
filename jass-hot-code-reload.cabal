@@ -22,6 +22,7 @@ executable jhcr
                  optparse-applicative, gitrev, parser-combinators, lca, mtl,
                  lens, dlist, unordered-containers, vector
   default-language: Haskell2010
+  cpp-options: -DPATCH_LVL=128
 
 executable convert
   main-is: convert.hs

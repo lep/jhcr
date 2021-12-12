@@ -2,6 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE CPP #-}
 
 import Debug.Trace
 
@@ -103,14 +104,12 @@ data Options =
          , processJasshelper :: Bool
          , statePath :: FilePath
          , outjPath :: FilePath
-         , oldPatch :: Bool
          }
   | Update { inputjPath :: FilePath
            , preloadPath :: FilePath
            , processJasshelper :: Bool
            , statePath :: FilePath
            , showAsm :: Bool
-           , oldPatch :: Bool
            }
    | Compile { commonjPath :: FilePath
              , inputPaths :: [FilePath]
@@ -124,7 +123,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
   where
     opts = info (pCommand <**> helper)
       (  fullDesc
-      <> header ("jhcr - A compiler to allow hot code reload in jass (v. git-" <> take 6 $(gitHash) <> ")")
+      <> header ("jhcr - A compiler to allow hot code reload in jass (v. git-" <> take 6 $(gitHash) <> ")" <> " patch " <> show PATCH_LVL)
       )
     pCommand = hsubparser
       (  command "init" (info initOptions ( progDesc "Compiles the mapscript to allow hot code reload"))
@@ -138,14 +137,12 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
              <*> pJasshelper
              <*> pState
              <*> pOutWar3Map
-             <*> switch (long "old-patch" <> help "Use for Patches older than 1.29")
     updateOptions =
         Update <$> pWar3Map
                <*> pPreload
                <*> pJasshelper
                <*> pState
                <*> pAsm
-               <*> switch (long "old-patch" <> help "Use for Patches older than 1.29")
     compileOptions =
         Compile <$> argument str (help "Path to common.j" <> metavar "common.j")
                 <*> some (argument str (metavar "[FILE]" <> help "jass files to compile"))
@@ -275,7 +272,8 @@ updateX o = do
             
             let fnAsm = Ins.serializeChunked 700 fnsCompiled
                 gAsm = Ins.serializeChunked 700 gCompiled
-                preload' = (if oldPatch o then mkPreload128 else mkPreload) fnAsm gAsm
+                preload' = mkPreload fnAsm gAsm
+                --(if oldPatch o then mkPreload128 else mkPreload) fnAsm gAsm
             
             case preload' of
                 Nothing -> do
@@ -325,24 +323,24 @@ updateX o = do
     isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
 
-    mkPreload128 :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
-    mkPreload128 fns globals = do
+#if PATCH_LVL<129
+    mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
+    mkPreload fns globals = do
         guard $ length fns + length globals <= 12
-        fns' <- mkF128 fns "1" 0
-        g' <- mkF128 globals "2" $ length fns
+        fns' <- mkF fns "1" 0
+        g' <- mkF globals "2" $ length fns
         return . J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
             fns' <> g'
 
-    mkF128 :: [String] -> J.Lit -> Int -> Maybe [J.Ast J.Name J.Stmt]
-    mkF128 asms slot offset = do
+    mkF :: [String] -> J.Lit -> Int -> Maybe [J.Ast J.Name J.Stmt]
+    mkF asms slot offset = do
         let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show $ length asms ]
             setCodes = zipWith mkC [offset, offset+1 .. ] $ reverse asms
 
             mkC id asm = J.Call "SetPlayerName" [ J.Call "Player" [ J.Int $ show id ], J.String asm ]
 
         return $ setCnt:setCodes
-        
-    
+#else
     mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
     mkPreload fns globals = do
         fns' <- mkF fns fnsIds "1"
@@ -363,6 +361,7 @@ updateX o = do
             setCodes = zipWith mkC availableIds asms
 
         return $ setCnt:setCodes
+#endif
 
     fnsIds =
         [ "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls"
