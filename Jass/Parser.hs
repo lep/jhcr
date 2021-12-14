@@ -240,4 +240,4 @@ term = parens expression
 
 arglist = expression `sepBy` symbol ","
 
-programm = Programm . concat <$> (many horizontalSpace *> many toplevel <* eof)
+programm = Programm . concat <$> (space *> many horizontalSpace *> many toplevel <* eof)

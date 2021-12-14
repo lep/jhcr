@@ -98,9 +98,7 @@ runtime2 = map S8.unpack
   ]
 
 data Options =
-    Init { commonjPath :: FilePath
-         , blizzardjPath :: FilePath
-         , inputjPath :: FilePath
+    Init { jassFiles :: [FilePath]
          , processJasshelper :: Bool
          , statePath :: FilePath
          , outjPath :: FilePath
@@ -131,9 +129,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
       <> command "compile" (info compileOptions (progDesc "Compiles code to asm. Used for debugging purposes"))
       )
     initOptions =
-        Init <$> argument str (help "Path to common.j" <> metavar "common.j")
-             <*> argument str (help "Path to Blizzard.j" <> metavar "Blizzard.j")
-             <*> pWar3Map
+        Init <$> some (argument str (metavar "[FILE]" <> help "All jass files needed. Last one should be the map script"))
              <*> pJasshelper
              <*> pState
              <*> pOutWar3Map
@@ -376,8 +372,14 @@ updateX o = do
 
 initX o = do
     let jhc = if processJasshelper o then JH.compile else id
+    let commonJassFiles = init $ jassFiles o
+        inputjPath = last $ jassFiles o
+    when (length (jassFiles o) < 2) $ do
+        hPutStrLn stderr "Provide at least two jass files"
+        exitFailure 
+        
     x <- runExceptT $ do
-        prelude <- J.Programm . mconcat <$> forM [commonjPath o, blizzardjPath o] (\j -> do
+        prelude <- J.Programm . mconcat <$> forM commonJassFiles (\j -> do
             src <- liftIO $ readFile j
             J.Programm ast <- exceptT $ parse J.programm j src
             return ast)
@@ -405,7 +407,7 @@ initX o = do
             let (prelude', st) = Rename.compile' Rename.Init id prelude
                 typeHierachy = LCA.child2parent prelude
             
-            p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
+            p <- parse J.programm inputjPath <$> readFile inputjPath
             case p of
                 Left err -> do
                     hPutStrLn stderr $ errorBundlePretty err
