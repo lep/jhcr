@@ -330,7 +330,7 @@ updateX o = do
 
     mkF :: [String] -> J.Lit -> Int -> Maybe [J.Ast J.Name J.Stmt]
     mkF asms slot offset = do
-        let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show $ length asms ]
+        let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show $ offset + length asms ]
             setCodes = zipWith mkC [offset, offset+1 .. ] $ reverse asms
 
             mkC id asm = J.Call "SetPlayerName" [ J.Call "Player" [ J.Int $ show id ], J.String asm ]
