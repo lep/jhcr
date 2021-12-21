@@ -101,6 +101,34 @@ addGlobal c name ty isArray = do
             globalScope %= (at name ?~ v)
             return v
 
+addNative :: Name -> [Type] -> Type -> RenameVariablesM Var
+addNative name args ret = do
+    v' <- uses fnScope $ Map.lookup name
+    case v' of
+        Just v -> do
+            let sig = H.Fn name args ret (H.getId v)
+            -- potentially update if signature has changed
+            if v == sig
+            then return v
+            else do
+                fnScope %= (at name ?~ sig)
+                return sig
+        Nothing -> do
+            --(mode, f) <-  ask
+            mode <- asks fst
+            case mode of
+                Init -> do
+                    id <- uses fnScope (fromIntegral . succ . Map.size)
+                    let v = H.Fn name args ret id
+                    fnScope %= (at name ?~ v)
+                    return v
+                    
+                Update -> do
+                    id <- newFnCount <-= 1
+                    let v = H.Fn name args ret id
+                    fnScope %= (at name ?~ v)
+                    return v
+
 addFunction :: Name -> [Type] -> Type -> RenameVariablesM Var
 addFunction name args ret = do
     v' <- uses fnScope $ Map.lookup name
@@ -158,7 +186,7 @@ renameVariables = go
     go e =
       case e of
         Native c n args ret -> 
-            Native c <$> addFunction n (map fst args) ret
+            Native c <$> addNative n (map fst args) ret
                           <*> pure (map (\(typ, name) -> (typ, mkLocal name)) args)
                           <*> pure ret
 
