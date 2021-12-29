@@ -67,6 +67,8 @@ import qualified Text.Megaparsec as Mega
 import Options.Applicative
 import Development.GitRev (gitHash)
 
+import GHC.IO.Encoding (setLocaleEncoding, utf8)
+
 exceptT :: Either e a -> ExceptT e IO a
 exceptT = ExceptT . return
 
@@ -179,6 +181,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
       )
 
 main = do
+    setLocaleEncoding utf8
     options <- parseOptions
     case options of
         Update{} -> updateX options
@@ -270,7 +273,6 @@ updateX o = do
                 gAsm = Ins.serializeChunked 700 gCompiled
                 preload' = mkPreload fnAsm gAsm
                 --(if oldPatch o then mkPreload128 else mkPreload) fnAsm gAsm
-            
             case preload' of
                 Nothing -> do
                     hPutStrLn stderr "Too many changes. Did not write bytecode to file"
@@ -443,10 +445,8 @@ initX o = do
                     encodeFile (statePath o) (st', hmap, typeHierachy)
 
                     putStrLn "Writing map script"
-                    jh <- openBinaryFile (outjPath o) WriteMode
-                    hPutBuilder jh $ J.pretty outj
-                    hFlush jh
-                    hClose jh
+                    withBinaryFile (outjPath o) WriteMode $ \f ->
+                        hPutBuilder f $ J.pretty outj
 
                     putStrLn "Ok."
   where

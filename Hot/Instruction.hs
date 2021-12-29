@@ -98,26 +98,26 @@ pad2Dec :: Int16 -> Builder
 pad2Dec x =
   let l = intlog10 $ abs x
       w = 2 - if x < 0 then 1 else 0
-  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
+  in int16Dec x <> string8 (replicate (w-l) '.')
 
 pad3Dec :: Int16 -> Builder
 pad3Dec x =
   let l = intlog10 $ abs x
       w = 3 - if x < 0 then 1 else 0
-  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
+  in int16Dec x <> string8 (replicate (w-l) '.')
 
 
 pad6Dec :: Int16 -> Builder
 pad6Dec x =
   let l = intlog10 $ abs x
       w = 6 - if x < 0 then 1 else 0
-  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
+  in int16Dec x <> string8 (replicate (w-l) '.')
 
 pad9Dec :: Int32 -> Builder
 pad9Dec x =
   let l = intlog10 $ abs x
       w = 9 - if x < 0 then 1 else 0
-  in int32Dec x <> stringUtf8 (replicate (w-l) '.')
+  in int32Dec x <> string8 (replicate (w-l) '.')
 
 
 intlog10 :: (Integral a, Num b) => a -> b
@@ -128,15 +128,22 @@ intlog10 = fromIntegral . log10 . fromIntegral
     log10 x = fst . head . filter ( (x <) . snd ) $ zip [0..] (iterate (*10) 1)
 
 
-serializeLit :: Hot.Ast Var Expr -> Builder
-serializeLit l =
+{- We have to parametrize this function as we use it to both serialize
+ - human readable asm for debugging purpose and also to serialize the 
+ - instruction chungs which we later put into another jass AST.
+ - And herein lies the problem: we can't re-encode some utf8 string again
+ - as that messes up the lit "string" instructions encoded in jass AST.
+ - Overall it's very unpleasent.
+ -}
+serializeLit :: (String -> Builder) -> Hot.Ast Var Expr -> Builder
+serializeLit stringBuilder l =
   case l of
     Hot.Int i -> int32Dec i
-    Hot.Real r -> stringUtf8 $ printf "%f" r
-    Hot.String s -> stringUtf8 s
-    Hot.Bool True -> stringUtf8 "true"
-    Hot.Bool False -> stringUtf8 "false"
-    Hot.Null -> stringUtf8 "null"
+    Hot.Real r -> stringBuilder $ printf "%f" r
+    Hot.String s -> stringBuilder s
+    Hot.Bool True -> stringBuilder "true"
+    Hot.Bool False -> stringBuilder "false"
+    Hot.Null -> stringBuilder "null"
 
 serializeG :: (IsString s)
            => (s -> a)
@@ -194,7 +201,7 @@ serializeG op ty reg lbl expr call fn ins =
 serializeAsm :: [Instruction] -> Builder
 serializeAsm = unlines . map (unwords . s)
   where
-    s = serializeG id stringUtf8 reg' label' (pure . serializeLit) (pure . stringUtf8) (\_ n -> [stringUtf8 n])
+    s = serializeG id string8 reg' label' (pure . serializeLit stringUtf8) (pure . stringUtf8) (\_ n -> [stringUtf8 n])
     unlines = mconcat . intersperse (charUtf8 '\n')
     unwords = mconcat . intersperse (charUtf8 ' ')
 
@@ -204,10 +211,10 @@ serialize' =
   where
     sFn f n =
         if f < 0
-        then [pad6Dec (genericLength n), stringUtf8 n]
+        then [pad6Dec (genericLength n), string8 n]
         else []
     sLit l =
-        let litRendered = serializeLit l
+        let litRendered = serializeLit string8 l
             litLen = fromIntegral . BL.length $ toLazyByteString litRendered
         in [ pad6Dec litLen, litRendered ]
     typeToId x = pad3Dec (Map.findWithDefault (error x) x Hot.types)

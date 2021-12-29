@@ -101,6 +101,16 @@ addGlobal c name ty isArray = do
             globalScope %= (at name ?~ v)
             return v
 
+{-
+ - This is mostly the same as addFunction (TODO: refactor)
+ - except that we don't run the type-conversion function ( snd in the Reader
+ - state).
+ - This is because we have to treat those native definitions as "prelude"
+ - instead of user-reloadable code. That's also why we compile the "prelude"
+ - with Rename.compile Rename.Init *id* in contrast to
+ -      Rename.compile Rename.Init *conv* (where conv is the code to int
+ - converter function).
+ -}
 addNative :: Name -> [Type] -> Type -> RenameVariablesM Var
 addNative name args ret = do
     v' <- uses fnScope $ Map.lookup name
