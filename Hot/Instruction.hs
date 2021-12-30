@@ -215,7 +215,8 @@ serialize' =
         else []
     sLit l =
         let litRendered = serializeLit string8 l
-            litLen = fromIntegral . BL.length $ toLazyByteString litRendered
+            litEncodedHack = serializeLit stringUtf8 l
+            litLen = fromIntegral . BL.length $ toLazyByteString litEncodedHack
         in [ pad6Dec litLen, litRendered ]
     typeToId x = pad3Dec (Map.findWithDefault (error x) x Hot.types)
     ins2id n = pad2Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
