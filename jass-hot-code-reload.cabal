@@ -20,7 +20,7 @@ executable jhcr
   build-depends: base, file-embed, transformers, filepath, directory,
                  bytestring, binary, containers, hashable, megaparsec,
                  optparse-applicative, gitrev, parser-combinators, lca, mtl,
-                 lens, dlist, unordered-containers, vector
+                 lens, dlist, unordered-containers, vector, utf8-string
   default-language: Haskell2010
   cpp-options: -DPATCH_LVL=128
 

@@ -279,10 +279,8 @@ updateX o = do
                     exitFailure
                 Just preload -> do
                     createDirectoryIfMissing True $ preloadPath o
-                    cfd <- openBinaryFile (preloadPath o </> "JHCR.txt") WriteMode
-                    hPutBuilder cfd $ J.pretty preload
-                    hFlush cfd
-                    hClose cfd
+                    withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
+                        hPutBuilder f $ J.pretty preload
 
                     putStrLn "Writing state file"
                     encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy)

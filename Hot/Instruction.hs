@@ -23,6 +23,7 @@ import Text.Printf (printf)
 
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as L8
+import qualified Data.ByteString.UTF8 as UTF8
 import Data.ByteString.Builder
 
 import Hot.Ast (Expr, Name, Type, Var(..))
@@ -98,26 +99,26 @@ pad2Dec :: Int16 -> Builder
 pad2Dec x =
   let l = intlog10 $ abs x
       w = 2 - if x < 0 then 1 else 0
-  in int16Dec x <> string8 (replicate (w-l) '.')
+  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
 
 pad3Dec :: Int16 -> Builder
 pad3Dec x =
   let l = intlog10 $ abs x
       w = 3 - if x < 0 then 1 else 0
-  in int16Dec x <> string8 (replicate (w-l) '.')
+  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
 
 
 pad6Dec :: Int16 -> Builder
 pad6Dec x =
   let l = intlog10 $ abs x
       w = 6 - if x < 0 then 1 else 0
-  in int16Dec x <> string8 (replicate (w-l) '.')
+  in int16Dec x <> stringUtf8 (replicate (w-l) '.')
 
 pad9Dec :: Int32 -> Builder
 pad9Dec x =
   let l = intlog10 $ abs x
       w = 9 - if x < 0 then 1 else 0
-  in int32Dec x <> string8 (replicate (w-l) '.')
+  in int32Dec x <> stringUtf8 (replicate (w-l) '.')
 
 
 intlog10 :: (Integral a, Num b) => a -> b
@@ -201,7 +202,7 @@ serializeG op ty reg lbl expr call fn ins =
 serializeAsm :: [Instruction] -> Builder
 serializeAsm = unlines . map (unwords . s)
   where
-    s = serializeG id string8 reg' label' (pure . serializeLit stringUtf8) (pure . stringUtf8) (\_ n -> [stringUtf8 n])
+    s = serializeG id stringUtf8 reg' label' (pure . serializeLit stringUtf8) (pure . stringUtf8) (\_ n -> [stringUtf8 n])
     unlines = mconcat . intersperse (charUtf8 '\n')
     unwords = mconcat . intersperse (charUtf8 ' ')
 
@@ -211,12 +212,11 @@ serialize' =
   where
     sFn f n =
         if f < 0
-        then [pad6Dec (genericLength n), string8 n]
+        then [pad6Dec (genericLength n), stringUtf8 n]
         else []
     sLit l =
-        let litRendered = serializeLit string8 l
-            litEncodedHack = serializeLit stringUtf8 l
-            litLen = fromIntegral . BL.length $ toLazyByteString litEncodedHack
+        let litRendered = serializeLit stringUtf8 l
+            litLen = fromIntegral . BL.length $ toLazyByteString litRendered
         in [ pad6Dec litLen, litRendered ]
     typeToId x = pad3Dec (Map.findWithDefault (error x) x Hot.types)
     ins2id n = pad2Dec . fromMaybe (error $ "unknown op" <> show n) $ lookup n instable
@@ -234,9 +234,16 @@ instable =
 serialize :: [Instruction] -> Builder
 serialize = mconcat . map serialize'
 
+{-
+ - Since Haskell Strings are List of Chars and a Char is a unicode
+ - code point (idk if it's UTF-16 or UTF-32, but *not* UTF-8)
+ - we can't just unpack the bytestring back into a normal haskell string
+ - but we have to decode it correctly.
+ -}
 serializeChunked :: Int64 -> [Instruction] -> [String]
 serializeChunked chunkSize =
-    map L8.unpack .
+    map UTF8.toString .
+    map L8.toStrict.
     map toLazyByteString .
     map fst .
     foldl' go [] .
