@@ -7,31 +7,25 @@ PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
 
 .PHONY: clean process all build
-.PHONY: patch126 patch129 patch130 patch131 patch132
+.PHONY: patch128 patch132
+.PHONY: configure-old-patch configure-new-patch
 
 all: patch132
 
 # 1.26b to 1.28
 patch128: COMMONJ=common-1.28.j
 patch128: PATCH_LVL=128
-patch128: build
-
-patch129: COMMONJ=common-1.29.j
-patch129: PATCH_LVL=129
-patch129: build
-
-patch130: COMMONJ=common-1.30.j
-patch130: PATCH_LVL=130
-patch130: build
-
-patch131: COMMONJ=common-1.31.j
-patch131: PATCH_LVL=131
-patch131: build
+patch128: clean configure-old-patch build
 
 patch132: COMMONJ=common-1.32.9.j
 patch132: PATCH_LVL=132
-patch132: build
+patch132: clean configure-new-patch build
 
+configure-old-patch:
+	cabal configure -f+old-patch
+
+configure-new-patch:
+	cabal configure -f-old-patch
 
 build: $(PROCESSED) Hot/Types.hs
 	cabal build jhcr
