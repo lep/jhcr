@@ -9,6 +9,10 @@ maintainer:          lep.delete@googlemail.com
 build-type:          Simple
 extra-source-files:  Readme.md
 
+flag old-patch
+  default: False
+  manual: True
+
 executable jhcr
   main-is: Main.hs
   other-modules: Data.Composeable, Hot.Ast, Hot.HandleCode, Hot.Init.Auto,
@@ -22,7 +26,8 @@ executable jhcr
                  optparse-applicative, gitrev, parser-combinators, lca, mtl,
                  lens, dlist, unordered-containers, vector, utf8-string
   default-language: Haskell2010
-  cpp-options: -DPATCH_LVL=128
+  if flag(old-patch)
+    cpp-options: -DOLD_PATCH
 
 executable convert
   main-is: convert.hs

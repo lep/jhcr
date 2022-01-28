@@ -121,9 +121,15 @@ data Options =
 
 parseOptions = customExecParser (prefs showHelpOnEmpty) opts
   where
+#ifdef OLD_PATCH
+    patch_type = "patch<1.29"
+#else
+    patch_type = "patch>=1.29"
+#endif
+
     opts = info (pCommand <**> helper)
       (  fullDesc
-      <> header ("jhcr - A compiler to allow hot code reload in jass (v. git-" <> take 6 $(gitHash) <> ")" <> " patch " <> show PATCH_LVL)
+      <> header ("jhcr - A compiler to allow hot code reload in jass (git-" <> take 6 $(gitHash) <> ","  <> patch_type <> ")" )
       )
     pCommand = hsubparser
       (  command "init" (info initOptions ( progDesc "Compiles the mapscript to allow hot code reload"))
@@ -319,7 +325,7 @@ updateX o = do
     isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
 
-#if PATCH_LVL<129
+#ifdef OLD_PATCH
     mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
     mkPreload fns globals = do
         guard $ length fns + length globals <= 12
