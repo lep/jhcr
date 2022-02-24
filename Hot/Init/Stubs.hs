@@ -16,6 +16,13 @@ import qualified Hot.Var as H
 compile :: Ast Var Programm -> Ast Var Programm
 compile (Programm pr) = Programm $ concatMap stubifyFn pr
 
+{-
+ - This creates the _Auto_<function-name> wrapper functions
+ - and creates the original <function-name> functions.
+ - The _Auto_<function-name> functions call either the original function
+ - or start an interpreter if the function was modified (or a completely
+ - new functions loaded).
+ -}
 stubifyFn :: Ast Var Toplevel -> [Ast Var Toplevel]
 stubifyFn e =
   case e of
@@ -37,6 +44,8 @@ stubifyFn e =
                    else Just . Local $ SDef Normal (mkLocal "_ret") retty Nothing
 
             mkRetVar = if retty == "code"
+		    -- TODO: i think this is not needed anymore as we remove
+		    -- all code variables/types prior to calling this.
                        then Call (mkFn "_Auto_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar ltbl, Int "0"]]
                        else Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar ltbl, Int "0"]
 

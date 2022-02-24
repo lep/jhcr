@@ -116,6 +116,10 @@ compile pr =
     bind = AVar (mkLocal "_Context_bindings") (Var $ SVar ctx)
     scope = AVar (mkLocal "_Context_locals") (Var $ SVar ctx)
 
+    {-
+     - This creates the _Auto_dummyFunction<n> and the _Auto_i2code
+     - functions
+     -}
     i2code :: [Ast Var Toplevel] -> [Ast Var Toplevel]
     i2code fns =
 
@@ -143,6 +147,14 @@ compile pr =
 
                     
 
+    {-
+     - This creates the _Auto_call_predefined function.
+     - The _call_predefined function is used to call a native, blizzard-j
+     - or otherwise defined function. This uses the internal ID of each
+     - function and calls the function with the context coming from an
+     - active interpreter context. This function is basically the call
+     - instruction in the interpreter.
+    -}
     enterFunction :: [Ast Var Toplevel] -> Ast Var Toplevel
     enterFunction fns =
         let reg = mkLocal "_reg"
