@@ -89,12 +89,12 @@ runtime1 = map S8.unpack
   , $(embedFile "out/wrap-around.j")
   , $(embedFile "out/modified.j")
   , $(embedFile "out/instruction.j")
+  , $(embedFile "out/parser.j")
   ]
 
 runtime2 :: [String]
 runtime2 = map S8.unpack
-  [ $(embedFile "out/parser.j")
-  , $(embedFile "out/convert.j")
+  [ $(embedFile "out/convert.j")
   , $(embedFile "out/interpreter.j")
   , $(embedFile "out/init.j")
   ]
