@@ -58,11 +58,17 @@ import qualified Hot.Instruction.Opt.Rewrite.SomeRules as Ins.Opt
 import qualified Hot.HandleCode as HandleCode
 import qualified Hot.JassHelper as JH
 
+import Hot.CommonJHash
+
 import Data.Composeable
 import Data.Hashable
 
+import Data.Monoid
+
 import Text.Megaparsec (errorBundlePretty)
 import qualified Text.Megaparsec as Mega
+
+import Text.Printf
 
 import Options.Applicative
 import Development.GitRev (gitHash)
@@ -129,7 +135,9 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
 
     opts = info (pCommand <**> helper)
       (  fullDesc
-      <> header ("jhcr - A compiler to allow hot code reload in jass (git-" <> take 6 $(gitHash) <> ","  <> patch_type <> ")" )
+      <> header ("jhcr - A compiler to allow hot code reload in jass")
+      <> progDesc ( unwords [ "Compiled from commit", $(gitHash),
+            "for patch levels", patch_type, "and common.j hash", printf "0x%x" commonjHash ])
       )
     pCommand = hsubparser
       (  command "init" (info initOptions ( progDesc "Compiles the mapscript to allow hot code reload"))
@@ -385,10 +393,11 @@ initX o = do
         exitFailure 
         
     x <- runExceptT $ do
-        prelude <- J.Programm . mconcat <$> forM commonJassFiles (\j -> do
+        (prelude, First (Just cjhash)) <- first J.Programm . mconcat <$> forM commonJassFiles (\j -> do
             src <- liftIO $ readFile j
             J.Programm ast <- exceptT $ parse J.programm j src
-            return ast)
+            return (ast, First . Just . hash $ J.Programm ast)
+            )
 
         rt1 <- J.Programm . mconcat <$> forM runtime1 (\src -> do
             J.Programm ast <- exceptT $ parse J.programm "rt1" src
@@ -398,14 +407,20 @@ initX o = do
             J.Programm ast <- exceptT $ parse J.programm "rt2" src
             return ast)
             
-        return (prelude, rt1, rt2)
+        return (prelude, cjhash, rt1, rt2)
         
     case x of
         Left err -> do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
-        Right (prelude, rt1, rt2) -> do
+        Right (prelude, cjhash, rt1, rt2) -> do
             putStrLn "Initializing...."
+            when (cjhash /= commonjHash) $
+                putStrLn $ unwords
+                    [ "Potentially mismatching common.j files:"
+                    , printf "yours (0x%x)" cjhash
+                    , printf "mine (0x%x)" commonjHash
+                    ]
             
             let rt1' = addPrefix' "JHCR" rt1
                 rt2' = addPrefix' "JHCR" rt2

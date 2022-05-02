@@ -30,7 +30,7 @@ configure-new-patch:
 build: $(PROCESSED) Hot/Types.hs
 	cabal build jhcr
 
-runtime/convert.j Hot/Types.hs runtime/types.j runtime/g-type-bin.j: $(COMMONJ)
+runtime/convert.j Hot/Types.hs Hot/CommonJHash.hs runtime/types.j runtime/g-type-bin.j: $(COMMONJ)
 	cabal run convert -- $(COMMONJ)
 
 process: $(PROCESSED)

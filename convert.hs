@@ -12,7 +12,9 @@ import Control.Monad.State
 import Data.Tuple
 import Data.Int
 import Data.String
-import Data.List
+import Data.List hiding (singleton)
+
+import Data.Hashable
 
 import Jass.Ast hiding (foldMap)
 import Jass.Printer
@@ -219,7 +221,8 @@ main = do
             let types :: [Tree Name]
                 types@(a:b:_) = evalState (mapM (go base2children) ["handle", "real", "string", "boolean", "code", "nothing"]) 1
 
-            printHaskell types
+            printHaskellTypes types
+            printHaskellHash j
             printRuntime [a, b]
             printGBinTy $ take 4 types
             printJassTypes types
@@ -237,7 +240,7 @@ main = do
         hPutBuilder f . printStmt $ gTypeBin ty
         hClose f
 
-    printHaskell ty = do
+    printHaskellTypes ty = do
         f <- openFile "Hot/Types.hs" WriteMode
         hPutStrLn f $ unlines
           [ "{-# LANGUAGE OverloadedStrings #-}"
@@ -247,6 +250,15 @@ main = do
           , "import Data.Int"
           , "types :: Map String Int16"
           , ("types = Map.fromList " <> ) . show . map swap $ concatMap allChildren ty
+          ]
+        hClose f
+
+    printHaskellHash j = do
+        f <- openFile "Hot/CommonJHash.hs" WriteMode
+        hPutStrLn f $ unlines
+          [ "module Hot.CommonJHash (commonjHash) where"
+          , "commonjHash :: Int"
+          , "commonjHash = " ++ show (hash j)
           ]
         hClose f
     
