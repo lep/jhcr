@@ -22,12 +22,14 @@ patch132: PATCH_LVL=132
 patch132: clean configure-new-patch build
 
 configure-old-patch:
-	cabal configure -f+old-patch
+	unlink cabal.project.local
+	ln -s cabal.project.local.128 cabal.project.local
 
 configure-new-patch:
-	cabal configure -f-old-patch
+	unlink cabal.project.local
+	ln -s cabal.project.local.132 cabal.project.local
 
-build: $(PROCESSED) Hot/Types.hs
+build: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
 	cabal build jhcr
 
 runtime/convert.j Hot/Types.hs Hot/CommonJHash.hs runtime/types.j runtime/g-type-bin.j: $(COMMONJ)
@@ -40,4 +42,4 @@ out/%.j: runtime/%.j runtime/alloc.j runtime/alloc-globals.j
 	PATCH_LVL=$(PATCH_LVL) bash process.sh $< $@ JHCR_
 
 clean:
-	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs 
+	rm -f $(PROCESSED) runtime/convert.j runtime/types.j Hot/Types.hs Hot/CommonJHash.hs
