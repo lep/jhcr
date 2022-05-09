@@ -20,7 +20,9 @@ executable jhcr
                  Hot.Instruction.Compiler, Hot.Instruction.Opt.Rewrite,
                  Hot.Instruction.Opt.Rewrite.SomeRules, Hot.JassHelper,
                  Hot.Types, Hot.Var, Jass.Ast, Jass.LCA, Jass.Opt.Rewrite,
-                 Jass.Opt.Rewrite.SomeRules, Jass.Parser, Jass.Printer
+                 Jass.Opt.Rewrite.SomeRules, Jass.Parser, Jass.Printer,
+                 Hot.CommonJHash
+
   build-depends: base, file-embed, transformers, filepath, directory,
                  bytestring, binary, containers, hashable, megaparsec,
                  optparse-applicative, gitrev, parser-combinators, lca, mtl,

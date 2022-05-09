@@ -136,7 +136,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
     opts = info (pCommand <**> helper)
       (  fullDesc
       <> header ("jhcr - A compiler to allow hot code reload in jass")
-      <> progDesc ( unwords [ "Compiled from commit", $(gitHash),
+      <> footer ( unwords [ "Compiled from git commit", $(gitHash),
             "for patch levels", patch_type, "and common.j hash", printf "0x%x" commonjHash ])
       )
     pCommand = hsubparser
@@ -145,7 +145,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
       <> command "compile" (info compileOptions (progDesc "Compiles code to asm. Used for debugging purposes"))
       )
     initOptions =
-        Init <$> some (argument str (metavar "[FILE]" <> help "All jass files needed. Last one should be the map script"))
+        Init <$> some (argument str (metavar "[FILE]" <> help "All jass files needed. First one should be common.j and last one should be the map script"))
              <*> pJasshelper
              <*> pState
              <*> pOutWar3Map
@@ -418,8 +418,7 @@ initX o = do
             when (cjhash /= commonjHash) $
                 putStrLn $ unwords
                     [ "Potentially mismatching common.j files:"
-                    , printf "yours (0x%x)" cjhash
-                    , printf "mine (0x%x)" commonjHash
+                    , printf "yours (0x%x) mine (0x%x)" cjhash commonjHash
                     ]
             
             let rt1' = addPrefix' "JHCR" rt1

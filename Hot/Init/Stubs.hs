@@ -44,8 +44,8 @@ stubifyFn e =
                    else Just . Local $ SDef Normal (mkLocal "_ret") retty Nothing
 
             mkRetVar = if retty == "code"
-		    -- TODO: i think this is not needed anymore as we remove
-		    -- all code variables/types prior to calling this.
+                    -- TODO: i think this is not needed anymore as we remove
+                    -- all code variables/types prior to calling this.
                        then Call (mkFn "_Auto_i2code") [Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar ltbl, Int "0"]]
                        else Call (mkFn $ "_Table_get_" <> retty) [Var $ SVar ltbl, Int "0"]
 
