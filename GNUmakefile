@@ -22,11 +22,11 @@ patch133: PATCH_LVL=133
 patch133: clean configure-new-patch build
 
 configure-old-patch:
-	unlink cabal.project.local
+	rm -f cabal.project.local
 	ln -s cabal.project.local.128 cabal.project.local
 
 configure-new-patch:
-	unlink cabal.project.local
+	rm -f cabal.project.local
 	ln -s cabal.project.local.133 cabal.project.local
 
 build: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
