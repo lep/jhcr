@@ -32,6 +32,11 @@ configure-new-patch:
 build: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
 	cabal build jhcr
 
+jhcr.exe: build
+	rm -f $@
+	strip $$(cabal list-bin jhcr)
+	upx -qq $$(cabal list-bin jhcr) -o $@
+
 runtime/convert.j Hot/Types.hs Hot/CommonJHash.hs runtime/types.j runtime/g-type-bin.j: $(COMMONJ)
 	cabal run convert -- $(COMMONJ)
 
