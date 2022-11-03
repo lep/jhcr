@@ -125,12 +125,13 @@ compile pr =
 
         let r :: Int -> Ast Var Stmt
             r idx = let fn = (fns' ++ fns) !! (100+idx)
-                        (v, args, name) = case fn of
-                            Native _ v args _ -> (Code v, args, v)
-                            Function _ v args _ _ -> (Code v, args, v)
+                        (v, args, name, ret, isNative) = case fn of
+                            Native _ v args ret -> (Code v, args, v, ret, True)
+                            Function _ v args ret _ -> (Code v, args, v, ret, False)
                     in case () of
                         _ | H.nameOf name `elem` donttouch -> Return . Just . Code $ mkFn "DoNothing"
-                          | null args -> Return $ Just v
+                          | null args {-&& ret == "nothing"-} -> Return $ Just v
+                          | isNative -> Return . Just . Code $ mkFn "DoNothing"
                           | otherwise -> Return . Just . Code $ mkFn "DoNothing"
 
 
