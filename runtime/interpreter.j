@@ -2,7 +2,7 @@
 // REQUIRES Types Context Ins Table Parser Auto Wrap Convert
 
 // older patches didn't have the %-operator
-// we don't use Blizzard.j-ModuloInteger since it's behaviour is different
+// we don't use Blizzard.j-ModuloInteger since its behaviour is different
 // from the %-operator.
 #if PATCH_LVL<129
 function _mod128 takes integer _dividend, integer _divisor returns integer

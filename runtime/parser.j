@@ -26,12 +26,15 @@ function _parse_ins takes string _s returns integer
     set Ins#_op[_new] = _ins
     set Ins#_next[_new] = 0
     
+    // not the less-or-equal: we handle all two-operand arithmetic instructions
+    // here and all array instructions the same here.
     if _ins <= Ins#_GetGlobalArray then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
         set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
         set Ins#_a2[_new]   = S2I(SubString(_s, _S+14, _S+23))
         set Ins#_a3[_new]   = S2I(SubString(_s, _S+23, _S+32))
         set _S = _S + 32
+    // handles negate, set, {set,get}global and bind
     elseif _ins <= Ins#_Bind then
         set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
         set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
