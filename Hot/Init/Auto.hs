@@ -1,4 +1,5 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MultiWayIf #-}
 
 module Hot.Init.Auto (compile) where
 
@@ -82,7 +83,7 @@ compile pr =
     defaultReturnValue "real" = Real "0.0"
     defaultReturnValue "integer" = Int "0"
     defaultReturnValue "string" = String ""
-    defaultReturnValue "code" = Code (mkFn "DoNothing")
+    defaultReturnValue "code" = Code (mkFn "_Wrap_DoNothing")
     defaultReturnValue "boolean" = Bool False
     defaultReturnValue _ = Null
   
@@ -125,13 +126,15 @@ compile pr =
 
         let r :: Int -> Ast Var Stmt
             r idx = let fn = (fns' ++ fns) !! (100+idx)
-                        (v, args, name) = case fn of
-                            Native _ v args _ -> (Code v, args, v)
-                            Function _ v args _ _ -> (Code v, args, v)
-                    in case () of
-                        _ | H.nameOf name `elem` donttouch -> Return . Just . Code $ mkFn "DoNothing"
-                          | null args -> Return $ Just v
-                          | otherwise -> Return . Just . Code $ mkFn "DoNothing"
+                        (v, args, name, isnative) = case fn of
+                            Native _ v args _ -> (Code v, args, v, True)
+                            Function _ v args _ _ -> (Code v, args, v, False)
+                    in if
+                        | isnative -> donothing
+                        | H.nameOf name `elem` donttouch -> donothing
+                        | null args -> Return $ Just v
+                        | otherwise -> donothing
+            donothing = Return . Just . Code $ mkFn "_Wrap_DoNothing"
 
 
             mkDummyFn idx =
