@@ -249,7 +249,7 @@ updateX o = do
         jass_opt = Jass.Opt.rewrite Jass.Opt.someRules
         ins_opt = (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules)
         
-    (st, hmap, typeHierachy) <- decodeFile (statePath o)
+    (st, hmap, typeHierachy, seq :: Int) <- decodeFile (statePath o)
 
     p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
     case p of
@@ -293,11 +293,16 @@ updateX o = do
                     exitFailure
                 Just preload -> do
                     createDirectoryIfMissing True $ preloadPath o
+# if OLD_PATCH
                     withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
                         hPutBuilder f $ J.pretty preload
+#else -- technically this only needs to be done on patch 1.33 or higher
+                    withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
+                        hPutBuilder f $ J.pretty preload
+#endif
 
                     putStrLn "Writing state file"
-                    encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy)
+                    encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy, succ seq)
                     putStrLn "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
@@ -460,7 +465,7 @@ initX o = do
                         hmap = mkHashMap jhast
                     
                     putStrLn "Writing state file"
-                    encodeFile (statePath o) (st', hmap, typeHierachy)
+                    encodeFile (statePath o) (st', hmap, typeHierachy, 0::Int)
 
                     putStrLn "Writing map script"
                     withBinaryFile (outjPath o) WriteMode $ \f ->

@@ -9,6 +9,8 @@ globals
     constant integer _g_max = 9
     
     boolean _already_init = false
+
+    integer _seq = 0
 endglobals
 
 function _parse128 takes nothing returns nothing
@@ -72,7 +74,8 @@ function _parse129 takes nothing returns nothing
         set _cnt = _cnt -1
     endloop
 
-    call Preloader("JHCR.txt")
+    call Preloader("JHCR-"+I2S(_seq)+".txt")
+    set _seq = _seq + 1
     
     set _cnt = GetPlayerTechMaxAllowed(Player(0), 1)
     set Parser#_prev_ins = 0
