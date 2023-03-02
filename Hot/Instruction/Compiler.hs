@@ -179,7 +179,7 @@ compileStmt e = do
     If cond tb eb -> do
         trueLabel <- newLabel
         joinLabel <- newLabel
-        r <- compileExpr cond
+        r <- typed "boolean" $ compileExpr cond
         emit $ JmpT trueLabel r
         compileStmt eb
         emit $ Jmp joinLabel
@@ -201,7 +201,7 @@ compileStmt e = do
 
     Exitwhen cond -> do
         (_, loopExit) <- peek
-        r <- compileExpr cond
+        r <- typed "boolean" $ compileExpr cond
         emit $ JmpT loopExit r
 
     H.Set (SVar v@Local{}) e -> do
