@@ -49,16 +49,16 @@ function _step takes integer _ctx returns integer
 
     elseif _t == Ins#_Lt then
         if Ins#_type[_op] == Types#_integer then
-            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) < Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) < Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real(Context#_locals[_ctx], Ins#_a2[_op]) < Table#_get_real(Context#_locals[_ctx], Ins#_a3[_op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real   (Context#_locals[_ctx], Ins#_a2[_op]) < Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
     elseif _t == Ins#_Le then
         if Ins#_type[_op] == Types#_integer then
             call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) <= Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real(Context#_locals[_ctx], Ins#_a2[_op]) <= Table#_get_real(Context#_locals[_ctx], Ins#_a3[_op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real   (Context#_locals[_ctx], Ins#_a2[_op]) <= Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
     elseif _t == Ins#_Gt then
@@ -72,7 +72,7 @@ function _step takes integer _ctx returns integer
         if Ins#_type[_op] == Types#_integer then
             call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_integer(Context#_locals[_ctx], Ins#_a2[_op]) >= Table#_get_integer(Context#_locals[_ctx], Ins#_a3[_op]))
         else
-            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real(Context#_locals[_ctx], Ins#_a2[_op]) >= Table#_get_real(Context#_locals[_ctx], Ins#_a3[_op]))
+            call Table#_set_boolean(Context#_locals[_ctx], Ins#_a1[_op], Table#_get_real   (Context#_locals[_ctx], Ins#_a2[_op]) >= Table#_get_real   (Context#_locals[_ctx], Ins#_a3[_op]))
         endif
         
     elseif _t == Ins#_Eq then
