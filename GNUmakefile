@@ -15,30 +15,24 @@ all: patch133
 # 1.26b to 1.28
 patch128: COMMONJ=common-1.28.j
 patch128: PATCH_LVL=128
-patch128: clean configure-old-patch build
+patch128: CABAL_FLAGS=-f old-patch
+patch128: clean build
 
 patch133: COMMONJ=common-1.33.j
 patch133: PATCH_LVL=133
-patch133: clean configure-new-patch build
-
-configure-old-patch:
-	rm -f cabal.project.local
-	ln -s cabal.project.local.128 cabal.project.local
-
-configure-new-patch:
-	rm -f cabal.project.local
-	ln -s cabal.project.local.133 cabal.project.local
+patch133: CABAL_FLAGS=
+patch133: clean build
 
 build: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
-	cabal build jhcr
+	cabal build $(CABAL_FLAGS) jhcr
 
 jhcr.exe: build
 	rm -f $@
-	strip $$(cabal list-bin jhcr)
-	upx -qq $$(cabal list-bin jhcr) -o $@
+	strip $$(cabal list-bin $(CABAL_FLAGS) jhcr)
+	upx -qq $$(cabal list-bin $(CABAL_FLAGS) jhcr) -o $@
 
 runtime/convert.j Hot/Types.hs Hot/CommonJHash.hs runtime/types.j runtime/g-type-bin.j: $(COMMONJ)
-	cabal run convert -- $(COMMONJ)
+	cabal run $(CABAL_FLAGS) convert -- $(COMMONJ)
 
 process: $(PROCESSED)
 

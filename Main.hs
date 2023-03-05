@@ -297,7 +297,8 @@ updateX o = do
 # if OLD_PATCH
                     withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
                         hPutBuilder f $ J.pretty preload
-#else -- technically this only needs to be done on patch 1.33 or higher
+#else
+-- technically this only needs to be done on patch 1.33 or higher
                     withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
                         hPutBuilder f $ J.pretty preload
 #endif
