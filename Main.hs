@@ -223,7 +223,7 @@ compileX o = do
         toCompile <- forM (inputPaths o) $ \j -> do
             src <- liftIO $ readFile j
             J.Programm ast <- exceptT $ parse J.programm j src
-            traceShowM ast
+            --traceShowM ast
             return ast
         return (commonj, J.Programm $ concat toCompile)
     case x of
@@ -236,8 +236,8 @@ compileX o = do
                 prog = jass_opt j
                 prog' = H.jass2hot . fst $ Rename.compile Rename.Init id st prog
                 asm = ins_opt $ Ins.compile typeHierachy prog'
-            traceShowM j
-            traceShowM prog
+            --traceShowM j
+            --traceShowM prog
             hPutBuilder stdout $ Ins.serializeAsm asm
             when (showSerialize o) $ do
                 putStrLn ""

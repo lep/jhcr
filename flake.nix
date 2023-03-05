@@ -59,6 +59,7 @@
 		buildInputs = [
 		    pkgs.gnumake
 		    pkgs.cabal-install
+                    ghcPackages
 		];
 	    in rec {
 		packages = {

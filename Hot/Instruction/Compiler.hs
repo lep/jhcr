@@ -252,8 +252,12 @@ compileExpr e =
         
     H.Call (Op "-") [a] -> do
         r <- newRegister
-        t <- compileExpr a
+        -- We need to compile `a` from `-a` as the type of `a` itself,
+        -- which does sound weird, but neccessary as otherwise a would be
+        -- put into the – let's say – real slot of the register when `a`
+        -- itself would be an integer
         ta <- typeOfExpr a
+        t <- typed ta $ compileExpr a
         emit $ Negate ta r t
         typedGet ta r
 
