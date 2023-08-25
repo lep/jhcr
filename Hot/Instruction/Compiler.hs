@@ -14,6 +14,7 @@ import qualified Data.Map as Map
 import Data.Maybe
 
 import Control.Lens
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.Writer
 import Control.Monad.Reader
