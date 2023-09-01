@@ -12,7 +12,7 @@ import Data.Composeable
 
 cleanName :: Name -> Name
 cleanName x =
-  let x' = concatMap (\case '_':'_':_ -> "__"; x -> x) $ group x
+  let x' = concatMap (\case "___" -> "__"; x -> x) $ group x
   in if "jasshelper__init" `isPrefixOf` x
   then "jasshelper__init0000"
   else x'
