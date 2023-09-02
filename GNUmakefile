@@ -8,7 +8,6 @@ PROCESSED := $(patsubst runtime/%.j, out/%.j, $(RUNTIME))
 
 .PHONY: clean process all build
 .PHONY: patch128 patch133
-.PHONY: configure-old-patch configure-new-patch
 
 all: patch133
 
