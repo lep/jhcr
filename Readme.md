@@ -3,10 +3,9 @@
 A compiler to allow hot code reload in WarCraft 3. This means you can update
 your map script and see the changes in a running game without restarting it.
 Do note though that this is alpha software. Expect bugs and make backups.
-This works without memhack.
+This works without memhack and on any patch from 1.24 upwards.
 
 ## Compiler usage
-
 
 The compiler has two commands: init and update. The first command you execute
 has to be the init command. The init command expects atleast three arguments:
@@ -47,12 +46,12 @@ like above.
 
 To build jhcr you need to provide some things:
 
-1. ghc, cabal-install, gnumake, sed, cpp (gcc)
+1. ghc, cabal-install, make, sed, cpp (gcc)
 2. A common.j file you want to target
 3. A patch-level you want to target
 
 After you installed all the build-tools and cloned this repo you probably should
-also run a `cabal update`.
+also run `cabal update`.
 
 #### Building for the latest patch or patch 1.28
 
@@ -62,14 +61,14 @@ If you put a file called common-1.33.j (or common-1.28.j)
 in the directory you can simply type `make patch133` (or `make patch128`) and it
 should just work. You can then find the executable deeply nested in the `dist-newstyle`
 folder. To get the exact path you could either use `cabal exec which jhcr` or
-if have a newer cabal version you can use `cabal list-bin jhcr`. If you're
+if you have a newer cabal version you can use `cabal list-bin jhcr`. If you're
 building for an older patch you have to provide the `-f old-patch` flag to
 `cabal list-bin` aswell.
 
 #### Building for any other patch
 
 If you want to target any other patch you have to use the `build` target and
-provide two to three environment variables depending on your patch level ( any
+provide two to three environment variables depending on your patch level (any
 patch lower than 1.29 is considered old).
 Let's take two patch levels as an example: 1.26 and 1.31.
 
@@ -86,7 +85,7 @@ It is recommended to run `clean` if you switch the patch level.
 ### Windows
 
 Building jhcr on windows is exactly the same as on a unix-system *except* that
-the required tools aren't as easy installed. Personally i use
+the required tools aren't as easily installed. Personally i use
 [chocolatey](https://chocolatey.org/) to install ghc, cabal and msys2 like this
 
     choco install ghc cabal msys2
