@@ -51,23 +51,37 @@ To build jhcr you need to provide some things:
 2. A common.j file you want to target
 3. A patch-level you want to target
 
-After you installed all the build-tools and cloned this repo, go into your
-freshly cloned repo and provide your common.j.
+After you installed all the build-tools and cloned this repo you probably should
+also run a `cabal update`.
 
-If your patch-level is below 1.29 build jhcr like this:
+#### Building for the latest patch or patch 1.28
 
-    COMMONJ=your-common.j PATCH_LVL=128 make configure-old-patch build
+The Makefile provides two build targets for the latest patch (1.33 as of
+writing) and patch 1.28 because these should be the most used patches.
+If you put a file called common-1.33.j (or common-1.28.j)
+in the directory you can simply type `make patch133` (or `make patch128`) and it
+should just work. You can then find the executable deeply nested in the `dist-newstyle`
+folder. To get the exact path you could either use `cabal exec which jhcr` or
+if have a newer cabal version you can use `cabal list-bin jhcr`. If you're
+building for an older patch you have to provide the `-f old-patch` flag to
+`cabal list-bin` aswell.
 
-Otherwise build it like this:
+#### Building for any other patch
 
-    COMMONJ=your-common.j PATCH_LVL=133 make configure-new-patch build
+If you want to target any other patch you have to use the `build` target and
+provide two to three environment variables depending on your patch level ( any
+patch lower than 1.29 is considered old).
+Let's take two patch levels as an example: 1.26 and 1.31.
 
-This will use cabal to fetch all the required dependencies and compile jhcr
-from scratch. If you want to switch between old and new patches a `make clean`
-inbetween is recommended. If you just want to build the newest patch provide
-a common.j file named like this common-1.33.j and simply do `make` as i try to
-provide two makefile targets, one for patches pre 1.29 and one for the latest
-patch on blizzard servers. The latter target of course changes over time.
+
+    # To build 1.31 aka a "new" patch
+    PATCH_LVL=131 COMMONJ=common-1.31.j make clean build
+
+    # To build 1.26 aka a "old" patch
+    CABAL_FLAGS="-f old-patch" PATCH_LVL=126 COMMONJ=common-1.26.j make clean build
+
+It is recommended to run `clean` if you switch the patch level.
+
 
 ### Windows
 
