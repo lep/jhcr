@@ -128,17 +128,11 @@ data Options =
 
 parseOptions = customExecParser (prefs showHelpOnEmpty) opts
   where
-#ifdef OLD_PATCH
-    patch_type = "patch<1.29"
-#else
-    patch_type = "patch>=1.29"
-#endif
-
     opts = info (pCommand <**> helper)
       (  fullDesc
       <> header ("jhcr - A compiler to allow hot code reload in jass")
       <> footer ( unwords [ "Compiled from git commit", $(gitHash),
-            "for patch levels", patch_type, "and common.j hash", printf "0x%x" commonjHash ])
+            "with common.j hash", printf "0x%x" commonjHash ])
       )
     pCommand = hsubparser
       (  command "init" (info initOptions ( progDesc "Compiles the mapscript to allow hot code reload"))
@@ -284,8 +278,8 @@ updateX o = do
                 putStrLn "; globals"
                 hPutBuilder stdout $ Ins.serializeAsm gCompiled
             
-            let fnAsm = Ins.serializeChunked 700 fnsCompiled
-                gAsm = Ins.serializeChunked 700 gCompiled
+            let fnAsm = Ins.serializeChunked 1000 fnsCompiled
+                gAsm = Ins.serializeChunked 1000 gCompiled
                 preload' = mkPreload fnAsm gAsm
                 --(if oldPatch o then mkPreload128 else mkPreload) fnAsm gAsm
             case preload' of
@@ -294,11 +288,10 @@ updateX o = do
                     exitFailure
                 Just preload -> do
                     createDirectoryIfMissing True $ preloadPath o
-# if OLD_PATCH
+#if PATCH_LVL < 133
                     withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
                         hPutBuilder f $ J.pretty preload
 #else
--- technically this only needs to be done on patch 1.33 or higher
                     withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
                         hPutBuilder f $ J.pretty preload
 #endif
@@ -340,56 +333,24 @@ updateX o = do
     isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
 
-#ifdef OLD_PATCH
     mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
     mkPreload fns globals = do
-        guard $ length fns + length globals <= 12
-        fns' <- mkF fns "1" 0
-        g' <- mkF globals "2" $ length fns
+        let gc = J.Local (J.SDef J.Normal "gc" "gamecache" $ Just $ J.Call "InitGameCache" [J.String "JHCR.w3v"]) 
+        fns' <- mkF (J.String "functions") fns
+        g' <- mkF (J.String "globals") globals
         return . J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
-            fns' <> g'
+            gc:fns' <> g'
 
-    mkF :: [String] -> J.Lit -> Int -> Maybe [J.Ast J.Name J.Stmt]
-    mkF asms slot offset = do
-        let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show $ offset + length asms ]
-            setCodes = zipWith mkC [offset, offset+1 .. ] $ reverse asms
 
-            mkC id asm = J.Call "SetPlayerName" [ J.Call "Player" [ J.Int $ show id ], J.String asm ]
+    mkF label asms = do
+        let statements = zipWith (storeAsm label) asms [1..]
+            storeLength = J.Call "StoreInteger" [ J.Var $ J.SVar "gc", label, J.String "count", J.Int $ show $ length statements]
+        pure $ storeLength:statements
 
-        return $ setCnt:setCodes
-#else
-    mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
-    mkPreload fns globals = do
-        fns' <- mkF fns fnsIds "1"
-        g' <- mkF globals globalIds "2"
-        return . J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
-            fns' <> g'
-    
-    mkF :: [String] -> [String] -> J.Lit -> Maybe [J.Ast J.Name J.Stmt]
-    mkF asms ids slot = do
-        let availableIds = map J.Rawcode ids
-            cnt = length asms
-            
-            mkC id asm = J.Call "BlzSetAbilityTooltip" [ id, J.String asm, J.Int "0" ]
-            
-        guard (length availableIds >= cnt)
-        
-        let setCnt = J.Call "SetPlayerTechMaxAllowed" [J.Call "Player" [ J.Int "0" ], J.Int slot, J.Int $ show cnt ]
-            setCodes = zipWith mkC availableIds asms
+    storeAsm label bytecode index =
+        J.Call "StoreString" [J.Var $ J.SVar "gc", label, J.String $ show index, J.String bytecode]
 
-        return $ setCnt:setCodes
-#endif
 
-    fnsIds =
-        [ "Agyv", "Aflk", "Agyb", "Ahea", "Ainf", "Aslo", "Afla", "Amls"
-        , "Adis", "Acmg", "Amdf", "Adts", "Aast", "Aetf", "Absk", "Alsh"
-        , "Aens", "Adcn", "Aliq", "Aspl", "Aven", "Ablo", "Acpf", "Awar"
-        ]
-
-    globalIds =
-        [ "Adec", "Aeat", "Aco3", "Acoh", "Abrf", "Aro2", "Aro1", "Aegr"
-        , "Aren"
-        ]
 
 initX o = do
     let jhc = if processJasshelper o then JH.compile else id

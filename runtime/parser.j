@@ -114,7 +114,7 @@ function _parse_and_init takes string _instruction returns nothing
     loop
     exitwhen _S >= _len
         set _ins = _parse_ins(_instruction)
-        //call Print#_print("Parsed instruction ("+ I2S(_ins) +") "+ Ins#_toString(_ins))
+        // call Print#_print("Parsed instruction ("+ I2S(_ins) +") "+ Ins#_toString(_ins))
         
         if Ins#_op[_ins] == Ins#_Fun then
             set _current_fn = Ins#_a1[_ins]
@@ -151,6 +151,7 @@ endfunction
 function _parse_globals takes string _instruction, integer _entry returns integer
     local integer _len = StringLength(_instruction)
     local integer _ins
+
     set _S = 0
     loop
     exitwhen _S >= _len
