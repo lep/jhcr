@@ -14,14 +14,18 @@ all: patch133
 # 1.26b to 1.28
 patch128: COMMONJ=common-1.28.j
 patch128: PATCH_LVL=128
-patch128: CABAL_FLAGS=-f old-patch
 patch128: clean build
 
 patch133: COMMONJ=common-1.33.j
 patch133: PATCH_LVL=133
-patch133: CABAL_FLAGS=
-patch133: clean build
+patch133: build
 
+nix: COMMONJ=common-133.j
+nix: PATCH_LVL=133
+nix: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
+	ghc -DPATCH_LVL=$(PATCH_LVL) Main.hs -o jhcr
+
+build: CABAL_FLAGS+=--ghc-options=-DPATCH_LVL=$(PATCH_LVL)
 build: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
 	cabal build $(CABAL_FLAGS) jhcr
 
