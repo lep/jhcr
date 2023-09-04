@@ -9,7 +9,7 @@ function _alloc takes nothing returns integer
     endif
     
     if _this >= JASS_MAX_ARRAY_SIZE then
-        call Print#_print("no more free instances " + "__BASE_FILE__")
+        call Print#_print("no more free instances " + __BASE_FILE__)
         return 0
     endif
 
@@ -19,10 +19,10 @@ endfunction
 
 function _free takes integer _this returns nothing
     if _this == 0 then
-        call Print#_print("free of nullptr " + "__BASE_FILE__")
+        call Print#_print("free of nullptr " + __BASE_FILE__)
         return
     elseif _V[_this] != -1 then
-        call Print#_print("Double free in " + "__BASE_FILE__")
+        call Print#_print("Double free in " + __BASE_FILE__)
         return
     endif
     set _V[_this] = _F
