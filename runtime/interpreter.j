@@ -23,8 +23,8 @@ function _step takes integer _ctx returns integer
     local integer _t = Ins#_op[_op]
     local integer _tmp
     local integer _fn
-    
-    //call Print#_log(Ins#_toString(_op))
+
+    // call Print#_print(" - ins: "+ Ins#_toString(_op))
     
     if _t == Ins#_Set then
         #define macro(ty) Table@_set_##ty(Context@_locals[_ctx], Ins@_a1[_op], Table@_get_##ty(Context@_locals[_ctx], Ins@_a2[_op]))
@@ -307,7 +307,7 @@ function _exec_globals takes integer _g returns nothing
     set Context#_bindings[_ctx] = Table#_alloc()
     set Context#_parent[_ctx]   = 0
     loop
-    exitwhen _ctx == 0
+    exitwhen Context#_pc[_ctx] == 0
         set _ctx = _step(_ctx)
     endloop
     call Context#_destroy(_ctx)
