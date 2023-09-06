@@ -68,8 +68,7 @@ building for an older patch you have to provide the `-f old-patch` flag to
 #### Building for any other patch
 
 If you want to target any other patch you have to use the `build` target and
-provide two to three environment variables depending on your patch level (any
-patch lower than 1.29 is considered old).
+provide two environment variables depending on your patch level.
 Let's take two patch levels as an example: 1.26 and 1.31.
 
 
@@ -77,7 +76,7 @@ Let's take two patch levels as an example: 1.26 and 1.31.
     PATCH_LVL=131 COMMONJ=common-1.31.j make clean build
 
     # To build 1.26 aka a "old" patch
-    CABAL_FLAGS="-f old-patch" PATCH_LVL=126 COMMONJ=common-1.26.j make clean build
+    PATCH_LVL=126 COMMONJ=common-1.26.j make clean build
 
 It is recommended to run `clean` if you switch the patch level.
 
