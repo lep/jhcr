@@ -280,25 +280,20 @@ updateX o = do
             
             let fnAsm = Ins.serializeChunked 1000 fnsCompiled
                 gAsm = Ins.serializeChunked 1000 gCompiled
-                preload' = mkPreload fnAsm gAsm
-                --(if oldPatch o then mkPreload128 else mkPreload) fnAsm gAsm
-            case preload' of
-                Nothing -> do
-                    hPutStrLn stderr "Too many changes. Did not write bytecode to file"
-                    exitFailure
-                Just preload -> do
-                    createDirectoryIfMissing True $ preloadPath o
+                preload = mkPreload fnAsm gAsm
+
+            createDirectoryIfMissing True $ preloadPath o
 #if PATCH_LVL < 133
-                    withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
-                        hPutBuilder f $ J.pretty preload
+            withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
+                hPutBuilder f $ J.pretty preload
 #else
-                    withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
-                        hPutBuilder f $ J.pretty preload
+            withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
+                hPutBuilder f $ J.pretty preload
 #endif
 
-                    putStrLn "Writing state file"
-                    encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy, succ seq)
-                    putStrLn "Ok."
+            putStrLn "Writing state file"
+            encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy, succ seq)
+            putStrLn "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
     isUpdated old new x =
@@ -333,19 +328,19 @@ updateX o = do
     isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
 
-    mkPreload :: [String] -> [String] -> Maybe (J.Ast J.Name J.Programm)
-    mkPreload fns globals = do
+    mkPreload :: [String] -> [String] -> (J.Ast J.Name J.Programm)
+    mkPreload fns globals =
         let gc = J.Local (J.SDef J.Normal "gc" "gamecache" $ Just $ J.Call "InitGameCache" [J.String "JHCR.w3v"]) 
-        fns' <- mkF (J.String "functions") fns
-        g' <- mkF (J.String "globals") globals
-        return . J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
+            fns' = mkF (J.String "functions") fns
+            g' = mkF (J.String "globals") globals
+        in J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
             gc:fns' <> g'
 
 
-    mkF label asms = do
+    mkF label asms =
         let statements = zipWith (storeAsm label) asms [1..]
             storeLength = J.Call "StoreInteger" [ J.Var $ J.SVar "gc", label, J.String "count", J.Int $ show $ length statements]
-        pure $ storeLength:statements
+        in storeLength:statements
 
     storeAsm label bytecode index =
         J.Call "StoreString" [J.Var $ J.SVar "gc", label, J.String $ show index, J.String bytecode]
