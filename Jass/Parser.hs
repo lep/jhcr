@@ -9,7 +9,7 @@ module Jass.Parser
     , stringlit
     , reallit
     , rawcode
-    
+
     ) where
 
 import Control.Applicative hiding (many, some)
@@ -25,6 +25,7 @@ import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import Control.Monad.Combinators.Expr
+import Data.Functor (($>))
 
 type Parser = Parsec Void String
 
@@ -39,7 +40,7 @@ lexeme = L.lexeme sc
 stringlit = lexeme $ char '"' >> manyTill L.charLiteral (char '"')
 
 rawcode :: Parser String
-rawcode = lexeme $ char '\'' *> (escaped <|> anyCC) 
+rawcode = lexeme $ char '\'' *> (escaped <|> anyCC)
   where
     escaped = do
        char '\\'
@@ -106,12 +107,12 @@ toplevel = globals
 
   where
     functionLike = do
-        const <- fromMaybe Normal <$> optional (reserved "constant"*> pure Jass.Ast.Const)
+        const <- fromMaybe Normal <$> optional (reserved "constant" $> Jass.Ast.Const)
         native const <|> function const
 
     globals = between (reserved "globals"<* horizontalSpace)
                       (reserved "endglobals" <* horizontalSpace) $ many $ do
-        const <- fromMaybe Normal <$> optional (reserved "constant" *> pure Jass.Ast.Const)
+        const <- fromMaybe Normal <$> optional (reserved "constant" $> Jass.Ast.Const)
         vdecl <- vardecl const
         return $ Global vdecl
 
@@ -122,14 +123,14 @@ toplevel = globals
         base <- identifier
         horizontalSpace
         return [Typedef new base]
-    
+
 pSignature = do
-    
+
     name <- identifier
     reserved "takes"
-    args <- (reserved "nothing" *> pure []) <|> ((,) <$> identifier <*> identifier) `sepBy` symbol ","
+    args <- (reserved "nothing" $> []) <|> ((,) <$> identifier <*> identifier) `sepBy` symbol ","
     reserved "returns"
-    ret <- (reserved "nothing" *> pure "nothing") <|> identifier
+    ret <- (reserved "nothing" $> "nothing") <|> identifier
     horizontalSpace
     return (name, args, ret)
 
@@ -170,7 +171,7 @@ statement = returnStmt
                 Just idx -> return $ AVar v idx
                 Nothing -> return $ SVar v
 
-            
+
         exitwhen = Exitwhen <$> (reserved "exitwhen" *> expression <* horizontalSpace)
 
         if_ = If <$> (reserved "if" *> expression <* reserved "then" <* horizontalSpace)
@@ -192,7 +193,7 @@ statement = returnStmt
 
 vardecl constantness = do
     typ <- identifier
-    isArray <- reserved "array" *> pure True <|> pure False
+    isArray <- (reserved "array" $> True) <|> pure False
     if isArray
     then varArray typ <* horizontalSpace
     else varNormal typ <* horizontalSpace
@@ -204,7 +205,8 @@ vardecl constantness = do
 expression = makeExprParser term table
             <?> "expression"
   where
-    table = [ [ binary (symbol "%") "%", binary (symbol "*") "*", binary (symbol "/") "/"]
+    table = [ [ prefix (reserved "not") "not" ],
+              [ binary (symbol "%") "%", binary (symbol "*") "*", binary (symbol "/") "/"]
             , [ binary (symbol "+") "+", binary (symbol "-") "-"]
             , zipWith binary
                 [symbol "<=", symbol "<" , symbol ">=", symbol ">", symbol "!=" , symbol "==" ]
@@ -212,22 +214,23 @@ expression = makeExprParser term table
             , [ binary (reserved "or") "or"]
             , [ binary (reserved "and") "and"]
             ]
-    binary t op = InfixL (t *> pure (\a b -> Call op [a, b]))
+    binary t op = InfixL (t $> (\a b -> Call op [a, b]))
+    prefix t op = Prefix (t $> (\e -> Call op [e]))
+
 
 term = parens expression
     <|> literal
     <|> varOrCall
     <|> symbol "+"      *> ((\e -> Call "+" [e]) <$> term)
     <|> symbol "-"      *> ((\e -> Call "-" [e]) <$> term)
-    <|> reserved "not"  *> ((\e -> Call "not" [e]) <$> expression)
     <?> "term"
   where
     literal = String <$> stringlit
             <|> either Real Int <$> eitherP (try reallit) intlit
             <|> Rawcode <$> rawcode
-            <|> (reserved "true" *> pure ( Bool True))
-            <|> (reserved "false" *> pure ( Bool False))
-            <|> (reserved "null" *> pure Null)
+            <|> (reserved "true" $> Bool True)
+            <|> (reserved "false" $> Bool False)
+            <|> (reserved "null" $> Null)
             <|> Code <$> (reserved "function" *> identifier)
 
     varOrCall = do
