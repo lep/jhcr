@@ -214,15 +214,19 @@ expression = makeExprParser term table
             , [ binary (reserved "or") "or"]
             , [ binary (reserved "and") "and"]
             ]
-    binary t op = InfixL (t $> (\a b -> Call op [a, b]))
-    prefix t op = Prefix (t $> (\e -> Call op [e]))
+binary t op = InfixL (t $> (\a b -> Call op [a, b]))
+prefix t op = Prefix (t $> (\e -> Call op [e]))
 
 
 term = parens expression
     <|> literal
     <|> varOrCall
-    <|> symbol "+"      *> ((\e -> Call "+" [e]) <$> term)
-    <|> symbol "-"      *> ((\e -> Call "-" [e]) <$> term)
+    <|> symbol "+"     *> ((\e -> Call "+" [e]) <$> term)
+    <|> symbol "-"     *> ((\e -> Call "-" [e]) <$> term)
+    -- makeExprParser doesn't support multiple prefix operations
+    -- as per documentation so we have to handle it in both term and
+    -- expression. Looks like it gives the correct result...
+    <|> reserved "not" *> ((\e -> Call "not" [e]) <$> expression)
     <?> "term"
   where
     literal = String <$> stringlit
