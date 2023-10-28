@@ -131,7 +131,7 @@ intlog10 = fromIntegral . log10 . fromIntegral
 
 {- We have to parametrize this function as we use it to both serialize
  - human readable asm for debugging purpose and also to serialize the 
- - instruction chungs which we later put into another jass AST.
+ - instruction chunks which we later put into another jass AST.
  - And herein lies the problem: we can't re-encode some utf8 string again
  - as that messes up the lit "string" instructions encoded in jass AST.
  - Overall it's very unpleasent.

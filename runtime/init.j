@@ -10,8 +10,7 @@ endglobals
 
 function _parse takes nothing returns nothing
     local integer _g = 0
-    local integer _i = 1
-    local integer _cnt
+    local integer _i
 
 #if PATCH_LVL >= 133
     call Preloader("JHCR-"+I2S(_seq)+".txt")
@@ -20,22 +19,20 @@ function _parse takes nothing returns nothing
     call Preloader("JHCR.txt")
 #endif
 
-    set _cnt = GetStoredInteger(_GC, "functions", "count")
-
+    set _i = GetStoredInteger(_GC, "functions", "count")
     set Parser#_prev_ins = 0
     loop
-    exitwhen _i > _cnt
+    exitwhen _i == 0
         call Parser#_parse_and_init(GetStoredString(_GC, "functions", I2S(_i)))
-        set _i = _i +1
+        set _i = _i -1
     endloop
 
-    set _i = 1
     set Parser#_prev_ins = 0
-    set _cnt = GetStoredInteger(_GC, "globals", "count")
+    set _i = GetStoredInteger(_GC, "globals", "count")
     loop
-    exitwhen _i > _cnt
+    exitwhen _i == 0
         set _g = Parser#_parse_globals(GetStoredString(_GC, "globals", I2S(_i)), _g)
-        set _i = _i + 1
+        set _i = _i - 1
     endloop
 
     // execute _g
