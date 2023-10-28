@@ -20,7 +20,7 @@ patch133: COMMONJ=common-1.33.j
 patch133: PATCH_LVL=133
 patch133: build
 
-nix: COMMONJ=common-133.j
+nix: COMMONJ=common-1.33.j
 nix: PATCH_LVL=133
 nix: $(PROCESSED) Hot/Types.hs Hot/CommonJHash.hs
 	ghc -DPATCH_LVL=$(PATCH_LVL) Main.hs -o jhcr
