@@ -66,7 +66,7 @@ import Data.Hashable
 
 import Data.Monoid
 
-import Text.Megaparsec (errorBundlePretty)
+import Text.Megaparsec (errorBundlePretty, parse)
 import qualified Text.Megaparsec as Mega
 
 import Text.Printf
@@ -76,10 +76,6 @@ import Development.GitRev (gitHash)
 
 import GHC.IO.Encoding (setLocaleEncoding, utf8)
 
-exceptT :: Either e a -> ExceptT e IO a
-exceptT = ExceptT . return
-
-parse fp p src = Mega.parse fp p $ src <> "\n"
 
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
@@ -212,11 +208,11 @@ compileX o = do
         ins_opt = if optAsm o then (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules) else id
     x <- runExceptT $ do
         src <- liftIO $ readFile (commonjPath o)
-        commonj <- exceptT $ parse J.programm (commonjPath o) src
+        commonj <- except $ parse J.programm (commonjPath o) src
         
         toCompile <- forM (inputPaths o) $ \j -> do
             src <- liftIO $ readFile j
-            J.Programm ast <- exceptT $ parse J.programm j src
+            J.Programm ast <- except $ parse J.programm j src
             --traceShowM ast
             return ast
         return (commonj, J.Programm $ concat toCompile)
@@ -358,16 +354,16 @@ initX o = do
     x <- runExceptT $ do
         (prelude, First (Just cjhash)) <- first J.Programm . mconcat <$> forM commonJassFiles (\j -> do
             src <- liftIO $ readFile j
-            J.Programm ast <- exceptT $ parse J.programm j src
+            J.Programm ast <- except $ parse J.programm j src
             return (ast, First . Just . hash $ J.Programm ast)
             )
 
         rt1 <- J.Programm . mconcat <$> forM runtime1 (\src -> do
-            J.Programm ast <- exceptT $ parse J.programm "rt1" src
+            J.Programm ast <- except $ parse J.programm "rt1" src
             return ast)
         
         rt2 <- J.Programm . mconcat <$> forM runtime2 (\src -> do
-            J.Programm ast <- exceptT $ parse J.programm "rt2" src
+            J.Programm ast <- except $ parse J.programm "rt2" src
             return ast)
             
         return (prelude, cjhash, rt1, rt2)

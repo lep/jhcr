@@ -111,7 +111,9 @@ toplevel = globals
         native const <|> function const
 
     globals = between (reserved "globals"<* horizontalSpace)
-                      (reserved "endglobals" <* horizontalSpace) $ many $ do
+                      (reserved "endglobals" ) $
+                        pGlobal `sepEndBy` horizontalSpace
+    pGlobal = do
         const <- fromMaybe Normal <$> optional (reserved "constant" $> Jass.Ast.Const)
         vdecl <- vardecl const
         return $ Global vdecl
@@ -121,17 +123,14 @@ toplevel = globals
         new <- identifier
         reserved "extends"
         base <- identifier
-        horizontalSpace
         return [Typedef new base]
 
 pSignature = do
-
     name <- identifier
     reserved "takes"
     args <- (reserved "nothing" $> []) <|> ((,) <$> identifier <*> identifier) `sepBy` symbol ","
     reserved "returns"
     ret <- (reserved "nothing" $> "nothing") <|> identifier
-    horizontalSpace
     return (name, args, ret)
 
 native const = do
@@ -142,9 +141,9 @@ native const = do
 function const = do
     reserved "function"
     (name, args, ret) <- pSignature
-    body <- many statement
-    reserved "endfunction"
     horizontalSpace
+    body <- statement `sepEndBy` horizontalSpace
+    reserved "endfunction"
     return [Function const name args ret body]
 
 statement = returnStmt
@@ -157,13 +156,12 @@ statement = returnStmt
           <?> "statement"
     where
         local = Local <$> (reserved "local"*> vardecl Normal)
-        returnStmt = Return <$> (reserved "return" *> optional expression <* horizontalSpace)
-        callStmt = Call <$> (optional (reserved "debug") *> reserved "call" *> identifier) <*> parens arglist <* horizontalSpace
-        loop = Loop <$> between startLoop endLoop (many statement)
+        returnStmt = Return <$> (reserved "return" *> optional expression)
+        callStmt = Call <$> (optional (reserved "debug") *> reserved "call" *> identifier) <*> parens arglist
+        loop = Loop <$> between startLoop endLoop (statement `sepEndBy` horizontalSpace)
 
         set = Set <$> (reserved "set" *> lvar)
                   <*> (symbol "=" *> expression)
-                  <* horizontalSpace
         lvar = do
             v <- identifier
             arr <- optional $ brackets expression
@@ -172,31 +170,31 @@ statement = returnStmt
                 Nothing -> return $ SVar v
 
 
-        exitwhen = Exitwhen <$> (reserved "exitwhen" *> expression <* horizontalSpace)
+        exitwhen = Exitwhen <$> (reserved "exitwhen" *> expression)
 
         if_ = If <$> (reserved "if" *> expression <* reserved "then" <* horizontalSpace)
-                 <*> many statement
+                 <*> statement `sepEndBy` horizontalSpace
                  <*> many elseif
                  <*> optional else_
-                 <*  reserved "endif" <* horizontalSpace
+                 <*  reserved "endif"
 
 
         elseif =
             (,) <$> (reserved "elseif" *> expression)
-                <*> (reserved "then" >> horizontalSpace *> many statement)
+                <*> (reserved "then" >> horizontalSpace *> statement `sepEndBy` horizontalSpace)
 
 
-        else_ = reserved "else" *> horizontalSpace *> many statement
+        else_ = reserved "else" *> horizontalSpace *> statement `sepEndBy` horizontalSpace
 
         startLoop = reserved "loop" <* horizontalSpace
-        endLoop = reserved "endloop" <* horizontalSpace
+        endLoop = reserved "endloop"
 
 vardecl constantness = do
     typ <- identifier
     isArray <- (reserved "array" $> True) <|> pure False
     if isArray
-    then varArray typ <* horizontalSpace
-    else varNormal typ <* horizontalSpace
+    then varArray typ
+    else varNormal typ
 
   where
     varArray typ = ADef <$> identifier <*> pure typ
@@ -247,4 +245,10 @@ term = parens expression
 
 arglist = expression `sepBy` symbol ","
 
-programm = Programm . concat <$> (space *> many horizontalSpace *> many toplevel <* eof)
+programm :: Parser (Ast Name Programm)
+programm = do
+    space
+    many horizontalSpace
+    ts <- concat <$> toplevel `sepEndBy` horizontalSpace
+    eof
+    pure $ Programm ts
