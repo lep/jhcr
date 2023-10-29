@@ -40,14 +40,14 @@
           buildPhase = ''
             export PATCH_LVL=133
 		    
-            ${ghcPackages}/bin/runhaskell convert.hs ${common-j}/common.j
+            ${ghcPackages}/bin/runhaskell -isrc src/convert.hs ${common-j}/common.j
 
             mkdir out
-            for j in runtime/*.j; do
-              bash process.sh "$j" "''${j/runtime/out}" JHCR_
+            for j in src/runtime/*.j; do
+              bash src/process.sh "$j" "''${j/src\/runtime/out}" JHCR_
             done
 
-            ${ghcPackages}/bin/ghc -O Main.hs -o jhcr
+            ${ghcPackages}/bin/ghc -O -isrc src/Main.hs -o jhcr
           '';
 
 

@@ -228,20 +228,20 @@ main = do
             printJassTypes types
   where
     printJassTypes ty = do
-        f <- openFile "runtime/types.j" WriteMode
+        f <- openFile "src/runtime/types.j" WriteMode
         hPutStrLn f "// scope Types"
         hPutStrLn f "// REQUIRES "
         hPutBuilder f . pretty $ mkJassTypes ty
         hClose f
 
     printGBinTy ty = do
-        f <- openFile "runtime/g-type-bin.j" WriteMode
+        f <- openFile "src/runtime/g-type-bin.j" WriteMode
         hPutStrLn f "#define hom(type, m) m(type)"
         hPutBuilder f . printStmt $ gTypeBin ty
         hClose f
 
     printHaskellTypes ty = do
-        f <- openFile "Hot/Types.hs" WriteMode
+        f <- openFile "src/Hot/Types.hs" WriteMode
         hPutStrLn f $ unlines
           [ "{-# LANGUAGE OverloadedStrings #-}"
           , "module Hot.Types (types) where"
@@ -254,7 +254,7 @@ main = do
         hClose f
 
     printHaskellHash j = do
-        f <- openFile "Hot/CommonJHash.hs" WriteMode
+        f <- openFile "src/Hot/CommonJHash.hs" WriteMode
         hPutStrLn f $ unlines
           [ "module Hot.CommonJHash (commonjHash) where"
           , "commonjHash :: Int"
@@ -264,7 +264,7 @@ main = do
     
     
     printRuntime ty = do
-        f <- openFile "runtime/convert.j" WriteMode
+        f <- openFile "src/runtime/convert.j" WriteMode
         hPutStrLn f "// scope Convert"
         hPutStrLn f "// REQUIRES Table Context"
         hPutBuilder f . pretty $ Programm

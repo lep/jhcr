@@ -61,9 +61,7 @@ If you put a file called common-1.33.j (or common-1.28.j)
 in the directory you can simply type `make patch133` (or `make patch128`) and it
 should just work. You can then find the executable deeply nested in the `dist-newstyle`
 folder. To get the exact path you could either use `cabal exec which jhcr` or
-if you have a newer cabal version you can use `cabal list-bin jhcr`. If you're
-building for an older patch you have to provide the `-f old-patch` flag to
-`cabal list-bin` aswell.
+if you have a newer cabal version you can use `cabal list-bin jhcr`.
 
 #### Building for any other patch
 

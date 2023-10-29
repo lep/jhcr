@@ -9,12 +9,9 @@ maintainer:          lep.delete@googlemail.com
 build-type:          Simple
 extra-source-files:  Readme.md
 
-flag old-patch
-  default: False
-  manual: True
-
 executable jhcr
   main-is: Main.hs
+  hs-source-dir: src
   other-modules: Data.Composeable, Hot.Ast, Hot.HandleCode, Hot.Init.Auto,
                  Hot.Init.Rename, Hot.Init.Stubs, Hot.Instruction,
                  Hot.Instruction.Compiler, Hot.Instruction.Opt.Rewrite,
@@ -31,6 +28,7 @@ executable jhcr
 
 executable convert
   main-is: convert.hs
+  hs-source-dir: src
   other-modules: Data.Composeable, Jass.Ast, Jass.Parser, Jass.Printer
   build-depends: base, mtl, hashable, binary, megaparsec, parser-combinators,
                  bytestring, containers
