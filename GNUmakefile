@@ -2,6 +2,7 @@ RUNTIME := src/runtime/table.j src/runtime/parser.j src/runtime/list.j src/runti
 RUNTIME += src/runtime/modified.j src/runtime/wrap-around.j src/runtime/print.j
 RUNTIME += src/runtime/convert.j src/runtime/context.j src/runtime/types.j
 RUNTIME += src/runtime/instruction.j src/runtime/interpreter.j src/runtime/init.j
+RUNTIME += src/runtime/api.j
 
 PROCESSED := $(patsubst src/runtime/%.j, out/%.j, $(RUNTIME))
 

@@ -107,6 +107,7 @@ runtime1 = map S8.unpack
   , $(embedFile "out/modified.j")
   , $(embedFile "out/instruction.j")
   , $(embedFile "out/parser.j")
+  , $(embedFile "out/api.j")
   ]
 
 runtime2 :: [String]
@@ -378,6 +379,13 @@ updateX o = do
 
 
 
+removeAPIDefs :: J.Ast H.Var J.Programm -> J.Ast H.Var J.Programm
+removeAPIDefs (J.Programm ts) = J.Programm $ filter f ts
+  where
+    f :: J.Ast H.Var J.Toplevel -> Bool
+    f (J.Native _ name _ _) = not $ "JHCR_API_" `isPrefixOf` H.nameOf name
+    f _ = True
+
 initX o = do
     let jhc = if processJasshelper o then JH.compile else id
     let commonJassFiles = init $ jassFiles o
@@ -430,7 +438,7 @@ initX o = do
                     cookie <- randomIO :: IO Word32
                     let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
-                        (ast', st') = first HandleCode.compile $
+                        (ast', st') = first removeAPIDefs $ first HandleCode.compile $
                                       Rename.compile Rename.Init conv st jhast
                         
                         conv x = if x == "code" then "integer" else x

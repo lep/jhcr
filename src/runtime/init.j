@@ -13,9 +13,12 @@ function _parse_wrapped takes nothing returns boolean
     local integer _g = 0
     local integer _i
 
+    set API#_last_status = API#_OP_LIMIT
+
     call Preloader("JHCR-" + Auto#_cookie +"-"+ I2S(_seq)+".txt")
     set _i = GetStoredInteger(_GC, "seq", "0")
     if _i != _seq then
+        set API#_last_status = API#_NO_DATA
         return false
     endif
     
@@ -42,11 +45,19 @@ function _parse_wrapped takes nothing returns boolean
         call Interpreter#_exec_globals(_g)
     endif
 
+    set API#_last_status = API#_SUCCESS
+
     return true
 endfunction
 
 function _parse takes nothing returns nothing
+    local integer _i = 0
     call TriggerEvaluate(_parse_runner)
+    loop
+    exitwhen _i >= API#_cnt
+        call TriggerExecute(API#_triggers[_i])
+        set _i = _i +1
+    endloop
 endfunction
 
 function _i2code takes nothing returns boolean
