@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 import Debug.Trace
 
@@ -20,16 +21,19 @@ import Control.Arrow (first, second)
 
 import System.IO
 import System.Exit
+import System.Random
 
 import System.FilePath ((</>))
-import System.Directory (createDirectoryIfMissing)
+import qualified System.FilePath.Glob as Glob
+import System.Directory (createDirectoryIfMissing, removeFile, doesFileExist)
 
 import qualified Data.ByteString.Char8 as S8
 import Data.ByteString.Builder
 
 import Data.List (isPrefixOf, partition)
 
-import Data.Binary (decodeFile, encodeFile)
+import Data.Binary (decodeFile, encodeFile, Binary)
+import GHC.Generics
 
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -76,6 +80,16 @@ import Development.GitRev (gitHash)
 
 import GHC.IO.Encoding (setLocaleEncoding, utf8)
 
+import Data.Word
+ 
+data ProgState = ProgState
+    { sequenceNumber :: Int
+    , functionHashes :: Map J.Name Int
+    , typesHierachy :: Map H.Type H.Type
+    , renameState :: Rename.RenameVariablesState
+    , randomCookie :: String
+    } deriving (Generic, Binary, Show)
+
 
 concatPrograms :: J.Ast a J.Programm -> J.Ast a J.Programm -> J.Ast a J.Programm
 concatPrograms (J.Programm a) (J.Programm b) = J.Programm $ a <> b
@@ -110,6 +124,7 @@ data Options =
          }
   | Update { inputjPath :: FilePath
            , preloadPath :: FilePath
+           , autoCleanPreloadPath :: Bool
            , processJasshelper :: Bool
            , statePath :: FilePath
            , showAsm :: Bool
@@ -143,6 +158,7 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
     updateOptions =
         Update <$> pWar3Map
                <*> pPreload
+               <*> pAutoClean
                <*> pJasshelper
                <*> pState
                <*> pAsm
@@ -156,6 +172,10 @@ parseOptions = customExecParser (prefs showHelpOnEmpty) opts
     pJasshelper = switch
       (  long "jasshelper" 
       <> help "Treats the input script as if it was produced by jasshelper"
+      )
+    pAutoClean = switch
+      ( long "autoclean"
+      <> help "Automatically removes stale JHCR Preload files in preload-path"
       )
     pWar3Map = argument str
         (  metavar "war3map.j"
@@ -235,12 +255,25 @@ compileX o = do
                     putStrLn s
             
 
+
+mkPreloadPath options progstate =
+    preloadPath options </> "JHCR-" <> randomCookie progstate <> "-"  <> show (sequenceNumber progstate) <> ".txt"
+    
+
 updateX o = do
     let jhc = if processJasshelper o then JH.compile else id
         jass_opt = Jass.Opt.rewrite Jass.Opt.someRules
         ins_opt = (!!4) . iterate (Ins.Opt.rewrite Ins.Opt.someRules)
         
-    (st, hmap, typeHierachy, seq :: Int) <- decodeFile (statePath o)
+    progstate@(ProgState seq hmap typeHierachy st cookie) <- decodeFile (statePath o)
+
+    when (autoCleanPreloadPath o) $ do
+        let cookiePattern = Glob.compile $ preloadPath o </> "JHCR-" <> cookie <> ".txt"
+        files <- Glob.glob $ preloadPath o </> "JHCR-*.txt"
+        forM_ files $ \f -> do
+            when (not $ Glob.match cookiePattern f) $
+                removeFile f
+
 
     p <- parse J.programm (inputjPath o) <$> readFile (inputjPath o)
     case p of
@@ -261,12 +294,11 @@ updateX o = do
 
             forM_ nameU $ \n ->
                 putStrLn $ unwords ["Updating function", n]
-
-            putStrLn "Writing bytecode"
         
             let fnsCompiled = ins_opt $ Ins.compile typeHierachy ast''
                 gCompiled = ins_opt $ Ins.compileGlobals typeHierachy $ H.globals2statements ast'
-                
+
+            putStrLn $ unwords [ "Writing bytecode", "seq#", show seq ]
             when (showAsm o) $ do
                 putStrLn "; functions"
                 hPutBuilder stdout $ Ins.serializeAsm fnsCompiled
@@ -274,21 +306,23 @@ updateX o = do
                 putStrLn "; globals"
                 hPutBuilder stdout $ Ins.serializeAsm gCompiled
             
+
             let fnAsm = Ins.serializeChunked 1000 fnsCompiled
                 gAsm = Ins.serializeChunked 1000 gCompiled
-                preload = mkPreload fnAsm gAsm
+                preload = mkPreload seq fnAsm gAsm
+
 
             createDirectoryIfMissing True $ preloadPath o
-#if PATCH_LVL < 133
-            withBinaryFile (preloadPath o </> "JHCR.txt") WriteMode $ \f ->
+            -- withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
+            withBinaryFile (mkPreloadPath o progstate) WriteMode $ \f ->
                 hPutBuilder f $ J.pretty preload
-#else
-            withBinaryFile (preloadPath o </> "JHCR-" <> show seq <> ".txt") WriteMode $ \f ->
-                hPutBuilder f $ J.pretty preload
-#endif
 
             putStrLn "Writing state file"
-            encodeFile (statePath o) (st', hmap' <> hmap, typeHierachy, succ seq)
+            encodeFile (statePath o) progstate {
+                renameState = st'
+              , functionHashes = hmap' <> hmap
+              , sequenceNumber = succ seq
+            }
             putStrLn "Ok."
   where
     isUpdated :: Map J.Name Int -> Map J.Name Int -> J.Ast J.Name x -> Bool
@@ -324,13 +358,14 @@ updateX o = do
     isSDef (J.Global (J.SDef{})) = True
     isSDef _ = False
 
-    mkPreload :: [String] -> [String] -> (J.Ast J.Name J.Programm)
-    mkPreload fns globals =
+    mkPreload :: Int -> [String] -> [String] -> (J.Ast J.Name J.Programm)
+    mkPreload seq fns globals =
         let gc = J.Local (J.SDef J.Normal "gc" "gamecache" $ Just $ J.Call "InitGameCache" [J.String "JHCR.w3v"]) 
+            storeSeq = J.Call "StoreInteger" [ J.Var $ J.SVar "gc", J.String "seq", J.String "0", J.Int $ show seq ]
             fns' = mkF (J.String "functions") fns
             g' = mkF (J.String "globals") globals
         in J.Programm . pure . J.Function J.Normal "PreloadFiles" [] "nothing" $
-            gc:fns' <> g'
+            gc:storeSeq: fns' <> g'
 
 
     mkF label asms =
@@ -392,6 +427,7 @@ initX o = do
                     hPutStrLn stderr $ errorBundlePretty err
                     exitFailure
                 Right ast -> do
+                    cookie <- randomIO :: IO Word32
                     let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
                         (ast', st') = first HandleCode.compile $
@@ -409,21 +445,35 @@ initX o = do
                         generated' :: J.Ast H.Var H.Programm
                         generated' = foldr1 concatPrograms $ stubs:generated
                         
+                        generated'' :: J.Ast H.Name H.Programm
                         generated'' = replaceExecuteFunc . J.fmap H.nameOf $ addPrefix "JHCR" generated'
+
+
+                        cookieAst :: J.Ast H.Name H.Programm
+                        cookieAst = J.fmap H.nameOf $ addPrefix "JHCR" $ J.Programm [
+                             J.Global $ J.SDef J.Normal (H.mkGlobal "_Auto_cookie") "string" (Just $ J.String $ show cookie)
+                            ]
                         
                         (main, rest) = extractMainAndConfig generated''
                         main' = injectInit main
                         
-                        outj = foldl1 concatPrograms [ rt1', rest, rt2', main']
+                        outj = foldl1 concatPrograms [ cookieAst, rt1', rest, rt2', main']
                         
                         hmap = mkHashMap jhast
                     
                     putStrLn "Writing state file"
-                    encodeFile (statePath o) (st', hmap, typeHierachy, 0::Int)
+                    encodeFile (statePath o) ProgState {
+                        sequenceNumber = 1
+                      , functionHashes = hmap
+                      , typesHierachy = typeHierachy
+                      , renameState = st'
+                      , randomCookie = show cookie
+                    }
 
                     putStrLn "Writing map script"
                     withBinaryFile (outjPath o) WriteMode $ \f ->
                         hPutBuilder f $ J.pretty outj
+
 
                     putStrLn "Ok."
   where

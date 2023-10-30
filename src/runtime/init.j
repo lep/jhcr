@@ -4,20 +4,22 @@
 globals
     boolean _already_init = false
 
-    integer _seq = 0
+    integer _seq = 1
     gamecache _GC = InitGameCache("JHCR.w3v")
+    trigger _parse_runner = CreateTrigger()
 endglobals
 
-function _parse takes nothing returns nothing
+function _parse_wrapped takes nothing returns boolean
     local integer _g = 0
     local integer _i
 
-#if PATCH_LVL >= 133
-    call Preloader("JHCR-"+I2S(_seq)+".txt")
+    call Preloader("JHCR-" + Auto#_cookie +"-"+ I2S(_seq)+".txt")
+    set _i = GetStoredInteger(_GC, "seq", "0")
+    if _i != _seq then
+        return false
+    endif
+    
     set _seq = _seq + 1
-#else
-    call Preloader("JHCR.txt")
-#endif
 
     set _i = GetStoredInteger(_GC, "functions", "count")
     set Parser#_prev_ins = 0
@@ -40,6 +42,11 @@ function _parse takes nothing returns nothing
         call Interpreter#_exec_globals(_g)
     endif
 
+    return true
+endfunction
+
+function _parse takes nothing returns nothing
+    call TriggerEvaluate(_parse_runner)
 endfunction
 
 function _i2code takes nothing returns boolean
@@ -56,6 +63,7 @@ function _init takes nothing returns nothing
     
     
     call TriggerAddCondition(Wrap#_t2, Condition(function _i2code))
+    call TriggerAddCondition(_parse_runner, Condition(function _parse_wrapped))
 
     call Types#_init()
     call Wrap#_init()

@@ -7,6 +7,7 @@ module Hot.Init.Rename
     ( Mode(..)
     , compile
     , compile'
+    , RenameVariablesState
     ) where
 
 
@@ -47,7 +48,7 @@ data RenameVariablesState = RenameVariablesState
     , _localCount :: Int32
     , _fnScope :: Map Name Var
     , _newFnCount :: Int32
-    } deriving (Generic)
+    } deriving (Generic, Show)
 makeLenses ''RenameVariablesState
 
 instance Binary RenameVariablesState

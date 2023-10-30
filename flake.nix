@@ -32,6 +32,8 @@
           ps.unordered-containers
           ps.vector
           ps.utf8-string
+          ps.random
+          ps.Glob
         ]);
 
         jhcr = pkgs.stdenv.mkDerivation {
