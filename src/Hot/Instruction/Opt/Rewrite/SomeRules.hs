@@ -406,6 +406,7 @@ args b n = map (mkRule n)
         in [b, cmd] --> [b]
 
 
+someRules :: [Rule]
 someRules =
        eliminateUselessJmp
     <> eliminateTmpOther
