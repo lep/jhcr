@@ -1,18 +1,24 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE MultiWayIf #-}
 
-module Hot.Instruction.Opt.Rewrite (rewrite, Rule(..), parse) where
+-- module Hot.Instruction.Opt.Rewrite (rewrite, Rule(..), parse) where
+module Hot.Instruction.Opt.Rewrite  where
 
 import Data.Maybe (mapMaybe)
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, foldl')
+
+import qualified Data.Foldable as Foldable
+
+
+import Data.Sequence (Seq)
+import qualified Data.Sequence as Seq
 
 import Data.ByteString.Lazy.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as L8
 
 import Data.Map (Map)
 import qualified Data.Map as Map
-
-import Data.DList (DList)
-import qualified Data.DList as DList
 
 import Control.Monad
 import Control.Monad.State
@@ -52,13 +58,15 @@ unify from to = do
     e <- gets $ Map.lookup from
     case e of
         Nothing -> do
-            modify $ Map.insert from to
+            modify' $ Map.insert from to
             return True
         Just to' ->
             if to == to'
             then return True
             else return False
 
+-- this is still the slowest function by far according to profiling
+-- it's just called *very* often
 match' :: [Tok] -> [Value] -> M Bool
 match' xs ys = and <$> zipWithM go xs ys
   where
@@ -71,13 +79,13 @@ match' xs ys = and <$> zipWithM go xs ys
             then unify from to
             else return False
         NotZero from ->
-            if zero to
-            then return False
-            else unify from to
+          case to of
+            Reg 0 -> pure False
+            _ -> unify from to
         Zero ->
-            if zero to
-            then return True
-            else return False
+          case to of
+            Reg 0 -> pure True
+            _ -> pure False
         Ex from -> return $ from == to
 
     zero x =
@@ -126,7 +134,7 @@ fromList x =
     [ Cmd "not", Reg a, Reg b] -> Not a b
     [ Cmd "ret", Type ty] -> Ret ty
 
-apply :: S -> [Tok] -> [Value]
+apply :: S -> TokInstruction -> ValInstruction
 apply m = map go
   where
     go x = 
@@ -138,46 +146,137 @@ apply m = map go
         Zero -> Reg 0
 
 
-match :: [ [Value] ] -> [ [Tok] ] -> (Bool, S)
-match [] _ = (False, mempty)
-match v t =
-  let v' = take (length t) v
-  in if length v < length t
-  then (False, mempty)
-  else flip runState mempty $ and <$> zipWithM match' t v'
-
-matchRule :: [[Value]] -> Rule -> Maybe (S, Rule)
-matchRule v r = --trace (unwords ["Trying to match", show v, "against rule", show r]) $
-  case match v (from r) of
-    (False, _) -> Nothing --trace "Did not match" Nothing
-    (True, s) -> Just (s, r) --trace "matched" $ Just (s, r)
-
 data Rule = Rule
-  { from :: [ [Tok] ]
-  , to :: [ [Tok] ]
+  { from :: [ TokInstruction ]
+  , to :: [ TokInstruction ]
   } deriving (Show)
-  
-rewrite :: [Rule] -> [Instruction] -> [Instruction]
-rewrite _ [] = []
-rewrite rules input = {-trace (unwords ["rewriting", show input]) $-} go mempty input'
-  where
-    input' :: [[Value]]
-    input' = map toList input
-    
-    go :: DList [Value] -> [[Value]] -> [Instruction]
-    go acc [] = map fromList $ DList.toList acc
-    go acc ls@(x:xs) =
-        let potentialMatches = mapMaybe (matchRule ls) rules
-        in case potentialMatches of
-            (s, r):_ -> --trace (unwords ["matched", show r, "with", show s ]) $
-                let ls' :: [[Value]]
-                    ls' = drop (length $ from r) ls
-                    new = map (apply s) $ to r
-                in go acc $ {-trace (unwords ["continuing with", show $ new <> ls']) $-} new <> ls'
-            [] -> go (acc `snoc` x) xs
-            
-    snoc = DList.snoc
 
+type TokInstruction = [Tok]
+type ValInstruction = [Value]
+
+data AppliedRule = AppliedRule
+  { patterns :: [TokInstruction]
+  , state :: S
+  , result :: [TokInstruction]
+  , originalRule :: Rule
+  } deriving (Show)
+
+makeInitialAppliedRule :: Rule -> AppliedRule
+makeInitialAppliedRule r@Rule{..} = AppliedRule
+  { result = to
+  , state = mempty
+  , patterns = from
+  , originalRule = r
+  }
+
+-- this matches/unifies one incoming instruction with one instruction pattern
+matchOne :: ValInstruction -> TokInstruction -> M Bool
+matchOne ins pattern = match' pattern ins
+
+-- this matches one incoming instruction against a list of possible rules
+-- and filters all rules that don't match
+matchMultipleRules :: ValInstruction -> [AppliedRule] -> [AppliedRule]
+matchMultipleRules ins as = mapMaybe applyOneRule as
+  where
+    applyOneRule a@AppliedRule{..} =
+      case patterns of
+        [] -> Just a
+        (t:ts) ->
+          let (matched, s') = runState (matchOne ins t) state
+          in if matched
+          then Just $ AppliedRule ts s' result originalRule
+          else Nothing
+
+-- matches a list of instructions against a list of possible patterns
+matchInstructionSequence :: Foldable t => t ValInstruction -> [AppliedRule] -> [AppliedRule]
+matchInstructionSequence instructions ps =
+  filter (null . patterns) $ foldl' (flip matchMultipleRules) ps instructions
+
+
+resultOfAppliedRule :: AppliedRule -> [ValInstruction]
+resultOfAppliedRule AppliedRule{..} = map (apply state) result
+
+applyResultToSeq :: Seq ValInstruction -> AppliedRule -> (Seq ValInstruction, Seq ValInstruction)
+applyResultToSeq window applied =
+  let result = Seq.fromList $ resultOfAppliedRule applied
+      leftOver = Seq.drop (length $ from $ originalRule applied) window
+  in (result, leftOver)
+
+applyResultToAccumulator :: Accumulator -> AppliedRule -> Accumulator
+applyResultToAccumulator acc applied =
+  let (result, leftOver) = applyResultToSeq (accWindow acc) applied
+  in
+     acc {
+    accWindow = leftOver
+  , accResult = accResult acc Seq.>< result
+  }
+    
+
+data Accumulator = Accumulator
+  { accResult :: Seq ValInstruction
+  , accWindow :: Seq ValInstruction
+  , accWindowMinSize :: Int
+  , accWindowMaxSize :: Int
+  , initialRules :: [AppliedRule]
+  } deriving (Show)
+
+accOneInstruction :: ValInstruction -> Accumulator -> Accumulator
+accOneInstruction ins a@Accumulator{..} =
+  let hiWindow@(x Seq.:<| loWindow) = accWindow Seq.|> ins
+      a' = a {
+          accResult = accResult Seq.|> x
+        , accWindow = loWindow
+      }
+  in if
+    -- if the new window fits the requirements run the algorithm on it
+    | accWindowMinSize <= Seq.length hiWindow && Seq.length hiWindow <= accWindowMaxSize ->
+        case matchInstructionSequence hiWindow initialRules of
+          [] -> a {accWindow = hiWindow}
+          r:_ -> applyResultToAccumulator (a{ accWindow = hiWindow }) r
+    -- if the hiWindow is too large drop the first element and run on the smaller window
+    | Seq.length hiWindow > accWindowMaxSize ->
+        case matchInstructionSequence loWindow initialRules of
+          [] -> a'
+          r:_ -> applyResultToAccumulator a' r
+    | otherwise -> a { accWindow = hiWindow }
+
+accTail :: Accumulator -> Accumulator
+accTail acc@Accumulator{..}
+  | Seq.length accWindow < accWindowMinSize =
+      acc { accResult = accResult Seq.>< accWindow
+          , accWindow = mempty
+          }
+  | otherwise =
+      let x Seq.:<| window' = accWindow
+      in case matchInstructionSequence window' initialRules of
+        [] -> accTail acc {
+            accResult = accResult Seq.|> x
+          , accWindow = window'
+        }
+        r:_ -> accTail $ applyResultToAccumulator acc { accWindow = window', accResult = accResult Seq.|> x } r
+  
+
+rewrite :: [Rule] -> [Instruction] -> [Instruction]
+rewrite rules ins =
+  let inputValues = map toList ins :: [ValInstruction]
+      initialAppliedRules = map makeInitialAppliedRule rules
+      maxWindowSize = maximum $ map (length.from) rules
+      minWindowSize = minimum $ map (length.from) rules
+
+      acc = Accumulator {
+          accResult = mempty
+        , accWindow = mempty
+        , accWindowMinSize = minWindowSize
+        , accWindowMaxSize = maxWindowSize
+        , initialRules = initialAppliedRules
+      }
+  in finalizeAccumulator . accTail $ foldl' (flip accOneInstruction) acc inputValues
+
+finalizeAccumulator :: Accumulator -> [Instruction]
+finalizeAccumulator Accumulator{..} =
+  let t = fmap fromList $ accResult Seq.>< accWindow
+  in Foldable.toList t
+     
 
 parse :: String -> [Tok]
 parse = map p . words
