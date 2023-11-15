@@ -30,6 +30,14 @@ $ jhcr update war3map.j --preload-path Path\To\CustomMapData --jasshelper
 Again, if you've used jasshelper to compile your map, pass the --jasshelper flag.
 The update command will create a file called JHCR.txt in the path you've specified.
 
+Another flag is `--autoclean`. `jhcr` will write a new Preload file for each
+call to update with a random part. There are several reaons for this but the
+consequence is that we spam quite a lot of preload files. The `--autoclean` flag
+will remove all Preload files not belonging to the current jhcr session. If for
+some reason you are running multiple different jhcr sessions at the same time
+you probably shouldn't use this flag, but as this, i guess, rather uncommon
+there should be no harm to use this with every update call.
+
 As this tool operates only on the maps script and not on the map itself you
 have to extract and insert the war3map.j yourself.
 
@@ -38,6 +46,40 @@ have to extract and insert the war3map.j yourself.
 To load updates to the mapscript use `call ExecuteFunc("JHCR_Init_parse")` 
 when appropiate. I use pressing escape. Do this after you've done an `update`
 like above.
+
+### API
+
+`jhcr` provides a simple API which can, for now, be used to react to code being
+updated and see the success or error of the latest update aswell as the current
+sequence number.
+
+`jhcr` provides the following API. You can copy it into your map script to
+plase pjass and jhcr will fit with the correct version but it will also work
+if you don't provide those empty stub functions.
+
+````
+// Registers a trigger to run whenever a reload finishes
+function JHCR_API_RegisterReload takes trigger t returns nothing
+endfunction
+
+// Returns the current sequence number of the code being run.
+// The jhcr binary will print its sequence number on each `update` call.
+function JHCR_API_GetSeqNumber takes nothing returns integer
+    return 0
+endfunction
+
+// Returns the status of the latest reload attempt.
+// Possible return values are:
+//   -1  There wasn't any reload yet
+//    1  The reload was a success
+//    2  There wasn't any data to reload.
+//       Probably attempted a reload when no update was available.
+//    3  The reload hit the OP limit. Probably too much code to reload.
+function JHCR_API_GetLastStatus takes nothing returns integer
+    return 0
+endfunction
+
+````
 
 
 ## Building JHCR
