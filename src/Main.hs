@@ -384,7 +384,7 @@ removeAPIDefs :: J.Ast H.Var J.Programm -> J.Ast H.Var J.Programm
 removeAPIDefs (J.Programm ts) = J.Programm $ filter f ts
   where
     f :: J.Ast H.Var J.Toplevel -> Bool
-    f (J.Native _ name _ _) = not $ "JHCR_API_" `isPrefixOf` H.nameOf name
+    f (J.Function _ name _ _ _) = not $ "JHCR_API_" `isPrefixOf` H.nameOf name
     f _ = True
 
 initX o = do
