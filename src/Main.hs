@@ -270,7 +270,7 @@ updateX o = do
     progstate@(ProgState seq hmap typeHierachy st cookie) <- decodeFile (statePath o)
 
     when (autoCleanPreloadPath o) $ do
-        let cookiePattern = Glob.compile $ preloadPath o </> "JHCR-" <> cookie <> ".txt"
+        let cookiePattern = Glob.compile $ preloadPath o </> "JHCR-" <> cookie <> "-*.txt"
         files <- Glob.glob $ preloadPath o </> "JHCR-*.txt"
         forM_ files $ \f -> do
             when (not $ Glob.match cookiePattern f) $
