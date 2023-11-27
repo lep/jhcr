@@ -11,7 +11,7 @@ extra-source-files:  Readme.md
 
 executable jhcr
   main-is: Main.hs
-  hs-source-dir: src
+  hs-source-dirs: src
   other-modules: Data.Composeable, Hot.Ast, Hot.HandleCode, Hot.Init.Auto,
                  Hot.Init.Rename, Hot.Init.Stubs, Hot.Instruction,
                  Hot.Instruction.Compiler, Hot.Instruction.Opt.Rewrite,

@@ -12,10 +12,9 @@ globals
     
     // _name2id :: StringTable
     integer _name2id = 0
-endglobals
 
-function _DoNothing takes nothing returns nothing
-endfunction
+    code _Null = null
+endglobals
 
 function _i2code takes integer _i returns code
     set _p = _i

@@ -35,7 +35,7 @@ call to update with a random part. There are several reaons for this but the
 consequence is that we spam quite a lot of preload files. The `--autoclean` flag
 will remove all Preload files not belonging to the current jhcr session. If for
 some reason you are running multiple different jhcr sessions at the same time
-you probably shouldn't use this flag, but as this, i guess, rather uncommon
+you probably shouldn't use this flag, but as this is, i guess, rather uncommon
 there should be no harm to use this with every update call.
 
 As this tool operates only on the maps script and not on the map itself you
@@ -54,7 +54,7 @@ updated and see the success or error of the latest update aswell as the current
 sequence number.
 
 `jhcr` provides the following API. You can copy it into your map script to
-plase pjass and jhcr will fit with the correct version but it will also work
+please pjass and jhcr will fit with the correct version but it will also work
 if you don't provide those empty stub functions.
 
 ````
