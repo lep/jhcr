@@ -380,11 +380,12 @@ updateX o = do
 
 
 
-removeAPIDefs :: J.Ast H.Var J.Programm -> J.Ast H.Var J.Programm
+removeAPIDefs :: J.Ast J.Name J.Programm -> J.Ast J.Name J.Programm
 removeAPIDefs (J.Programm ts) = J.Programm $ filter f ts
   where
-    f :: J.Ast H.Var J.Toplevel -> Bool
-    f (J.Function _ name _ _ _) = not $ "JHCR_API_" `isPrefixOf` H.nameOf name
+    f :: J.Ast J.Name J.Toplevel -> Bool
+    f (J.Native _ name _ _ ) = not $ "JHCR_API_" `isPrefixOf` name
+    f (J.Function _ name _ _ _) = not $ "JHCR_API_" `isPrefixOf` name
     f _ = True
 
 initX o = do
@@ -439,7 +440,7 @@ initX o = do
                     cookie <- randomIO :: IO Word32
                     let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
-                        (ast', st') = first removeAPIDefs $ first HandleCode.compile $
+                        (ast', st') = first HandleCode.compile $
                                       Rename.compile Rename.Init conv st jhast
                         
                         conv x = if x == "code" then "integer" else x
@@ -466,7 +467,7 @@ initX o = do
                         (main, rest) = extractMainAndConfig generated''
                         main' = injectInit main
                         
-                        outj = foldl1 concatPrograms [ cookieAst, rt1', rest, rt2', main']
+                        outj = foldl1 concatPrograms [ cookieAst, rt1', removeAPIDefs rest, rt2', main']
                         
                         hmap = mkHashMap jhast
                     
