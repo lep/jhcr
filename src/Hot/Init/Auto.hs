@@ -175,7 +175,7 @@ compile pr =
                             types [1, 2 ..]
 
                     stmt
-                      | H.nameOf v `elem` donttouch = Call (mkFn "DoNothing") []
+                      | H.nameOf v `elem` donttouch = Call (mkFn "_Wrap_DoNothing") []
                       | ret == "nothing" = Call v args
                       | ret == "code"    = Call (mkFn "_Table_set_code") [Call (mkFn "_Auto_i2code") [Var scope, Var $ SVar reg, Call v args]]
                       | otherwise        = Call (mkFn $ "_Table_set_" <> ret) [Var scope, Var $ SVar reg, Call v args ]

@@ -29,7 +29,7 @@ executable jhcr
 
 executable convert
   main-is: convert.hs
-  hs-source-dir: src
+  hs-source-dirs: src
   other-modules: Data.Composeable, Jass.Ast, Jass.Parser, Jass.Printer
   build-depends: base, mtl, hashable, binary, megaparsec, parser-combinators,
                  bytestring, containers

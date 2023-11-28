@@ -16,6 +16,9 @@ globals
     code _Null = null
 endglobals
 
+function _DoNothing takes nothing returns nothing
+endfunction
+
 function _i2code takes integer _i returns code
     set _p = _i
     call TriggerEvaluate(_t2)
