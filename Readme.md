@@ -31,7 +31,7 @@ Again, if you've used jasshelper to compile your map, pass the --jasshelper flag
 The update command will create a file called JHCR.txt in the path you've specified.
 
 Another flag is `--autoclean`. `jhcr` will write a new Preload file for each
-call to update with a random part. There are several reaons for this but the
+call to update with a random part. There are several reasons for this but the
 consequence is that we spam quite a lot of preload files. The `--autoclean` flag
 will remove all Preload files not belonging to the current jhcr session. If for
 some reason you are running multiple different jhcr sessions at the same time

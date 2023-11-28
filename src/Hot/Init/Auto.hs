@@ -125,7 +125,9 @@ compile pr =
     i2code fns =
 
         let r :: Int -> Ast Var Stmt
-            r idx = let fn = (fns' ++ fns) !! (100+idx)
+            -- TODO: very ugly
+            r 0 = donothing
+            r idx = let fn = (fns' ++ [error "shouldn't happen"] ++ fns) !! (101+idx)
                         (v, args, name, isnative) = case fn of
                             Native _ v args _ -> (Code v, args, v, True)
                             Function _ v args _ _ -> (Code v, args, v, False)
@@ -143,9 +145,9 @@ compile pr =
                     Call (mkFn "_Wrap_call_anything_around") [Call (H.Op "-") [Int idx']]
                 ]
             fns' :: [Ast Var Toplevel]
-            fns' = map mkDummyFn [-1, -2 .. -101]
+            fns' = map mkDummyFn [-101, -100 .. -1]
         in fns' ++ [Function Normal (mkFn "_Auto_i2code") [("integer", uid)] "code" [
-            bin (-100) (length fns) (Var $ SVar uid) r
+            bin (-101) (length fns) (Var $ SVar uid) r
         ]]
 
 
