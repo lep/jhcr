@@ -141,8 +141,8 @@ compile pr =
 
             mkDummyFn idx =
                 let idx' = fromString . show $ negate idx
-                in Function Normal (mkFn $ "_Auto_dummyFunction_" <> idx') [] "nothing" [
-                    Call (mkFn "_Wrap_call_anything_around") [Call (H.Op "-") [Int idx']]
+                in Function Normal (mkFn $ "_Auto_dummyFunction_" <> idx') [] "boolean" [
+                    Return . Just $ Call (mkFn "_Wrap_call_anything_around") [Call (H.Op "-") [Int idx']]
                 ]
             fns' :: [Ast Var Toplevel]
             fns' = map mkDummyFn [-101, -100 .. -1]

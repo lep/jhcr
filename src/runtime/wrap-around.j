@@ -22,9 +22,9 @@ function _i2code takes integer _i returns code
     return _ret
 endfunction
 
-function _call_anything_around takes integer _i returns nothing
+function _call_anything_around takes integer _i returns boolean
     set _p = _i
-    call TriggerEvaluate(_t1)
+    return TriggerEvaluate(_t1)
 endfunction
 
 function _ExecuteFunc takes string _s returns nothing

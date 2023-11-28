@@ -274,6 +274,27 @@ function _step takes integer _ctx returns integer
 endfunction
 
 
+// This function is called via Wrap#_call_anything_around
+// which is called from two "places", that is if the interpreter detects
+// a reloaded files or from a dummy function.
+
+// We return a boolean anyways as it is good form for boolexpr's (which this
+// is used as, due to cycles), so in the past we always returned true.
+
+// But to be able to use dummy functions as boolexprs // TODO test boolexprs
+// we have to somehow get the return value of the function, which of course being
+// called from a dummy function is entirely interpreted. To do that we simply
+// return the boolean value of the return table (slot 0 in locals).
+
+// Now in case of a function not returning boolean or not being a dummy function
+// this does no harm, as we handle the return code in every other case in
+// the interpreter *and* we don't do any conditional stuff based on the return
+// value of Wrap#_call_anything_around. We just returned a value before because
+// it was good taste.
+
+// And this whole spiel is only really needed for the exact case of using a
+// dummy function as a boolexpr, because that is a unique boundary between
+// basically the call instruction and the semantic of basically `TriggerEvaluate`.
 function _start_interpreter_wrap takes nothing returns boolean
     local integer _ctx = Context#_alloc()
     local integer _parent = Context#_alloc()
@@ -296,7 +317,7 @@ function _start_interpreter_wrap takes nothing returns boolean
     endloop
 
     call Context#_free(_parent)
-    return true
+    return Table#_get_boolean(Wrap#_args, 0)
 endfunction
 
 function _exec_globals takes integer _g returns nothing
