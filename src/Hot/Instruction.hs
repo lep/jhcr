@@ -87,6 +87,11 @@ data Instruction
     | Label Label
     | Jmp Label
     | Function Label Name
+
+    -- Changes a functions coderef to another id. This is only needed for
+    -- functions that changed their signature and are then used as
+    -- filterfuncts. It's a very unlikely scenario…
+    | ChangeCodeRef Label Label
     
     | JmpT Label Register
     
@@ -187,6 +192,7 @@ serializeG op ty reg lbl expr call fn ins =
     Not s a -> [ op "not", reg s, reg a]
 
     Function f n -> [ op "fun", lbl f] <> fn f n
+    ChangeCodeRef l1 l2 -> [ op "ccr", lbl l1, lbl l2]
 
     Label l -> [ op "label", lbl l]
     Jmp l -> [ op "jmp", lbl l]
@@ -227,7 +233,7 @@ instable =
       , ("sla", 12), ("gla", 13), ("sga", 14), ("gga", 15), ("neg", 16)
       , ("set", 17), ("sg", 18), ("gg", 19), ("bind", 20), ("lit", 21)
       , ("call", 22), ("conv", 23), ("label", 24), ("jmp", 25), ("fun", 26)
-      , ("jmpt", 27), ("not", 28), ("ret", 29)
+      , ("jmpt", 27), ("not", 28), ("ret", 29), ("ccr", 30)
       ]
     
 

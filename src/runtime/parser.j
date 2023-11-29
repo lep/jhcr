@@ -81,6 +81,10 @@ function _parse_ins takes string _s returns integer
         else
             set _S = _S + 8
         endif
+    elseif _ins == Ins#_CCR then
+        set Ins#_a1[_new] = S2I(SubString(_s, _S+2, _S+8))
+        set Ins#_a2[_new] = S2I(SubString(_s, _S+8, _S+14))
+        set _S = _S + 14
     elseif _ins == Ins#_JmpT then
         set Ins#_a1[_new] = S2I(SubString(_s, _S+2,  _S+8))
         set Ins#_a2[_new] = S2I(SubString(_s, _S+8, _S+17))
@@ -135,7 +139,12 @@ function _parse_and_init takes string _instruction returns nothing
             
             call Modified#_set_modified(_current_fn)
             set _prev_ins = 0
+        elseif Ins#_op[_ins] == Ins#_CCR then
+            // replace entry point in dummyFunction to point to original id
+            set _fn_entry[Ins#_a2[_ins] + 100] = _fn_entry[100 + Ins#_a1[_ins]]
 
+            // replace original function with dummy function in i2code
+            call Table#_set_integer(Wrap#_replacements, Ins#_a1[_ins], Ins#_a2[_ins])
         elseif Ins#_op[_ins] == Ins#_Label then
             call Table#_set_integer(_fn_labels[_current_fn + 100], Ins#_a1[_ins], _ins)
         endif

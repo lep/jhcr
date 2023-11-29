@@ -294,7 +294,7 @@ endfunction
 
 // And this whole spiel is only really needed for the exact case of using a
 // dummy function as a boolexpr, because that is a unique boundary between
-// basically the call instruction and the semantic of basically `TriggerEvaluate`.
+// basically the call instruction and the semantics of `TriggerEvaluate`.
 function _start_interpreter_wrap takes nothing returns boolean
     local integer _ctx = Context#_alloc()
     local integer _parent = Context#_alloc()

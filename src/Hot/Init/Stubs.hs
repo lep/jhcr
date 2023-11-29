@@ -26,7 +26,7 @@ compile (Programm pr) = Programm $ concatMap stubifyFn pr
 stubifyFn :: Ast Var Toplevel -> [Ast Var Toplevel]
 stubifyFn e =
   case e of
-    Function _ (H.Fn n _ _ _) _ _ _ | n `elem` donttouch -> [e]
+    Function _ (H.Fn n _ _ _ _) _ _ _ | n `elem` donttouch -> [e]
     Function c n args retty body ->
         let binds :: [Ast Var Stmt]
             binds = zipWith (\(ty, var) idx ->

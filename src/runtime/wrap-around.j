@@ -13,6 +13,9 @@ globals
     // _name2id :: StringTable
     integer _name2id = 0
 
+    // _replacements :: Table
+    integer _replacements
+
     code _Null = null
 endglobals
 
@@ -42,4 +45,5 @@ endfunction
 function _init takes nothing returns nothing
     set _args = Table#_alloc()
     set _name2id = Table#_alloc()
+    set _replacements = Table#_alloc()
 endfunction

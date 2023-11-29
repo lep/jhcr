@@ -30,11 +30,11 @@ instance Monoid Type where
 compileReplace :: J.Ast H.Var x -> J.Ast H.Var x
 compileReplace x =
   case x of
-    J.Set lvar (J.Code (H.Fn _ _ _ id)) ->
+    J.Set lvar (J.Code (H.Fn _ _ _ id _)) ->
         J.Set lvar $ J.Int (show id)
-    J.SDef c var "integer" (Just (J.Code (H.Fn _ _ _ id))) ->
+    J.SDef c var "integer" (Just (J.Code (H.Fn _ _ _ id _))) ->
         J.SDef c var "integer" . Just . J.Int $ show id
-    J.Call fn@(H.Fn _ types _ _) args ->
+    J.Call fn@(H.Fn _ types _ _ _) args ->
         let want = map conv types
             args' = zipWith ($) want $ map compileReplace args
         in J.Call fn args'
@@ -44,8 +44,8 @@ compileReplace x =
     conv "code" x =
       case x of
         J.Code{} -> x
-        _ -> J.Call (H.Fn "_Wrap_i2code" [] "" 0) [x]
-    conv "integer" (J.Code (H.Fn _ _ _ id)) = J.Int (show id)
+        _ -> J.Call (H.Fn "_Wrap_i2code" [] "" 0 Nothing) [x]
+    conv "integer" (J.Code (H.Fn _ _ _ id _)) = J.Int (show id)
     conv _ x = x
 
 compileNull :: H.Type -> J.Ast H.Var x -> J.Ast H.Var x
@@ -58,7 +58,7 @@ compileNull ty x =
             args' = map (compileNull want) args
         in J.Call fn args'
     
-    J.Call fn@(H.Fn _ types _ _) args ->
+    J.Call fn@(H.Fn _ types _ _ _) args ->
         let args' = zipWith compileNull types args
         in J.Call fn args'
         
@@ -91,7 +91,7 @@ typeOfVar x =
     H.Local _ ty _ _ -> ty
     H.Global _ _ ty _ _ -> ty
     H.Op _ -> error "B"
-    H.Fn _ _ ret _ -> ret
+    H.Fn _ _ ret _ _ -> ret
 
 
 code2custom :: H.Type -> H.Type -> J.Ast H.Var x -> J.Ast H.Var x
@@ -110,7 +110,7 @@ code2custom from to x =
       case v of
         H.Local name ty b id -> H.Local name (goType ty) b id
         H.Global c name ty b id -> H.Global c name (goType ty) b id
-        H.Fn name args ret id -> H.Fn name (map goType args) (goType ret) id
+        H.Fn name args ret id r -> H.Fn name (map goType args) (goType ret) id r
         _ -> v
         
     goType :: H.Type -> H.Type
@@ -119,7 +119,7 @@ code2custom from to x =
 cleanup :: J.Ast H.Var x -> J.Ast H.Var x
 cleanup x =
   case x of
-    J.Call (H.Fn "_Wrap_i2code" _ _ _) [J.Null] -> unsafeCoerce J.Null
+    J.Call (H.Fn "_Wrap_i2code" _ _ _ _) [J.Null] -> unsafeCoerce J.Null
     _ -> composeOp cleanup x
 
 compile :: J.Ast H.Var x -> J.Ast H.Var x

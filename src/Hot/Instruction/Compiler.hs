@@ -105,7 +105,7 @@ typeOfVar v =
   case v of
     Local _ t _ _ -> t
     Global _ _ t _ _ -> t
-    Fn _ _ t _ -> t
+    Fn _ _ t _ _ -> t
     _ -> ""
     
 
@@ -126,6 +126,9 @@ compileToplevel (H.Function n _ r body) = do
     let fname = nameOf n
     let fn = Function (getId n) fname
     emit fn
+    case getReplacement n of
+        Nothing -> pure ()
+        Just r -> emit $ ChangeCodeRef (getId n) r
 
     labelId .= 1
     registerId .= 0
@@ -152,7 +155,7 @@ typedGet sourcetype source = do
 
 
 compileCall :: Ast Var a -> CompileMonad Register
-compileCall (H.Call n@(Fn _ aTypes _ _) args) = do
+compileCall (H.Call n@(Fn _ aTypes _ _ _) args) = do
     r <- newRegister
     let vname = nameOf n
     let v = getId n

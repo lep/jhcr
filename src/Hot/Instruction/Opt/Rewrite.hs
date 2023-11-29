@@ -133,6 +133,7 @@ fromList x =
     [ Cmd "jmpt", Label l, Reg r] -> JmpT l r
     [ Cmd "not", Reg a, Reg b] -> Not a b
     [ Cmd "ret", Type ty] -> Ret ty
+    [ Cmd "ccr", Label a, Label b] -> ChangeCodeRef a b
 
 apply :: S -> TokInstruction -> ValInstruction
 apply m = map go

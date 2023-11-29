@@ -113,6 +113,7 @@ compile pr =
     val = mkLocal "_v"
 
     ctx = mkLocal "_ctx"
+    replacement = mkLocal "_replacement"
 
     bind = AVar (mkLocal "_Context_bindings") (Var $ SVar ctx)
     scope = AVar (mkLocal "_Context_locals") (Var $ SVar ctx)
@@ -146,9 +147,29 @@ compile pr =
                 ]
             fns' :: [Ast Var Toplevel]
             fns' = map mkDummyFn [-101, -100 .. -1]
-        in fns' ++ [Function Normal (mkFn "_Auto_i2code") [("integer", uid)] "code" [
-            bin (-101) (length fns) (Var $ SVar uid) r
-        ]]
+
+            -- function Auto#_i2code takes integer _uid returns code
+            --     local integer _replacement = Table#_get_integer(Wrap#_replacements, _uid)
+            --     if _replacement < 0 then
+            --         return _Auto_i2code_wrap(_replacement)
+            --     else
+            --         return _Auto_i2code_wrap(_uid)
+            --     endif
+            -- endfunction
+            i2code_check_ccr = Function Normal (mkFn "_Auto_i2code") [("integer", uid)] "code" [
+                Local $ SDef Normal replacement "integer" $ Just $ Call (mkFn "_Table_get_integer") [Var $ SVar $ mkGlobal "_Wrap_replacements", Var $ SVar uid]
+              , If (Call (mkFn "<") [Var $ SVar replacement, Int "0"]) [
+                    Return . Just $ Call (mkFn "_Auto_i2code_wrap") [Var $ SVar replacement]
+                ] [] (Just [
+                    Return . Just $ Call (mkFn "_Auto_i2code_wrap") [Var $ SVar uid]
+                ])
+                ]
+        in fns' ++ [
+            Function Normal (mkFn "_Auto_i2code_wrap") [("integer", uid)] "code" [
+                bin (-101) (length fns) (Var $ SVar uid) r
+            ],
+            i2code_check_ccr
+        ]
 
 
 
@@ -165,7 +186,7 @@ compile pr =
         let reg = mkLocal "_reg"
             r idx =
                 let fn = fns !! pred idx
-                    v@(H.Fn _ types ret _) = case fn of
+                    v@(H.Fn _ types ret _ _) = case fn of
                                                 Native _ v _ _ -> v
                                                 Function _ v _ _ _ -> v
                     args = zipWith (\ty pos ->

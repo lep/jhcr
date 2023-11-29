@@ -2,6 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE MultiWayIf #-}
 
 module Hot.Init.Rename
     ( Mode(..)
@@ -20,6 +21,7 @@ import Control.Monad.Reader
 import Data.Int
 import Data.Monoid
 import Data.Maybe
+import Data.Bifunctor (second)
 
 import GHC.Generics
 import Data.Binary
@@ -117,7 +119,7 @@ addNative name args ret = do
     v' <- uses fnScope $ Map.lookup name
     case v' of
         Just v -> do
-            let sig = H.Fn name args ret (H.getId v)
+            let sig = H.Fn name args ret (H.getId v) Nothing
             -- potentially update if signature has changed
             if v == sig
             then return v
@@ -130,43 +132,65 @@ addNative name args ret = do
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    let v = H.Fn name args ret id
+                    let v = H.Fn name args ret id Nothing
                     fnScope %= (at name ?~ v)
                     return v
-                    
+
                 Update -> do
                     id <- newFnCount <-= 1
-                    let v = H.Fn name args ret id
+                    let v = H.Fn name args ret id Nothing
                     fnScope %= (at name ?~ v)
                     return v
+
+isFilterFunc :: [Type] -> Type -> Bool
+isFilterFunc [] "boolean" = True
+isFilterFunc _  _         = False
+
+sigEq
+    (H.Fn name1 args1 ret1 id1 replacement1)
+    (H.Fn name2 args2 ret2 id2 replacement2) =
+        and [ args1 == args2, ret1 == ret2 ]
 
 addFunction :: Name -> [Type] -> Type -> RenameVariablesM Var
 addFunction name args ret = do
     v' <- uses fnScope $ Map.lookup name
     case v' of
         Just v -> do
-            let sig = H.Fn name args ret (H.getId v)
-            -- potentially update if signature has changed
-            if v == sig
-            then return v
-            else do
-                fnScope %= (at name ?~ sig)
-                return sig
+            let sig = H.Fn name args ret (H.getId v) Nothing
+            if | isFilterFunc args ret
+                && not (sigEq v sig) -> do
+                    replacementId <- newFnCount <-= 1
+                    let sigReplacement = H.Fn name args ret (H.getId v) (Just replacementId)
+                    fnScope %= (at name ?~ sigReplacement)
+                    pure sigReplacement
+               | sigEq v sig -> pure v
+               | otherwise -> do
+                    fnScope %= (at name ?~ sig)
+                    return sig
+
+            
+        
+            -- -- potentially update if signature has changed
+            -- if v == sig
+            -- then return v
+            -- else do
+            --     fnScope %= (at name ?~ sig)
+            --     return sig
         Nothing -> do
             (mode, f) <-  ask
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    let v = H.Fn name (map f args) (f ret) id
+                    let v = H.Fn name (map f args) (f ret) id Nothing
                     fnScope %= (at name ?~ v)
                     return v
-                    
+
                 Update -> do
                     id <- newFnCount <-= 1
-                    let v = H.Fn name (map f args) (f ret) id
+                    let v = H.Fn name (map f args) (f ret) id Nothing
                     fnScope %= (at name ?~ v)
                     return v
-            
+
 
 getVar :: Name -> RenameVariablesM Var
 getVar n = do
@@ -196,9 +220,9 @@ renameVariables = go
     go :: Ast Name a -> RenameVariablesM (Ast Var a)
     go e =
       case e of
-        Native c n args ret -> 
+        Native c n args ret ->
             Native c <$> addNative n (map fst args) ret
-                          <*> pure (map (\(typ, name) -> (typ, mkLocal name)) args)
+                          <*> pure (map (second mkLocal) args)
                           <*> pure ret
 
         Function c name args ret body -> do
