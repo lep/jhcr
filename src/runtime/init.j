@@ -7,7 +7,30 @@ globals
     integer _seq = 1
     gamecache _GC = InitGameCache("JHCR.w3v")
     trigger _parse_runner = CreateTrigger()
+
+    string _param1
+    integer _param2
+    integer _ret
+    force _force
 endglobals
+
+function _parse_and_init takes nothing returns nothing
+    call Parser#_parse_and_init(_param1)
+endfunction
+function _parse_and_init_wrapped takes string _s returns nothing
+    set _param1 = _s
+    call ForForce(_force, function _parse_and_init)
+endfunction
+
+function _parse_globals takes nothing returns nothing
+    set _ret = Parser#_parse_globals(_param1, _param2)
+endfunction
+function _parse_globals_wrapped takes string _s, integer _g returns integer
+    set _param1 = _s
+    set _param2 = _g
+    call ForForce(_force, function _parse_globals)
+    return _ret
+endfunction
 
 function _parse_wrapped takes nothing returns boolean
     local integer _g = 0
@@ -28,7 +51,7 @@ function _parse_wrapped takes nothing returns boolean
     set Parser#_prev_ins = 0
     loop
     exitwhen _i == 0
-        call Parser#_parse_and_init(GetStoredString(_GC, "functions", I2S(_i)))
+        call _parse_and_init_wrapped(GetStoredString(_GC, "functions", I2S(_i)))
         set _i = _i -1
     endloop
 
@@ -36,7 +59,8 @@ function _parse_wrapped takes nothing returns boolean
     set _i = GetStoredInteger(_GC, "globals", "count")
     loop
     exitwhen _i == 0
-        set _g = Parser#_parse_globals(GetStoredString(_GC, "globals", I2S(_i)), _g)
+        set _g = _parse_globals_wrapped(GetStoredString(_GC, "globals", I2S(_i)), _g)
+        // set _g = Parser#_parse_globals(GetStoredString(_GC, "globals", I2S(_i)), _g)
         set _i = _i - 1
     endloop
 
@@ -82,6 +106,9 @@ function _init takes nothing returns nothing
     call Ins#_init()
     call Interpreter#_init()
     call Modified#_init()
+
+    set _force = CreateForce()
+    call ForceAddPlayer(_force, Player(0))
     
     //call PreloadGenClear()
     //call PreloadGenStart()
