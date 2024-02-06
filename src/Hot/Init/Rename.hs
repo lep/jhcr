@@ -167,15 +167,6 @@ addFunction name args ret = do
                | otherwise -> do
                     fnScope %= (at name ?~ sig)
                     return sig
-
-            
-        
-            -- -- potentially update if signature has changed
-            -- if v == sig
-            -- then return v
-            -- else do
-            --     fnScope %= (at name ?~ sig)
-            --     return sig
         Nothing -> do
             (mode, f) <-  ask
             case mode of

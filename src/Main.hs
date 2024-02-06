@@ -108,7 +108,6 @@ runtime1 = map S8.unpack
   , $(embedFile "out/modified.j")
   , $(embedFile "out/instruction.j")
   , $(embedFile "out/parser.j")
-  , $(embedFile "out/api.j")
   ]
 
 runtime2 :: [String]
@@ -116,6 +115,11 @@ runtime2 = map S8.unpack
   [ $(embedFile "out/convert.j")
   , $(embedFile "out/interpreter.j")
   , $(embedFile "out/init.j")
+  ]
+
+runtimeAPI :: [String]
+runtimeAPI = map S8.unpack [
+    $(embedFile "out/api.j")
   ]
 
 data Options =
@@ -410,14 +414,18 @@ initX o = do
         rt2 <- J.Programm . mconcat <$> forM runtime2 (\src -> do
             J.Programm ast <- except $ parse J.programm "rt2" src
             return ast)
+
+        rtApi <- J.Programm . mconcat <$> forM runtimeAPI (\src -> do
+            J.Programm ast <- except $ parse J.programm "rtApi" src
+            return ast)
             
-        return (prelude, cjhash, rt1, rt2)
+        return (prelude, cjhash, rt1, rt2, rtApi)
         
     case x of
         Left err -> do
             hPutStrLn stderr $ errorBundlePretty err
             exitFailure
-        Right (prelude, cjhash, rt1, rt2) -> do
+        Right (prelude, cjhash, rt1, rt2, rtApi) -> do
             putStrLn "Initializing...."
             when (cjhash /= commonjHash) $
                 putStrLn $ unwords
@@ -427,9 +435,12 @@ initX o = do
             
             let rt1' = addPrefix' "JHCR" rt1
                 rt2' = addPrefix' "JHCR" rt2
+                rtApi' = addPrefix'  "JHCR" rtApi
 
             let (prelude', st) = Rename.compile' Rename.Init id prelude
                 typeHierachy = LCA.child2parent prelude
+
+                (_, st') = Rename.compile Rename.Init id st rtApi'
             
             p <- parse J.programm inputjPath <$> readFile inputjPath
             case p of
@@ -440,8 +451,8 @@ initX o = do
                     cookie <- randomIO :: IO Word32
                     let jhast = jhc ast
                     let ast' :: J.Ast H.Var H.Programm
-                        (ast', st') = first HandleCode.compile $
-                                      Rename.compile Rename.Init conv st jhast
+                        (ast', st2) = first HandleCode.compile $
+                                      Rename.compile Rename.Init conv st' jhast
                         
                         conv x = if x == "code" then "integer" else x
                         
@@ -467,7 +478,7 @@ initX o = do
                         (main, rest) = extractMainAndConfig generated''
                         main' = injectInit main
                         
-                        outj = foldl1 concatPrograms [ cookieAst, rt1', removeAPIDefs rest, rt2', main']
+                        outj = foldl1 concatPrograms [ cookieAst, rt1', rtApi', removeAPIDefs rest, rt2', main']
                         
                         hmap = mkHashMap jhast
                     
@@ -476,7 +487,7 @@ initX o = do
                         sequenceNumber = 1
                       , functionHashes = hmap
                       , typesHierachy = typeHierachy
-                      , renameState = st'
+                      , renameState = st2
                       , randomCookie = show cookie
                     }
 
