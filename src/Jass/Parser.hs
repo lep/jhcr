@@ -78,7 +78,7 @@ realDot = do
 symbol = L.symbol sc
 
 reserved :: String -> Parser ()
-reserved w = (lexeme . try) (string w *> notFollowedBy alphaNumChar)
+reserved w = (lexeme . try) (string w *> notFollowedBy (alphaNumChar <|> char '_'))
 
 identifier :: Parser String
 identifier = (lexeme . try) (p >>= check)
@@ -207,8 +207,9 @@ expression = makeExprParser term table
               [ binary (symbol "%") "%", binary (symbol "*") "*", binary (symbol "/") "/"]
             , [ binary (symbol "+") "+", binary (symbol "-") "-"]
             , zipWith binary
-                [symbol "<=", symbol "<" , symbol ">=", symbol ">", symbol "!=" , symbol "==" ]
-                ["<="       , "<"        , ">="   , ">"      , "!="   , "==" ]
+                [symbol "<=", symbol "<" , symbol ">=", symbol ">"]
+                ["<="       , "<"        , ">="   , ">"]
+            , [ binary (symbol "==") "==", binary (symbol "!=") "!="]
             , [ binary (reserved "or") "or"]
             , [ binary (reserved "and") "and"]
             ]
