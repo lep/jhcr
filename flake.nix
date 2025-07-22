@@ -1,15 +1,19 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    jassdoc = {
+      url = "github:lep/jassdoc";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+    };
+
     systems.url = "github:nix-systems/default";
-    common-j.url = "github:lep/common-j";
-    common-j.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, systems, common-j }:
+  outputs = { self, nixpkgs, systems, jassdoc }:
     let
       eachSystem = nixpkgs.lib.genAttrs (import systems);
-      jhcr = pkgs:
+      jhcr = { pkgs, system }:
         let
           cabal-stuff = pkgs.haskellPackages.callPackage ./jhcr.nix { };
           convert = pkgs.haskell.lib.setBuildTarget cabal-stuff "convert";
@@ -17,7 +21,9 @@
           jhcr'' = jhcr'.overrideAttrs (final: prev: {
             env = (prev.env or { }) // { PATCH_LVL = 133; };
             preBuild = ''
-              ${convert}/bin/convert ${common-j}/common.j
+              ${pkgs.lib.getExe' convert "convert"} ${
+                jassdoc.packages.${system}.jass-files
+              }/common.j
               mkdir out
               for j in src/runtime/*.j; do
                 bash src/process.sh "$j" "''${j/src\/runtime/out}" JHCR_
@@ -28,7 +34,7 @@
     in {
       packages = eachSystem (system:
         let pkgs = import nixpkgs { inherit system; };
-        in { default = jhcr pkgs; });
+        in { default = jhcr { inherit system pkgs; }; });
 
       devShells = eachSystem (system:
         let pkgs = import nixpkgs { inherit system; };
