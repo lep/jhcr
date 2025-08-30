@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     jassdoc = {
       url = "github:lep/jassdoc";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,6 +19,7 @@
           convert = pkgs.haskell.lib.setBuildTarget cabal-stuff "convert";
           jhcr' = pkgs.haskell.lib.setBuildTarget cabal-stuff "jhcr";
           jhcr'' = jhcr'.overrideAttrs (final: prev: {
+            meta.mainProgram = "jhcr";
             env = (prev.env or { }) // { PATCH_LVL = 133; };
             preBuild = ''
               ${pkgs.lib.getExe' convert "convert"} ${
