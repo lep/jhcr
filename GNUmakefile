@@ -7,10 +7,12 @@ RUNTIME += src/runtime/api.j
 PROCESSED := $(patsubst src/runtime/%.j, out/%.j, $(RUNTIME))
 
 
-.PHONY: clean process all build
+.PHONY: clean process all build install
 .PHONY: patch128 patch133
 
 all: patch133
+
+release: clean patch133 jhcr.exe
 
 # 1.26b to 1.28
 patch128: COMMONJ=common-1.28.j
@@ -43,6 +45,10 @@ process: $(PROCESSED)
 out/%.j: src/runtime/%.j src/runtime/alloc.j src/runtime/alloc-globals.j
 	@mkdir -p $(@D)
 	PATCH_LVL=$(PATCH_LVL) bash src/process.sh $< $@ JHCR_
+
+install:
+	mkdir -p $(PREFIX)
+	cp $$(cabal list-bin jhcr) $(PREFIX)
 
 clean:
 	rm -f $(PROCESSED)
