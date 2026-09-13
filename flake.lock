@@ -10,11 +10,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1756497439,
-        "narHash": "sha256-QfKNyYKQBgEeC9OD53Wzp73gNn0H2YcBFuoShkoZBG8=",
+        "lastModified": 1789314618,
+        "narHash": "sha256-gDwz1+v8QGVIjHvmp33lfBYpvjA1vzTObIEu+/eiaqQ=",
         "owner": "lep",
         "repo": "jassdoc",
-        "rev": "f6dda7785d417a4bc1a08a376dedebbe1faae337",
+        "rev": "15ff7ae906bbce08840b1db92a188278445fc52f",
         "type": "github"
       },
       "original": {
@@ -25,11 +25,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1767364772,
-        "narHash": "sha256-fFUnEYMla8b7UKjijLnMe+oVFOz6HjijGGNS1l7dYaQ=",
+        "lastModified": 1788614874,
+        "narHash": "sha256-PRK1fSEiAcO29DkUoOlsVLGYRK3h1YKVr+qQJB0VcYQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "16c7794d0a28b5a37904d55bcca36003b9109aaa",
+        "rev": "c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0",
         "type": "github"
       },
       "original": {
