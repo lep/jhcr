@@ -8,9 +8,9 @@ PROCESSED := $(patsubst src/runtime/%.j, out/%.j, $(RUNTIME))
 
 
 .PHONY: clean process all build install
-.PHONY: patch128 patch133
+.PHONY: patch128 patch300
 
-all: patch133
+all: patch300
 
 release: clean patch133 jhcr.exe
 
@@ -19,9 +19,9 @@ patch128: COMMONJ=common-1.28.j
 patch128: PATCH_LVL=128
 patch128: clean build
 
-patch133: COMMONJ=common-1.33.j
-patch133: PATCH_LVL=133
-patch133: build
+patch300: COMMONJ=common-3.0.0.j
+patch300: PATCH_LVL=300
+patch300: build
 
 nix: COMMONJ=common-1.33.j
 nix: PATCH_LVL=133
