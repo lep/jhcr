@@ -25,6 +25,10 @@ globals
     commandbuttoneffect array _commandbuttoneffect
 #endif
 
+#if PATCH_LVL >= 300
+    metakeytype array _metakeytype
+#endif
+
 endglobals
 
 #include "alloc.j"
@@ -1127,4 +1131,46 @@ function _set_commandbuttoneffect takes integer _this,integer _key,commandbutton
     call SaveInteger(_ht, _this, _key, _list[_this])
 endfunction
 
+#endif
+
+#if PATCH_LVL >= 300
+// patch 3.0.0
+
+function _get_fogstyle takes integer _this,integer _key returns fogstyle
+    return ConvertFogStyle(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_fogstyle takes integer _this,integer _key, fogstyle _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+function _get_equipmentType takes integer _this,integer _key returns equipmentType
+    return ConvertEquipmentType(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_equipmentType takes integer _this,integer _key, equipmentType _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+function _get_itemTag takes integer _this,integer _key returns itemTag
+    return ConvertItemTag(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_itemTag takes integer _this,integer _key, itemTag _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+function _get_loadoutslot takes integer _this,integer _key returns loadoutslot
+    return ConvertLoadoutSlot(GetHandleId(LoadFogStateHandle(_ht, _this, _key)))
+endfunction
+function _set_loadoutslot takes integer _this,integer _key, loadoutslot _value returns nothing
+    call SaveFogStateHandle(_ht, _this, _key, ConvertFogState(GetHandleId(_value)))
+endfunction
+
+
+function _get_metakeytype takes integer _this,integer _key returns metakeytype
+    return _metakeytype[(LoadInteger(_ht, _this, _key))]
+endfunction
+function _set_metakeytype takes integer _this,integer _key,metakeytype _value returns nothing
+    set _list[_this] = List#_cons(_list[_this])
+    set _metakeytype[_list[_this]]=_value
+    call SaveInteger(_ht, _this, _key, _list[_this])
+endfunction
 #endif
