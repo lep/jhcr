@@ -20,7 +20,7 @@
           jhcr' = pkgs.haskell.lib.setBuildTarget cabal-stuff "jhcr";
           jhcr'' = jhcr'.overrideAttrs (final: prev: {
             meta.mainProgram = "jhcr";
-            env = (prev.env or { }) // { PATCH_LVL = 133; };
+            env = (prev.env or { }) // { PATCH_LVL = 300; };
             preBuild = ''
               ${pkgs.lib.getExe' convert "convert"} ${
                 jassdoc.packages.${system}.jass-files
@@ -41,7 +41,7 @@
         let pkgs = import nixpkgs { inherit system; };
         in {
           default = pkgs.mkShell {
-            env.PATCH_LVL = 133;
+            env.PATCH_LVL = 300;
             # packages = [ ];
             nativeBuildInputs = [ pkgs.cabal-install ];
           };
