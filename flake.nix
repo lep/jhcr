@@ -25,7 +25,7 @@
               ${pkgs.lib.getExe' convert "convert"} ${
                 jassdoc.packages.${system}.jass-files
               }/common.j
-              mkdir out
+              [ -e out ] || mkdir out
               for j in src/runtime/*.j; do
                 bash src/process.sh "$j" "''${j/src\/runtime/out}" JHCR_
               done
