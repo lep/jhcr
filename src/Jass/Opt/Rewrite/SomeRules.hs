@@ -56,21 +56,23 @@ someRules =
   , mkRR ["a"] "1*a" "a"
   , mkRR ["a"] "a*1" "a"
   
+  -- TODO: see #github:14 for a bug report. Enable these rules once a fix
+  -- has been found
   -- 1.0*a can be used in jass to promote an integer to a real, so normally
   -- this would not be a valid rewrite rule, but the instruction compiler
   -- inserts the correct conv instructions which allows these rules
-  , mkRR ["a"] "-1.0*a" "-a"
-  , mkRR ["a"] "a*-1.0" "-a"
-  , mkRR ["a"] "a+0.0" "a"
-  , mkRR ["a"] "0.0+a" "a"
-  , mkRR ["a"] "1.0*a" "a"
-  , mkRR ["a"] "a*1.0" "a"
+  -- , mkRR ["a"] "-1.0*a" "-a"
+  -- , mkRR ["a"] "a*-1.0" "-a"
+  -- , mkRR ["a"] "a+0.0" "a"
+  -- , mkRR ["a"] "0.0+a" "a"
+  -- , mkRR ["a"] "1.0*a" "a"
+  -- , mkRR ["a"] "a*1.0" "a"
   
   , mkRR ["a"] "a/1" "a"
-  , mkRR ["a"] "a/1.0" "a"
+  -- , mkRR ["a"] "a/1.0" "a"
   
   , mkRR ["a"] "a/-1" "-a"
-  , mkRR ["a"] "a/-1.0" "-a"
+  -- , mkRR ["a"] "a/-1.0" "-a"
   ]
   where
     mkRR fv from to =
