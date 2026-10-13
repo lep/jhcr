@@ -248,6 +248,7 @@ bind2 f x y = liftM2 (,) x y >>= uncurry f
 compileExpr :: Ast Var Expr -> CompileMonad Register
 compileExpr e =
   case e of
+    H.Call (Op "+") [a] -> compileExpr a
     H.Call (Op "not") [a] -> do
         r <- newRegister
         t <- compileExpr a
