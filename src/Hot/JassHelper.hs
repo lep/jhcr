@@ -19,6 +19,7 @@ cleanName x =
 
 
 -- TODO: Maybe operate on Hot.Ast to only rename globals
+-- TODO: Maybe really do this, as #github:16
 compile :: Ast Name x -> Ast Name x
 compile x =
   case x of
@@ -30,6 +31,6 @@ compile x =
     SVar n -> SVar $ cleanName n
     AVar n idx -> AVar (cleanName n) $ compile idx
     Function c name args ret body ->
-        Function c (cleanName name) args ret $ map compile body
+        Function c (cleanName name) (map (\(a, b) -> (a, cleanName b)) args) ret $ map compile body
    
     _ -> composeOp compile x
