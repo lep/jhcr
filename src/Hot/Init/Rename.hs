@@ -90,7 +90,8 @@ addLocal name ty isArray = do
 
 addGlobal :: Constant -> Name -> Type -> IsArray -> RenameVariablesM Var
 addGlobal c name ty isArray = do
-    let isAPI = "JHCR_API_" `isPrefixOf` name -- && False
+    -- TODO: use the same technique for the functions/natives aswell
+    let isAPI = "JHCR_API_" `isPrefixOf` name
         scopeLens :: Lens' RenameVariablesState (Map Name Var)
         scopeLens = if isAPI then debugGlobalScope else globalScope
         countLens = if isAPI then debugGlobalCount else globalCount

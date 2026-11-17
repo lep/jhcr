@@ -507,7 +507,6 @@ initX o = do
 
               hmap = mkHashMap jhast
 
-          pPrint st2
           putStrLn "Writing state file"
           encodeFile
             (statePath o)
