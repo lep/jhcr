@@ -2,6 +2,7 @@
 , dlist, file-embed, filepath, gitrev, Glob, hashable, lca, lens
 , lib, megaparsec, mtl, optparse-applicative, parser-combinators
 , random, transformers, unordered-containers, utf8-string, vector
+, pretty-simple
 }:
 mkDerivation {
   pname = "jass-hot-code-reload";
@@ -13,7 +14,7 @@ mkDerivation {
     base binary bytestring containers directory dlist file-embed
     filepath gitrev Glob hashable lca lens megaparsec mtl
     optparse-applicative parser-combinators random transformers
-    unordered-containers utf8-string vector
+    unordered-containers utf8-string vector pretty-simple
   ];
   license = lib.licenses.lgpl3Only;
 }
