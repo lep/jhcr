@@ -51,15 +51,17 @@ data RenameVariablesState = RenameVariablesState
     , _localCount :: Int32
     , _fnScope :: Map Name Var
     , _newFnCount :: Int32
-    , _debugScope :: Map Name Var
-    , _debugCount :: Int32
+    , _debugFnScope :: Map Name Var
+    , _debugFnCount :: Int32
+    , _debugGlobalScope :: Map Name Var
+    , _debugGlobalCount :: Map (Type, IsArray) Int32
     } deriving (Generic, Show)
 makeLenses ''RenameVariablesState
 
 instance Binary RenameVariablesState
 
 defaultRenameVariableState :: RenameVariablesState
-defaultRenameVariableState = RenameVariablesState mempty mempty mempty 1 mempty 0 mempty 0
+defaultRenameVariableState = RenameVariablesState mempty mempty mempty 1 mempty 0 mempty 0 mempty mempty
 
 
 newtype RenameVariablesM a = RenameVariablesM { unRenameVariablesM :: ReaderT (Mode, Type -> Type) (State RenameVariablesState) a }
@@ -88,7 +90,13 @@ addLocal name ty isArray = do
 
 addGlobal :: Constant -> Name -> Type -> IsArray -> RenameVariablesM Var
 addGlobal c name ty isArray = do
-    v' <- uses globalScope $ Map.lookup name
+    let isAPI = "JHCR_API_" `isPrefixOf` name -- && False
+        scopeLens :: Lens' RenameVariablesState (Map Name Var)
+        scopeLens = if isAPI then debugGlobalScope else globalScope
+        countLens = if isAPI then debugGlobalCount else globalCount
+        countLens :: Lens' RenameVariablesState (Map (Type, IsArray) Int32)
+        offset = if isAPI then 9999999 else 0
+    v' <- uses scopeLens $ Map.lookup name
     (m, f) <- ask
     let idf = if m == Init then id else idf' . negate
         idf' = if isArray then (*32768) else id
@@ -98,13 +106,13 @@ addGlobal c name ty isArray = do
             if sig == v
             then return v
             else do
-                globalScope %= sans name
+                scopeLens %= sans name
                 addGlobal c name ty isArray
         Nothing -> do
-            globalCount %= Map.insertWith (+) (f ty, isArray) 1
-            id <- idf <$> uses globalCount (Map.findWithDefault (error "xxx") (f ty, isArray))
+            countLens %= Map.insertWith (+) (f ty, isArray) 1
+            id <- idf  . (+offset) <$> uses countLens (Map.findWithDefault (error "xxx") (f ty, isArray))
             let v = H.Global c name (f ty) isArray id
-            globalScope %= (at name ?~ v)
+            scopeLens %= (at name ?~ v)
             return v
 
 -- we have to keep the API functions in a different scope because otherwise
@@ -112,25 +120,25 @@ addGlobal c name ty isArray = do
 -- we look them up if they're used by the user.
 getDebugApiID :: Name -> [Type] -> Type -> RenameVariablesM Var
 getDebugApiID name args ret = do
-    v' <- uses debugScope $ Map.lookup name
+    v' <- uses debugFnScope $ Map.lookup name
     case v' of
         Just v -> pure v
         Nothing -> do
             mode <- asks fst
             case mode of
                 Init -> do
-                    id <- uses debugScope ((99999999 +) . fromIntegral . succ . Map.size)
+                    id <- uses debugFnScope ((99999999 +) . fromIntegral . succ . Map.size)
                     let v = H.Fn name args ret id Nothing
-                    debugScope %= (at name ?~ v)
+                    debugFnScope %= (at name ?~ v)
                     fnScope %= (at name ?~ v)
                     return v
                 Update -> do
                     -- to be honest this is just copied. i have no idea what
                     -- happens when a new function called JHCR_API_*** is
                     -- reloaded
-                    id <- debugCount <-= 1
+                    id <- debugFnCount <-= 1
                     let v = H.Fn name args ret id Nothing
-                    debugScope %= (at name ?~ v)
+                    debugFnScope %= (at name ?~ v)
                     return v
 {-
  - This is mostly the same as addFunction (TODO: refactor)
@@ -162,7 +170,7 @@ addNative name args ret = do
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    offset <- fromIntegral <$> uses debugScope Map.size
+                    offset <- fromIntegral <$> uses debugFnScope Map.size
                     let v = H.Fn name args ret (id - offset) Nothing
                     fnScope %= (at name ?~ v)
                     return v
@@ -205,7 +213,7 @@ addFunction name args ret = do
             case mode of
                 Init -> do
                     id <- uses fnScope (fromIntegral . succ . Map.size)
-                    offset <- fromIntegral <$> uses debugScope Map.size
+                    offset <- fromIntegral <$> uses debugFnScope Map.size
                     let v = H.Fn name (map f args) (f ret) (id - offset) Nothing
                     fnScope %= (at name ?~ v)
                     return v
