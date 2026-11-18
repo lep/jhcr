@@ -228,7 +228,8 @@ main = do
 
 dumpX :: Options -> IO ()
 dumpX o = do
-  progstate@(ProgState seq hmap typeHierachy st cookie) <- decodeFile (statePath o)
+  -- progstate@(ProgState seq hmap typeHierachy st cookie) <- decodeFile (statePath o)
+  progstate <- decodeFile (statePath o) :: IO ProgState
   pPrint progstate
 
 
