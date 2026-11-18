@@ -158,6 +158,7 @@ function _step takes integer _ctx returns integer
         set _tmp = _ctx
         set _ctx = Context#_parent[_ctx]
         call Table#_destroy(Context#_bindings[_tmp])
+        call Table#_flush(Context#_bindings[_ctx])
         call Context#_free(_tmp)
         
     elseif _t == Ins#_Call then
