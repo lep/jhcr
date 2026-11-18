@@ -340,9 +340,10 @@ compileExpr e =
     Null -> do
       r <- newRegister
       t <- code2int <$> asks fst
-      if t == "integer"
-        then emit $ Literal "integer" r $ Int 0
-        else emit $ Literal t r e
+      emit $ Nil t r
+      -- if t == "integer"
+      --   then emit $ Literal "integer" r $ Int 0
+      --   else emit $ Literal t r e
       return r
     Code v -> do
       r <- newRegister

@@ -42,6 +42,7 @@ globals
     constant integer _Ret = 29
 
     constant integer _CCR = 30
+    constant integer _Nil = 31
     
     
     
@@ -123,6 +124,8 @@ function _toString takes integer _ins returns string
         return(_OpNames[_op[_ins]] +" "+ I2S(_a1[_ins]) +" "+ I2S(_a2[_ins]) )
     elseif _op[_ins] == _Ret then
         return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] )
+    elseif _op[_ins] == _Nil then
+        return(_OpNames[_op[_ins]] +" "+ Types#_TypeNames[_type[_ins]] +" "+ I2S(_a1[_ins]) )
     else
         return("unknown op " +I2S(_op[_ins]))
     endif
@@ -173,5 +176,6 @@ function _init takes nothing returns nothing
     set _OpNames[_Convert]="conv"
     set _OpNames[_Fun]="fun"
     set _OpNames[_CCR]="ccr"
+    set _OpNames[_Nil]="nil"
 
 endfunction

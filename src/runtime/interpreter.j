@@ -262,8 +262,25 @@ function _step takes integer _ctx returns integer
             
         elseif Ins#_type[_op] == Types#_code then
             call Table#_set_integer(Context#_locals[_ctx], Ins#_a1[_op], Ins#_integer[_op])
+
+        // TODO: this can probably be removed now
         else // null
             // dont like how we use tables global, but whatev
+            call RemoveSavedHandle(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
+        endif
+    elseif _t == Ins#_Nil then
+        // dont like how we use tables global, but whatev
+        if Ins#_type[_op] == Types#_integer then
+            call RemoveSavedInteger(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
+        elseif Ins#_type[_op] == Types#_real then
+            call RemoveSavedReal(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
+        elseif Ins#_type[_op] == Types#_string then
+            call RemoveSavedString(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
+        elseif Ins#_type[_op] == Types#_boolean then
+            call RemoveSavedBoolean(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
+        elseif Ins#_type[_op] == Types#_code then
+            call RemoveSavedInteger(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
+        else // handle
             call RemoveSavedHandle(Table#_ht, Context#_locals[_ctx], Ins#_a1[_op])
         endif
     elseif _t == Ins#_Convert then

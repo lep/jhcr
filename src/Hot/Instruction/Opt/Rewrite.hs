@@ -134,6 +134,7 @@ fromList x =
     [ Cmd "not", Reg a, Reg b] -> Not a b
     [ Cmd "ret", Type ty] -> Ret ty
     [ Cmd "ccr", Label a, Label b] -> ChangeCodeRef a b
+    [ Cmd "nil", Type ty, Reg r] -> Nil ty r
 
 apply :: S -> TokInstruction -> ValInstruction
 apply m = map go

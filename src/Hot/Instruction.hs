@@ -78,6 +78,9 @@ data Instruction
     | GetGlobal Type Register Register
     | Bind      Type Register Register
 
+    -- one reg
+    | Nil       Type Register
+
     -- special
     | Literal Type Register (Hot.Ast Var Expr) -- encoded as: lit ty reg len string
     | Call Register Label Name
@@ -190,6 +193,7 @@ serializeG op ty reg lbl expr call fn ins =
     Bind t s a -> [ op "bind", ty t, reg s, reg a]
 
     Not s a -> [ op "not", reg s, reg a]
+    Nil tyv r -> [ op "nil", ty tyv , reg r]
 
     Function f n -> [ op "fun", lbl f] <> fn f n
     ChangeCodeRef l1 l2 -> [ op "ccr", lbl l1, lbl l2]
@@ -233,7 +237,7 @@ instable =
       , ("sla", 12), ("gla", 13), ("sga", 14), ("gga", 15), ("neg", 16)
       , ("set", 17), ("sg", 18), ("gg", 19), ("bind", 20), ("lit", 21)
       , ("call", 22), ("conv", 23), ("label", 24), ("jmp", 25), ("fun", 26)
-      , ("jmpt", 27), ("not", 28), ("ret", 29), ("ccr", 30)
+      , ("jmpt", 27), ("not", 28), ("ret", 29), ("ccr", 30), ("nil", 31)
       ]
     
 

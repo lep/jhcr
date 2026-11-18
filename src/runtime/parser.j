@@ -54,6 +54,10 @@ function _parse_ins takes string _s returns integer
             set Ins#_boolean[_new] = SubString(_s, _S+20, _S+20+_b)=="true"
         endif
         set _S = _S + 20 + _b
+    elseif _ins == Ins#_Nil then
+        set Ins#_type[_new] = S2I(SubString(_s, _S+2,  _S+ 5))
+        set Ins#_a1[_new]   = S2I(SubString(_s, _S+5,  _S+14))
+        set _S = _S + 14
     elseif _ins == Ins#_Call then
         set Ins#_a1[_new]   = S2I(SubString(_s, _S+2,  _S+11))
         set Ins#_a2[_new]   = S2I(SubString(_s, _S+11, _S+17))
